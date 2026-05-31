@@ -1,14 +1,11 @@
-//homepage do sistema, aqui crie apenas o esqueleto da página, sem se preocupar com o conteúdo
-import TemplateDemo from '../components/ui/Menubar';
-
+import Content from '../components/layout/Content';
 function Homepage() {
   return (
-    <header>
-      <div className="topbar">
-        <TemplateDemo/>
-      </div>
-      <h1>Homepage</h1>
-    </header>
+    <div className="layout">
+    <div className="main-content">
+        <Content/>
+    </div>
+</div>
   );
 }
 export default Homepage;
