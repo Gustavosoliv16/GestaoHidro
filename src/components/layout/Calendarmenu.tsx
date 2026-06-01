@@ -23,7 +23,7 @@ interface CalendarioLateralProps {
 export default function CalendarioLateral({ dataSelecionada, aoMudarData }: CalendarioLateralProps) {
 
 const opcoesHoras = Array.from({ length: 18 }, (_, i) => {
-    const hora = i + 6; // Começa em 6
+    const hora = i + 6;
     const horaFormatada = hora.toString().padStart(2, '0');
     return { label: `${horaFormatada} h`, value: hora };
 });
@@ -71,6 +71,7 @@ const minutoAtual = dataSelecionada ? dataSelecionada.getMinutes() : 0;
             <Calendar 
                 value={dataSelecionada} 
                 onChange={aoMudarDiaCalendario} 
+                disabledDays={[0]}
                 inline
                 locale="pt-BR" 
                 dateFormat="dd/mm/yy"
