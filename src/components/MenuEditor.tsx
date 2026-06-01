@@ -1,9 +1,14 @@
-
 import { useState } from 'react'; 
 import { PanelMenu } from 'primereact/panelmenu';
 import { Button } from 'primereact/button';
 
-export default function EditorMenu() {
+
+interface EditorMenuProps {
+    aoMudarVisao: (visao: 'tabela' | 'cadastro') => void;
+}
+
+
+export default function EditorMenu({ aoMudarVisao }: EditorMenuProps) {
     const items = [
         {
             key: '0',
@@ -19,24 +24,31 @@ export default function EditorMenu() {
                             key: '0_1_0',
                             icon:'pi pi-user',
                             label: 'Aluno',
+                            command: () => aoMudarVisao('cadastro')
                         },
                         {
                             key: '0_1_1',
-                            icon: 'pi pi-tags',
-                            label: 'Modalidade',
+                            label: 'Turmas',
+                            icon:'pi pi-user-edit',
                         }
                     ]
                 },
                 {
                     key: '0_2',
-                    label: 'Editar',
-                    icon: 'pi pi-pencil'
+                    label: 'Consultar',
+                    icon: 'pi pi-search',
+                    command: () => aoMudarVisao('tabela')
                 },
                 {
                     key: '0_3',
+                    label: 'Editar',
+                    icon: 'pi pi-pencil',
+                    command: () => aoMudarVisao('tabela')
+                },
+                {
+                    key: '0_4',
                     label: 'Status',
                     icon: 'pi pi-info'
-
                 }
             ]
         },
@@ -105,7 +117,7 @@ export default function EditorMenu() {
         setExpandedKeys({});
     };
 
-    const expandNode = (node) => {
+    const expandNode = (node: any) => {
         if (node.items && node.items.length) {
             expandedKeys[node.key] = true;
 
@@ -115,9 +127,8 @@ export default function EditorMenu() {
 
     return (
         <div className="card flex flex-column align-items-center gap-3">
-            <Button type="button" label="Toggle All" text onClick={() => toggleAll()} />
+            <Button type="button" label="Mostrar Todos" text onClick={() => toggleAll()} />
             <PanelMenu model={items} expandedKeys={expandedKeys} onExpandedKeysChange={setExpandedKeys} className="w-full md:w-20rem" multiple />
-            </div>
+        </div>
     )
 }
-        

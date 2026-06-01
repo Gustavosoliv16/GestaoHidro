@@ -37,9 +37,6 @@ const opcoesHoras = Array.from({ length: 18 }, (_, i) => {
     const horaDoEstado = dataSelecionada ? dataSelecionada.getHours() : 6;
 const horaAtual = horaDoEstado < 6 ? 6 : horaDoEstado;
 
-const minutoAtual = dataSelecionada ? dataSelecionada.getMinutes() : 0;
-
-   
     const aoMudarHora = (novaHora: number) => {
         if (dataSelecionada) {
             const novaData = new Date(dataSelecionada);
@@ -48,19 +45,11 @@ const minutoAtual = dataSelecionada ? dataSelecionada.getMinutes() : 0;
         }
     };
 
-    const aoMudarMinuto = (novoMinuto: number) => {
-        if (dataSelecionada) {
-            const novaData = new Date(dataSelecionada);
-            novaData.setMinutes(novoMinuto);
-            aoMudarData(novaData);
-        }
-    };
-
+    
     const aoMudarDiaCalendario = (e: any) => {
         if (e.value) {
             const novaData = new Date(e.value);
             novaData.setHours(horaAtual);
-            novaData.setMinutes(minutoAtual);
             aoMudarData(novaData);
         }
     };
@@ -102,16 +91,6 @@ const minutoAtual = dataSelecionada ? dataSelecionada.getMinutes() : 0;
                     
                     <span className="font-bold text-xl text-400">:</span>
 
-                    <div className="flex-1">
-                        <Dropdown 
-                            value={minutoAtual} 
-                            options={opcoesMinutos} 
-                            onChange={(e) => aoMudarMinuto(e.value)} 
-                            placeholder="Minuto"
-                            className="w-full text-center"
-                            scrollHeight="200px"
-                        />
-                    </div>
                 </div>
             </div>
         </div>

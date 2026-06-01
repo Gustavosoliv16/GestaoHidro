@@ -1,7 +1,9 @@
-import Database from "@tauri-apps/plugin-sql-api";
+import Database from "@tauri-apps/plugin-sql";
 
 export async function initDatabase() {
   const db = await Database.load("sqlite:gestao_hidro.db");
+  
+  console.log("Inicializando banco de dados...");
   
   await db.execute(`
     PRAGMA foreign_keys = ON;
@@ -19,7 +21,7 @@ export async function initDatabase() {
         "modalidade" TEXT NOT NULL
     );
 
-    CREATE TABLE IF NOT EXISTS "ENDEREÇO" (
+    CREATE TABLE IF NOT EXISTS "ENDERECO" (
         "id_endereco" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         "logradouro" TEXT,
         "numero" INTEGER,
@@ -31,23 +33,25 @@ export async function initDatabase() {
     CREATE TABLE IF NOT EXISTS "ALUNOS" (
         "id" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         "nome" TEXT NOT NULL,
-        "email" TEXT NOT NULL,
+        "email" TEXT, -- REMOVIDO O NOT NULL (Já que não está no formulário atual)
         "tel" TEXT NOT NULL,
         "documento" TEXT NOT NULL UNIQUE,
-        "data de nascimento" DATE NOT NULL,
-        "id_responsavel" INTEGER NOT NULL,
+        "data_nascimento" TEXT NOT NULL, -- Removido espaços do nome
+        "dia_vencimento" INTEGER NOT NULL, -- ADICIONADO (Para bater com a tela)
+        "valor_mensalidade" REAL NOT NULL, -- ADICIONADO (Para bater com a tela)
+        "id_responsavel" INTEGER, -- REMOVIDO O NOT NULL (Para permitir alunos adultos)
         "id_modalidade" INTEGER NOT NULL,
-        "id_endereço" INTEGER NOT NULL,
+        "id_endereco" INTEGER NOT NULL,
         
         FOREIGN KEY("id_responsavel") REFERENCES "RESPONSAVEL"("id_responsavel"),
         FOREIGN KEY("id_modalidade") REFERENCES "MODALIDADE"("id_modalidade"),
-        FOREIGN KEY("id_endereço") REFERENCES "ENDEREÇO"("id_endereco")
+        FOREIGN KEY("id_endereco") REFERENCES "ENDERECO"("id_endereco")
     );
 
     CREATE TABLE IF NOT EXISTS "ALUNO_HORARIO_PADRAO" (
         "id_padrao" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         "id_aluno" INTEGER NOT NULL,
-        "dia_semana" TEXT NOT NULL,
+        "dia_semana" INTEGER NOT NULL, -- Alterado para INTEGER (1=Seg, 2=Ter...) para facilitar no código
         "horario" TEXT NOT NULL,
         FOREIGN KEY("id_aluno") REFERENCES "ALUNOS"("id"),
         UNIQUE("id_aluno", "dia_semana", "horario")
@@ -56,15 +60,15 @@ export async function initDatabase() {
     CREATE TABLE IF NOT EXISTS "PAGAMENTO" (
         "id_pagamento" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         "id_aluno" INTEGER NOT NULL,
-        "valor" FLOAT NOT NULL,
-        
+        "valor_pago" REAL NOT NULL,
+        "data_pagamento" TEXT NOT NULL,
         FOREIGN KEY("id_aluno") REFERENCES "ALUNOS"("id")
     );
 
     CREATE TABLE IF NOT EXISTS "AGENDA_CALENDARIO" (
         "id_agenda" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
         "id_aluno" INTEGER NOT NULL,
-        "data_aula" DATE NOT NULL,
+        "data_aula" TEXT NOT NULL,
         "horario" TEXT NOT NULL,
         "status" TEXT DEFAULT 'AGENDADO',
         FOREIGN KEY("id_aluno") REFERENCES "ALUNOS"("id"),
