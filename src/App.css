@@ -4,7 +4,6 @@
   line-height: 24px;
   font-weight: 400;
 
-  background-image: bluegray-50;  
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -12,38 +11,75 @@
   -webkit-text-size-adjust: 100%;
 }
 
-.body {
+html, body {
+  scrollbar-gutter: stable;
+  height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #c21d1d;
+  background-color: #f5f7fa;
 }
 
-.container {
-  margin: 0;
-  padding-top: 10vh;
+#root {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  text-align: center;
+  min-height: 100vh;
+}
+
+main {
+  flex-grow: 1;
 }
 
 .custom-calendar.p-calendar-inline .p-datepicker {
-    width: 100%;
-    border: none;
+  width: 100%;
+  border: none;
 }
 
 .custom-calendar .p-datepicker table td > span {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
 }
 
 @keyframes full-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .animate-spin {
-    animation: full-spin 0.6s ease-in-out;
+  animation: full-spin 0.6s ease-in-out;
 }
-  
+
+/* Fixed size and color for status InputSwitch */
+.fixed-status-switch.p-inputswitch {
+  width: 44px !important;
+  height: 24px !important;
+  min-width: 44px !important;
+  flex: 0 0 44px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+}
+.fixed-status-switch .p-inputswitch-slider {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 12px !important;
+  background-color: #d0d0d0 !important;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box !important;
+  transform: none !important;
+}
+.fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider {
+  background-color: #22c55e !important;
+}
+.fixed-status-switch .p-inputswitch-slider:before {
+  width: 18px !important;
+  height: 18px !important;
+  top: 3px !important;
+  left: 3px !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
+  transition: left 0.15s ease;
+}
+.fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider:before {
+  left: calc(100% - 3px - 18px) !important;
+}

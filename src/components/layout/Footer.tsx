@@ -1,8 +1,13 @@
+import { Card } from "primereact/card";
 
 export default function Footer() {
-    return (
-            <div className="footer" style={{ backgroundColor: '#f0f0f0', textAlign: 'center' }}>    
-                <p>&copy; 2026 Sistema de Gestão Hidro. Todos os direitos reservados.</p>
-            </div>
-    );
+  return (
+    <Card className="border-noround m-0 surface-border">
+      <div className="text-center text-600 text-sm py-2">
+        <p>
+          &copy; 2026 Sistema de Gestão Hidro. Todos os direitos reservados.
+        </p>
+      </div>
+    </Card>
+  );
 }
