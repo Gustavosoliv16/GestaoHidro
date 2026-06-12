@@ -2,7 +2,7 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 
 import Menutopbar from "../src/components/layout/Menubar";
 import Homepage from "../src/pages/Homepage";
-import Alunos from "../src/pages/Alunos";
+import Alunos from "../src/pages/Cadastros";
 import Footer from "../src/components/layout/Footer";
 import Horarios from "./pages/Horarios";
 

@@ -209,3 +209,13 @@ export async function alternarStatusAluno(
   ]);
   return novoStatus;
 }
+
+export async function excluirTurma(idTurma: number) {
+
+  const db = await obterBancoPreparado();
+  await db.execute("DELETE FROM TURMAS WHERE id_turma = $1", [idTurma]);
+
+  await db.execute("DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_turma = $1", [idTurma]);
+  return { sucesso: true, mensagem: "Turma excluída com sucesso." };
+
+}

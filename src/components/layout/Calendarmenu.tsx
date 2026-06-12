@@ -62,7 +62,7 @@ export default function CalendarioLateral({
     const horaFormatada = hora.toString().padStart(2, "0");
     return { label: `${horaFormatada} h`, value: hora };
   });
-  // minute options not used currently
+ 
 
   const horaDoEstado = dataSelecionada ? dataSelecionada.getHours() : 6;
   const horaAtual = horaDoEstado < 6 ? 6 : horaDoEstado;

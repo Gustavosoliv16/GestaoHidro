@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { InputText } from "primereact/inputtext";
 import { InputMask, InputMaskChangeEvent } from "primereact/inputmask";
 import {
   salvarAlunoCompleto,
   atualizarAlunoCompleto,
 } from "../services/AlunoService";
+import { Toast } from "primereact/toast";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";
@@ -40,6 +42,8 @@ export default function NovoAlunoModal({
   const [bairro, setBairro] = useState("");
   const [cidade, setCidade] = useState("");
   const [opcoesModalidades, setOpcoesModalidades] = useState<Modalidade[]>([]);
+
+  const toast = useRef<Toast>(null);
 
   useEffect(() => {
     async function carregarModalidades() {
@@ -85,15 +89,7 @@ export default function NovoAlunoModal({
     setHorariosFixos(a.horariosFixos || []);
   }, [alunoParaEditar]);
 
-  const lidarComSalvar = async () => {
-    if (!nome || !modalidade || !diaVencimento) {
-      alert("Por favor, preencha o Nome, Modalidade e o Dia de Vencimento.");
-      return;
-    }
-
-    // confirm intent
-    if (!window.confirm("Confirmar salvar as alterações deste aluno?")) return;
-
+  const executarSalvar = async () => {
     const strip = (s: string | null | undefined) =>
       s ? s.replace(/\D/g, "") : "";
 
@@ -116,12 +112,24 @@ export default function NovoAlunoModal({
       if (alunoParaEditar && (alunoParaEditar.id_aluno || alunoParaEditar.id)) {
         const idAluno = alunoParaEditar.id_aluno || alunoParaEditar.id;
         await atualizarAlunoCompleto(Number(idAluno), dadosParaSalvar);
-        alert("Aluno atualizado com sucesso!");
-        aoSalvar({ ...alunoParaEditar, ...dadosParaSalvar });
-        aoFechar();
+        toast.current?.show({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Aluno atualizado com sucesso!",
+          life: 3000,
+        });
+        setTimeout(() => {
+          aoSalvar({ ...alunoParaEditar, ...dadosParaSalvar });
+          aoFechar();
+        }, 500);
       } else {
         await salvarAlunoCompleto(dadosParaSalvar);
-        alert("Aluno salvo com sucesso!");
+        toast.current?.show({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Aluno salvo com sucesso!",
+          life: 3000,
+        });
         const novoAluno: Aluno = {
           id: Date.now(),
           nome,
@@ -134,17 +142,53 @@ export default function NovoAlunoModal({
           valorMensalidade: valorMensalidade || 0,
           horariosFixos: horariosFixos,
         };
-        aoSalvar(novoAluno);
-        aoFechar();
+        setTimeout(() => {
+          aoSalvar(novoAluno);
+          aoFechar();
+        }, 500);
       }
     } catch (erro) {
       console.error("Erro detalhado ao salvar:", erro);
-      alert("Erro ao salvar o aluno no banco de dados.");
+      toast.current?.show({
+        severity: "error",
+        summary: "Erro",
+        detail: "Erro ao salvar o aluno no banco de dados.",
+        life: 4000,
+      });
     }
+  };
+
+  const lidarComSalvar = () => {
+    const erros: string[] = [];
+if (!nome) erros.push("Nome");
+if (!documento || documento.replace(/\D/g, "").length < 11) erros.push("CPF");
+if (!modalidade) erros.push("Modalidade");
+if (!diaVencimento) erros.push("Dia de vencimento");
+if (erros.length > 0) {
+  toast.current?.show({
+    severity: "error",
+    summary: "Campos obrigatórios",
+    detail: `Preencha os campos: ${erros.join(", ")}`,
+  });
+  return;
+}
+
+    confirmDialog({
+      message: "Confirmar salvar as alterações deste aluno?",
+      header: "Confirmação",
+      icon: "pi pi-question-circle",
+      acceptLabel: "Sim",
+      rejectLabel: "Não",
+      accept: executarSalvar,
+    });
   };
 
   return (
     <div className="flex flex-column gap-4 w-full">
+      {/* Toast e ConfirmDialog precisam estar na raiz do componente */}
+      <Toast ref={toast} />
+      <ConfirmDialog />
+
       <div>
         <h2 className="text-2xl font-bold m-0 text-900">
           {alunoParaEditar ? "Editar Aluno" : "Novo Aluno"}

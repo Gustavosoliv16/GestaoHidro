@@ -1,6 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 
-export async function initDatabase(): Promise<void> {
+export default async function initDatabase(): Promise<void> {
   const db: any = await (Database as any).load("sqlite:gestao_hidro.db");
 
   console.log("Inicializando banco de dados...");

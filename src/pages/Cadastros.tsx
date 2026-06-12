@@ -5,6 +5,7 @@ import { Sidebar } from "primereact/sidebar";
 import ListaAlunos from "../components/ListaAluno";
 import Modalidades from "../components/layout/Modalidades";
 import CadastroAluno from "../components/CadastroAluno";
+import Turmas from "../components/layout/Turmas"; 
 import { Divider } from "primereact/divider";
 
 export default function Alunos() {
@@ -46,7 +47,7 @@ export default function Alunos() {
                 label: "Turmas",
                 icon: "pi pi-users",
                 command: () => {
-                  alert("Funcionalidade de Turmas em desenvolvimento.");
+                  setViewAtiva("turmas");
                 },
               },
               {
@@ -76,8 +77,9 @@ export default function Alunos() {
                 key: "0_2_2",
                 label: "Turmas",
                 icon: "pi pi-users",
-                command: () =>
-                  alert("Funcionalidade de Turmas em desenvolvimento."),
+                command: () => {
+                  setViewAtiva("turmas");
+                },
               },
               {
                 key: "0_2_3",
@@ -168,8 +170,6 @@ export default function Alunos() {
       <div className="flex-grow-1 min-w-0">
         <div className="card surface-card p-4 border-round shadow-1 w-full">
           
-          {/* 2. RENDERIZAÇÃO CONDICIONAL CORRIGIDA */}
-          
           {/* TELA: CADASTRO DE ALUNO */}
           {viewAtiva === "cadastro" && (
             <CadastroAluno
@@ -186,6 +186,11 @@ export default function Alunos() {
           {/* TELA: GERENCIAR MODALIDADES */}
           {viewAtiva === "modalidades" && (
             <Modalidades />
+          )}
+
+          {/* 4. NOVA TELA: GERENCIAR TURMAS */}
+          {viewAtiva === "turmas" && (
+            <Turmas />
           )}
 
           {/* TELA: CONSULTA GERAL DE ALUNOS (Consultar, Editar, Status) */}

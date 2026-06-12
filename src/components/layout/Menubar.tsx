@@ -59,7 +59,7 @@ export default function Menutopbar() {
   const centerContent = (
     <div className="flex flex-wrap align-items-center gap-3">
       <Tooltip target=".button-home" content="Inicio" position="bottom" />
-      <Tooltip target=".button-users" content="Alunos" position="bottom" />
+      <Tooltip target=".button-users" content="Cadastros" position="bottom" />
       <Tooltip
         target=".button-schedules"
         content="Horarios"

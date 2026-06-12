@@ -2,7 +2,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { initDatabase } from "../src/database/db";
+import initDatabase from "../src/database/db";
 
 initDatabase()
   .then(() => {
