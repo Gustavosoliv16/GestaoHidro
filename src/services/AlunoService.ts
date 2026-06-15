@@ -11,21 +11,7 @@ export async function salvarAlunoCompleto(dadosForm: any) {
   try {
     await db.execute("BEGIN TRANSACTION;");
 
-    let idModalidade: number;
-    const buscarModalidade: any[] = await db.select(
-      "SELECT id_modalidade FROM MODALIDADE WHERE modalidade = $1",
-      [dadosForm.modalidade],
-    );
-
-    if (buscarModalidade.length > 0) {
-      idModalidade = buscarModalidade[0].id_modalidade;
-    } else {
-      const novaMod: any = await db.execute(
-        "INSERT INTO MODALIDADE (modalidade) VALUES ($1)",
-        [dadosForm.modalidade],
-      );
-      idModalidade = novaMod.lastInsertId;
-    }
+    const idModalidade = dadosForm.modalidade;
 
     const resultadoEndereco: any = await db.execute(
       `INSERT INTO ENDERECO (logradouro, bairro, cidade, numero) 
@@ -39,13 +25,17 @@ export async function salvarAlunoCompleto(dadosForm: any) {
     );
     const idEnderecoGerado = resultadoEndereco.lastInsertId;
 
-    const diaVenc = Number.isFinite(dadosForm.diaVencimento)
+    // Data de cadastro = hoje (YYYY-MM-DD)
+    const hoje = new Date();
+    const dataCadastro = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+
+    const diaVenc = Number.isFinite(dadosForm.diaVencimento) && dadosForm.diaVencimento !== null
       ? Math.trunc(dadosForm.diaVencimento)
-      : null;
+      : hoje.getDate();
 
     const resultadoAluno: any = await db.execute(
-      `INSERT INTO ALUNOS (nome, tel, documento, data_nascimento, dia_vencimento, valor_mensalidade, id_modalidade, id_endereco) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      `INSERT INTO ALUNOS (nome, tel, documento, data_nascimento, dia_vencimento, valor_mensalidade, id_modalidade, id_endereco, data_cadastro) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         dadosForm.nome,
         dadosForm.telefone,
@@ -55,6 +45,7 @@ export async function salvarAlunoCompleto(dadosForm: any) {
         dadosForm.valorMensalidade,
         idModalidade,
         idEnderecoGerado,
+        dataCadastro,
       ],
     );
     const idAlunoGerado = resultadoAluno.lastInsertId;
@@ -130,6 +121,7 @@ export async function buscarTodosAlunos() {
       a.dia_vencimento as diaVencimento, 
       a.valor_mensalidade as valorMensalidade, 
       a.ativo,
+      a.id_modalidade,
       m.modalidade,
       e.logradouro as endereco,
       e.bairro,
@@ -171,8 +163,8 @@ export async function atualizarAlunoCompleto(idAluno: number, dadosForm: any) {
 
       await db.execute(
         `UPDATE ALUNOS 
-         SET nome = $1, tel = $2, documento = $3, data_nascimento = $4, dia_vencimento = $5, valor_mensalidade = $6 
-         WHERE id_aluno = $7`,
+         SET nome = $1, tel = $2, documento = $3, data_nascimento = $4, dia_vencimento = $5, valor_mensalidade = $6, id_modalidade = $7 
+         WHERE id_aluno = $8`,
          [
           dadosForm.nome,
           dadosForm.telefone,
@@ -182,6 +174,7 @@ export async function atualizarAlunoCompleto(idAluno: number, dadosForm: any) {
             ? Math.trunc(dadosForm.diaVencimento)
             : dadosForm.diaVencimento,
           dadosForm.valorMensalidade,
+          dadosForm.modalidade,
           idAluno,
         ],
       );
@@ -208,14 +201,4 @@ export async function alternarStatusAluno(
     idAluno,
   ]);
   return novoStatus;
-}
-
-export async function excluirTurma(idTurma: number) {
-
-  const db = await obterBancoPreparado();
-  await db.execute("DELETE FROM TURMAS WHERE id_turma = $1", [idTurma]);
-
-  await db.execute("DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_turma = $1", [idTurma]);
-  return { sucesso: true, mensagem: "Turma excluída com sucesso." };
-
-}
+}

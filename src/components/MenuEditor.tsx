@@ -65,7 +65,7 @@ export default function EditorMenu({ aoMudarVisao }: EditorMenuProps) {
                 {
                     key: '1_1',
                     icon: 'pi pi-book',
-                    label: 'Relatorios',
+                    label: 'Relsatorios',
                 },
                 {
                     key: '1_2',

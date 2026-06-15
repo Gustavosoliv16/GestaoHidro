@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tag } from "primereact/tag";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
@@ -26,9 +27,31 @@ async function buscarTodasModalidades(){
   return await db.select<any[]>("SELECT id_modalidade, modalidade FROM MODALIDADE ORDER BY id_modalidade");
 }
 
+const formatarHora = (hora: any): string => {
+  if (hora === undefined || hora === null) return "";
+  const h = Math.round(Number(hora));
+  return String(h).padStart(2, "0");
+};
+
+const obterEstiloTurma = (idTurma: number, isDark: boolean) => {
+  const cores = [
+    { bg: isDark ? "#ffff00" : "#eff6ff", border: "#5f5100", text: isDark ? "#93c5fd" : "#1e3a8a", badge: "success" },       // Blue
+    { bg: isDark ? "#312c48" : "#e6fffa", border: "#2dd4bf", text: isDark ? "#5eead4" : "#234e52", badge: "success" },    // Teal
+    { bg: isDark ? "#312c48" : "#faf5ff", border: "#5c13ec", text: isDark ? "#927ee6" : "#553c9a", badge: "success" },    // Purple
+    { bg: isDark ? "#3a4240" : "#eef2ff", border: "#6366f1", text: isDark ? "#a5b4fc" : "#312e81", badge: "success" },    // Indigo
+    { bg: isDark ? "#3a4240" : "#fff7ed", border: "#f97316", text: isDark ? "#fdba74" : "#7c2d12", badge: "success" },     // Orange
+    { bg: isDark ? "#3a4240" : "#fdf2f8", border: "#ec4899", text: isDark ? "#f9a8d4" : "#701a75", badge: "success" },     // Pink
+    { bg: isDark ? "#3a4240" : "#ecfeff", border: "#06b6d4", text: isDark ? "#67e8f9" : "#083344", badge: "success" },       // Cyan
+    { bg: isDark ? "#3a4240" : "#fefce8", border: "#eab308", text: isDark ? "#fde047" : "#713f12", badge: "success" },    // Yellow
+    { bg: isDark ? "#3a4240" : "#f0fdf4", border: "#22c55e", text: isDark ? "#86efac" : "#14532d", badge: "success" },    // Green
+  ];
+  const idSafe = Number.isFinite(idTurma) ? Math.round(idTurma) : 0;
+  return cores[idSafe % cores.length];
+};
+
 export default function GradeHoraria() {
   const toast = useRef<Toast>(null);
-  
+  const navigate = useNavigate();
  
   const [turmas, setTurmas] = useState<any[]>([]);
   const [modalidades, setModalidades] = useState<any[]>([]);
@@ -55,6 +78,16 @@ export default function GradeHoraria() {
     idModalidade: null as number | null,
     capacidadeMaxima: 6
   });
+
+  const [isDark, setIsDark] = useState(() => document.body.classList.contains("dark-theme"));
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.body.classList.contains("dark-theme"));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   const linhasHorarios = Array.from({ length: 15 }, (_, i) => i + 7); 
 
@@ -192,7 +225,7 @@ export default function GradeHoraria() {
         const resposta = await excluirTurma(turmaSelecionada.id_turma);
         toast.current?.show({ severity: "success", summary: "Excluída", detail: resposta.mensagem });
         setModalDetalhesVisible(false);
-        carregarDadosDoCalendario(); // Limpa do grid imediatamente
+        carregarDadosDoCalendario();
       } catch (error) {
         toast.current?.show({ severity: "error", summary: "Erro", detail: "Falha ao apagar turma." });
       }
@@ -206,12 +239,11 @@ export default function GradeHoraria() {
       <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center mb-4 gap-3">
         <div>
           <h2 className="text-2xl font-bold m-0 text-900">Grade Horária Semanal</h2>
-          <p className="text-sm text-500 mt-1 m-0">Gerencie horários, turmas e matrículas em tempo real.</p>
         </div>
         <div className="flex align-items-center gap-2">
-          <Button icon="pi pi-chevron-left" onClick={voltarSemana} className="p-button-outlined p-button-sm text-primary" />
-          <Button label="Hoje" onClick={irParaHoje} className="p-button-outlined p-button-sm text-primary font-bold" />
-          <Button icon="pi pi-chevron-right" onClick={avancarSemana} className="p-button-outlined p-button-sm text-primary" />
+          <Button label="Anterior "icon="pi pi-chevron-left" onClick={voltarSemana} className="p-button-outlined p-button-sm text-primary" />
+          <Button label="Semana atual" onClick={irParaHoje} className="p-button-outlined p-button-sm text-primary font-bold" />
+          <Button label="Próxima" icon="pi pi-chevron-right" onClick={avancarSemana} className="p-button-outlined p-button-sm text-primary" />
         </div>
       </div>
 
@@ -249,31 +281,31 @@ export default function GradeHoraria() {
                       style={{ verticalAlign: 'top', cursor: 'pointer' }}
                       onClick={() => handleCelulaClick(dia.id, hora)}
                     >
-                    
-                      {ehO_MomentoAtual && (
-                        <div className="absolute left-0 right-0 border-top-2 border-red-500 z-2 pointer-events-none" style={{ top: `${(agora.getMinutes() / 60) * 100}%` }}>
-                          <span className="absolute bg-red-500 text-white font-bold px-1 border-round-right block shadow-1" style={{ fontSize: '8px', left: 0, marginTop: '-6px' }}>AGORA</span>
-                        </div>
-                      )}
 
                       {turmasNesseBloco.map((turma) => {
-                        const total = turma.totalAlunos || 0;
-                        const max = turma.capacidadeMaxima || 6;
+                        const total = Math.round(Number(turma.totalAlunos || 0));
+                        const max = Math.round(Number(turma.capacidadeMaxima || 6));
                         const estaCheia = total >= max;
+                        const estilo = obterEstiloTurma(turma.id_turma, isDark);
 
                         return (
                           <div key={turma.id_turma} onClick={(e) => handleCardClick(e, turma)}
-                            className="surface-card border-round shadow-1 p-2 flex flex-column gap-1 border-left-3 border-blue-500 hover:shadow-4 transition-all"
+                            className="border-round shadow-1 p-2 flex flex-column gap-1 border-left-3 hover:shadow-3 transition-all"
+                            style={{
+                              backgroundColor: estilo.bg,
+                              borderLeftColor: estilo.border,
+                              color: estilo.text
+                            }}
                           >
-                            <div className="font-bold text-xs text-900 uppercase white-space-nowrap overflow-hidden text-overflow-ellipsis" title={turma.modalidade}>
+                            <div className="font-bold text-xs uppercase white-space-nowrap overflow-hidden text-overflow-ellipsis" style={{ color: estilo.text }} title={turma.modalidade}>
                               {turma.modalidade}
                             </div>
-                            <div className="text-500 font-medium" style={{ fontSize: '10px' }}>
-                              {String(turma.horarioInicio).padStart(2, '0')}h às {String(turma.horarioFim).padStart(2, '0')}h
+                            <div className="font-medium" style={{ fontSize: '10px', color: estilo.text, opacity: 0.85 }}>
+                              {formatarHora(turma.horarioInicio)}h às {formatarHora(turma.horarioFim)}h
                             </div>
-                            <div className="flex align-items-center justify-content-between mt-1 pt-1 border-top-1 surface-border">
-                              <span className="text-600" style={{ fontSize: '9px' }}>Alunos:</span>
-                              <Tag severity={estaCheia ? "danger" : "success"} value={`${total}/${max}`} style={{ fontSize: '9px', padding: '1px 4px', height: '16px' }} />
+                            <div className="flex align-items-center justify-content-between mt-1 pt-1 border-top-1" style={{ borderColor: 'rgba(0,0,0,0.05)' }}>
+                              <span style={{ fontSize: '9px', color: estilo.text, opacity: 0.8 }}>Alunos:</span>
+                              <Tag severity={estaCheia ? "danger" : (estilo.badge as any)} value={`${total}/${max}`} style={{ fontSize: '9px', padding: '1px 4px', height: '16px' }} />
                             </div>
                           </div>
                         );
@@ -287,7 +319,6 @@ export default function GradeHoraria() {
         </table>
       </div>
 
-      {/* MODAL 1: REGISTRAR NOVA TURMA */}
       <Dialog header="Agendar Nova Turma" visible={modalCriarVisible} style={{ width: '400px' }} onHide={() => setModalCriarVisible(false)} footer={
         <div>
           <Button label="Cancelar" icon="pi pi-times" onClick={() => setModalCriarVisible(false)} className="p-button-text text-sm" />
@@ -296,8 +327,8 @@ export default function GradeHoraria() {
       }>
         <div className="flex flex-column gap-3 pt-2">
           <div>
-            <label className="block font-bold text-sm text-700 mb-1">Modalidade</label>
-            <Dropdown value={novaTurma.idModalidade} options={modalidades} optionLabel="nome" optionValue="id" onChange={(e) => setNovaTurma({...novaTurma, idModalidade: e.value})} placeholder="Selecione a atividade" className="w-full" />
+            <label className="block fo-nt-bold text-sm text-700 mb-1">Modalidade</label>
+            <Dropdown appendTo="self" value={novaTurma.idModalidade} options={modalidades} optionLabel="modalidade" optionValue="id_modalidade" onChange={(e) => setNovaTurma({...novaTurma, idModalidade: e.value})} placeholder="Selecione a atividade" className="w-full" />
           </div>
           <div className="flex gap-2">
             <div className="flex-1">
@@ -316,18 +347,17 @@ export default function GradeHoraria() {
         </div>
       </Dialog>
 
-      {/* MODAL 2: DETALHES E GERENCIAMENTO DE ALUNOS */}
       <Dialog header={turmaSelecionada ? `Gerenciar Turma: ${turmaSelecionada.modalidade}` : "Detalhes"} visible={modalDetalhesVisible} style={{ width: '450px' }} onHide={() => setModalDetalhesVisible(false)}>
         {turmaSelecionada && (
           <div className="flex flex-column gap-3">
             <div className="bg-blue-50 border-round p-3 flex justify-content-between align-items-center">
               <div>
                 <span className="block text-xs font-semibold text-600 uppercase">Horário</span>
-                <span className="font-bold text-primary">{String(turmaSelecionada.horarioInicio).padStart(2, '0')}:00 às {String(turmaSelecionada.horarioFim).padStart(2, '0')}:00</span>
+                <span className="font-bold text-primary">{formatarHora(turmaSelecionada.horarioInicio)}:00 às {formatarHora(turmaSelecionada.horarioFim)}:00</span>
               </div>
               <div>
                 <span className="block text-xs font-semibold text-600 uppercase text-right">Lotação Atual</span>
-                <span className="font-bold text-900 block text-right">{alunosDaTurma.length} de {turmaSelecionada.capacidadeMaxima}</span>
+                <span className="font-bold text-900 block text-right">{alunosDaTurma.length} de {Math.round(Number(turmaSelecionada.capacidadeMaxima))}</span>
               </div>
             </div>
 
@@ -339,16 +369,14 @@ export default function GradeHoraria() {
                 )}
               </div>
 
-              {/* Seletor dinâmico para adicionar novos alunos (Aparece ao clicar em Vincular) */}
               {mostrarSeletorAluno && (
                 <div className="flex gap-2 align-items-center mb-3 p-2 bg-gray-50 border-round border-1 surface-border">
-                  <Dropdown value={alunoSelecionadoId} options={listaCompletaAlunos} optionLabel="nome" optionValue="id_aluno" filter onChange={(e) => setAlunoSelecionadoId(e.value)} placeholder="Selecione o aluno..." className="flex-1 p-inputtext-sm" />
+                  <Dropdown appendTo="self" value={alunoSelecionadoId} options={listaCompletaAlunos} optionLabel="nome" optionValue="id_aluno" filter onChange={(e) => setAlunoSelecionadoId(e.value)} placeholder="Selecione o aluno..." className="flex-1 p-inputtext-sm" />
                   <Button icon="pi pi-check" severity="success" onClick={gerenciarVinculoAluno} className="p-button-sm" tooltip="Confirmar Vínculo" />
                   <Button icon="pi pi-times" severity="secondary" onClick={() => setMostrarSeletorAluno(false)} className="p-button-sm p-button-text" />
                 </div>
               )}
 
-              {/* Lista com scroll dos alunos matriculados */}
               <div className="flex flex-column gap-2 max-h-12rem overflow-y-auto pr-1">
                 {alunosDaTurma.length > 0 ? (
                   alunosDaTurma.map((aluno) => (
@@ -366,10 +394,26 @@ export default function GradeHoraria() {
               </div>
             </div>
 
-            {/* Ações inferiores da Turma */}
+           
             <div className="border-top-1 surface-border pt-3 mt-2 flex justify-content-between">
               <Button label="Excluir Turma" icon="pi pi-trash" onClick={gerenciarExclusaoTurma} className="p-button-outlined p-button-danger p-button-sm" />
-              <Button label="Fechar Janela" onClick={() => setModalDetalhesVisible(false)} className="p-button-secondary p-button-sm" />
+              <div className="flex gap-2">
+                {(() => {
+                  const eHojeADiaDaTurma = turmaSelecionada && diaAtualId === Number(turmaSelecionada.diaSemana);
+                  return (
+                    <Button
+                      label="Ir para Chamada"
+                      icon="pi pi-check-square"
+                      className="p-button-sm p-button-success"
+                      disabled={!eHojeADiaDaTurma}
+                      tooltip={!eHojeADiaDaTurma ? "Chamada disponível somente no dia da aula" : "Abrir registro de chamada"}
+                      tooltipOptions={{ position: 'top' }}
+                      onClick={() => { setModalDetalhesVisible(false); navigate(`/Presenca?turma=${turmaSelecionada.id_turma}`); }}
+                    />
+                  );
+                })()}
+                <Button label="Fechar Janela" onClick={() => setModalDetalhesVisible(false)} className="p-button-secondary p-button-sm" />
+              </div>
             </div>
           </div>
         )}

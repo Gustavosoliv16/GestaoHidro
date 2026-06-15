@@ -32,7 +32,9 @@ export default function NovoAlunoModal({
   const [nascimento, setNascimento] = useState("");
   const [documento, setDocumento] = useState("");
   const [modalidade, setModalidade] = useState<Modalidade | []>([]);
-  const [diaVencimento, setDiaVencimento] = useState<number | null>(null);
+  const [diaVencimento, setDiaVencimento] = useState<number | null>(() => {
+    return new Date().getDate();
+  });
   const [valorMensalidade, setValorMensalidade] = useState<number | null>(null);
   const [horariosFixos, setHorariosFixos] = useState<
     { diaSemana: number; hora: string }[]
@@ -83,7 +85,7 @@ export default function NovoAlunoModal({
     setNumero(a.numero || "");
     setBairro(a.bairro || "");
     setCidade(a.cidade || "");
-    setModalidade(a.modalidade || null);
+    setModalidade(a.id_modalidade || null);
     setDiaVencimento(a.diaVencimento || a.dia_vencimento || null);
     setValorMensalidade(a.valorMensalidade || a.valor_mensalidade || null);
     setHorariosFixos(a.horariosFixos || []);

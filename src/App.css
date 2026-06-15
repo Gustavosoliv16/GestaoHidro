@@ -32,12 +32,56 @@ main {
 .custom-calendar.p-calendar-inline .p-datepicker {
   width: 100%;
   border: none;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.custom-calendar .p-datepicker-header {
+  background: var(--blue-50) !important;
+  border-bottom: 1px solid var(--blue-100) !important;
+  border-radius: 12px 12px 0 0 !important;
+  padding: 0.75rem 1rem !important;
+}
+
+.custom-calendar .p-datepicker-title,
+.custom-calendar .p-datepicker-header .p-link {
+  color: var(--blue-900) !important;
+  font-weight: 700;
+}
+
+.custom-calendar .p-datepicker table th {
+  color: var(--blue-700);
+  font-weight: 600;
+  font-size: 0.85rem;
 }
 
 .custom-calendar .p-datepicker table td > span {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.custom-calendar .p-datepicker table td > span.p-highlight {
+  background: var(--blue-600) !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.3);
+}
+
+.custom-calendar .p-datepicker table td > span:not(.p-highlight):hover {
+  background: var(--blue-50) !important;
+  color: var(--blue-900) !important;
+}
+
+.custom-calendar .p-datepicker table td.p-datepicker-today > span {
+  border: 2px solid var(--blue-500) !important;
+  background: transparent;
+  color: var(--blue-900);
+  font-weight: bold;
 }
 
 @keyframes full-spin {
@@ -82,4 +126,444 @@ main {
 }
 .fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider:before {
   left: calc(100% - 3px - 18px) !important;
+}
+
+body.dark-theme,
+body.dark-theme #root,
+body.dark-theme main,
+body.dark-theme .surface-ground,
+body.dark-theme .flex-column,
+body.dark-theme .min-h-screen {
+  background-color: #0d0d0d !important;
+  color: #f0f0f0 !important;
+}
+
+/* ── Toolbar (top menubar) – keep its own gradient, just ensure text is white ── */
+body.dark-theme .p-toolbar {
+  background: linear-gradient(to right, #1e3a5f, #102a43) !important;
+  border-color: #1a1a2e !important;
+}
+
+/* ── PrimeReact Cards ── */
+body.dark-theme .p-card,
+body.dark-theme .p-card-body,
+body.dark-theme .p-card-content {
+  background-color: #1a1a1a !important;
+  border-color: #2e2e2e !important;
+  color: #f0f0f0 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.6) !important;
+}
+
+/* ── Headings ── */
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6 {
+  color: #ffffff !important;
+}
+
+/* ── All generic text nodes ── */
+body.dark-theme p,
+body.dark-theme li,
+body.dark-theme small,
+body.dark-theme blockquote {
+  color: #d4d4d4 !important;
+}
+
+/* ── PrimeFlex utility text classes ── */
+body.dark-theme .text-900,
+body.dark-theme .text-800 {
+  color: #ffffff !important;
+}
+body.dark-theme .text-700,
+body.dark-theme .text-600 {
+  color: #e0e0e0 !important;
+}
+body.dark-theme .text-500,
+body.dark-theme .text-400 {
+  color: #a8a8a8 !important;
+}
+body.dark-theme .text-300,
+body.dark-theme .text-200,
+body.dark-theme .text-100 {
+  color: #888888 !important;
+}
+
+/* ── Labels & spans (scoped, not overriding Tags or Toasts) ── */
+body.dark-theme label {
+  color: #d4d4d4 !important;
+}
+body.dark-theme .p-card span:not(.p-tag):not(.p-badge):not(.p-button-label),
+body.dark-theme .p-dialog span:not(.p-tag):not(.p-badge):not(.p-button-label),
+body.dark-theme main span:not(.p-tag):not(.p-badge):not(.p-button-label):not(.p-checkbox-icon):not(.p-radiobutton-icon) {
+  color: #e0e0e0 !important;
+}
+
+/* ── Dividers ── */
+body.dark-theme .p-divider-horizontal::before {
+  border-top-color: #3a3a3a !important;
+}
+body.dark-theme .p-divider-vertical::before {
+  border-left-color: #3a3a3a !important;
+}
+
+/* ── Dialogs / Overlays ── */
+body.dark-theme .p-dialog {
+  background-color: #1a1a1a !important;
+  border: 1px solid #333333 !important;
+}
+body.dark-theme .p-dialog-header {
+  background-color: #222222 !important;
+  color: #ffffff !important;
+  border-bottom-color: #333333 !important;
+}
+body.dark-theme .p-dialog-header .p-dialog-title {
+  color: #ffffff !important;
+}
+body.dark-theme .p-dialog-header-icon,
+body.dark-theme .p-dialog-header-icon:hover {
+  color: #cccccc !important;
+}
+body.dark-theme .p-dialog-content {
+  background-color: #1a1a1a !important;
+  color: #e0e0e0 !important;
+}
+body.dark-theme .p-dialog-footer {
+  background-color: #1e1e1e !important;
+  border-top-color: #333333 !important;
+}
+
+/* ── Sidebar / Drawer ── */
+body.dark-theme .p-sidebar,
+body.dark-theme .p-sidebar-content {
+  background-color: #1a1a1a !important;
+  color: #f0f0f0 !important;
+  border-color: #333333 !important;
+}
+body.dark-theme .p-sidebar-header {
+  background-color: #222222 !important;
+  border-bottom-color: #333333 !important;
+}
+body.dark-theme .p-sidebar-close-icon {
+  color: #cccccc !important;
+}
+
+/* ── PanelMenu (side navigation) ── */
+body.dark-theme .p-panelmenu-header > a,
+body.dark-theme .p-panelmenu-header > a:hover {
+  background-color: #222222 !important;
+  color: #f0f0f0 !important;
+  border-color: #333333 !important;
+}
+body.dark-theme .p-panelmenu-content {
+  background-color: #1a1a1a !important;
+  border-color: #2e2e2e !important;
+}
+body.dark-theme .p-menuitem-link {
+  color: #d4d4d4 !important;
+  background-color: transparent !important;
+}
+body.dark-theme .p-menuitem-link:hover {
+  background-color: #2e2e2e !important;
+  color: #ffffff !important;
+}
+body.dark-theme .p-menuitem-link:focus,
+body.dark-theme .p-menuitem-link:focus-visible {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+body.dark-theme .p-panelmenu .p-menuitem.p-focus > .p-menuitem-content,
+body.dark-theme .p-panelmenu .p-menuitem.p-focus > .p-menuitem-content .p-menuitem-link {
+  background-color: transparent !important;
+  color: #d4d4d4 !important;
+}
+body.dark-theme .p-menuitem-link.p-menuitem-link-active {
+  background-color: #1e3a5f !important;
+  color: #ffffff !important;
+}
+
+body.dark-theme .p-panelmenu .p-panelmenu-header-content {
+  border: 1px solid #3a3a3a !important;
+  background: #1e1e1e !important;
+  border-radius: 3px;
+  transition: box-shadow 0.2s;
+}
+
+body.dark-theme .p-menuitem-icon,
+body.dark-theme .p-menuitem-text {
+  color: inherit !important;
+}
+
+/* ── Popup Menu (config gear) ── */
+body.dark-theme .p-menu,
+body.dark-theme .p-menu-list {
+  background-color: #1e1e1e !important;
+  border: 1px solid #333333 !important;
+}
+body.dark-theme .p-menu .p-submenu-header {
+  background-color: #262626 !important;
+  color: #a0a0a0 !important;
+}
+body.dark-theme .p-menu .p-menuitem-link {
+  color: #a0a0a0 !important;
+  background-color: #262626;
+}
+body.dark-theme .p-menu .p-menuitem-link:hover {
+  background-color: #333333 !important;
+  color: #ffffff !important;
+}
+body.dark-theme .p-menu .p-menuitem-separator {
+  border-color: #333333 !important;
+}
+
+/* ── Inputs ── */
+body.dark-theme .p-inputtext,
+body.dark-theme .p-inputnumber-input,
+body.dark-theme .p-password input,
+body.dark-theme textarea {
+  background-color: #262626 !important;
+  color: #f0f0f0 !important;
+  border-color: #444444 !important;
+}
+body.dark-theme .p-inputtext:focus,
+body.dark-theme .p-inputnumber-input:focus {
+  border-color: #4d94ff !important;
+  box-shadow: 0 0 0 2px rgba(77,148,255,0.25) !important;
+}
+body.dark-theme .p-inputtext::placeholder {
+  color: #777777 !important;
+}
+body.dark-theme .p-inputgroup-addon {
+  background-color: #2e2e2e !important;
+  border-color: #444444 !important;
+  color: #cccccc !important;
+}
+
+/* ── Dropdown ── */
+body.dark-theme .p-dropdown {
+  background-color: #262626 !important;
+  border-color: #444444 !important;
+}
+body.dark-theme .p-dropdown-label {
+  color: #f0f0f0 !important;
+}
+body.dark-theme .p-dropdown-trigger {
+  background-color: transparent !important;
+  color: #cccccc !important;
+}
+body.dark-theme .p-dropdown-panel {
+  background-color: #1e1e1e !important;
+  border: 1px solid #444444 !important;
+}
+body.dark-theme .p-dropdown-items-wrapper {
+  background-color: #1e1e1e !important;
+}
+body.dark-theme .p-dropdown-item {
+  background-color: transparent !important;
+  color: #e0e0e0 !important;
+}
+body.dark-theme .p-dropdown-item:hover,
+body.dark-theme .p-dropdown-item.p-highlight {
+  background-color: #2e2e2e !important;
+  color: #ffffff !important;
+}
+body.dark-theme .p-dropdown-filter {
+  background-color: #262626 !important;
+  color: #f0f0f0 !important;
+  border-color: #444444 !important;
+}
+
+/* ── DataTable ── */
+body.dark-theme .p-datatable-wrapper,
+body.dark-theme .p-datatable-scrollable-wrapper {
+  background-color: #1a1a1a !important;
+}
+body.dark-theme .p-datatable .p-datatable-thead > tr > th {
+  background-color: #222222 !important;
+  color: #c0c0c0 !important;
+  border-color: #333333 !important;
+}
+body.dark-theme .p-datatable .p-datatable-tbody > tr {
+  background-color: #1a1a1a !important;
+  color: #e0e0e0 !important;
+  border-bottom: 1px solid #2e2e2e !important;
+}
+body.dark-theme .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background-color: #1f1f1f !important;
+}
+body.dark-theme .p-datatable .p-datatable-tbody > tr:hover {
+  background-color: #2a2a2a !important;
+}
+body.dark-theme .p-datatable .p-datatable-tbody > tr > td {
+  color: #e0e0e0 !important;
+  border-color: #2e2e2e !important;
+}
+body.dark-theme .p-datatable .p-sortable-column-icon {
+  color: #888888 !important;
+}
+body.dark-theme .p-paginator {
+  background-color: #1e1e1e !important;
+  border-color: #333333 !important;
+  color: #d0d0d0 !important;
+}
+body.dark-theme .p-paginator .p-paginator-page,
+body.dark-theme .p-paginator .p-paginator-next,
+body.dark-theme .p-paginator .p-paginator-prev,
+body.dark-theme .p-paginator .p-paginator-first,
+body.dark-theme .p-paginator .p-paginator-last {
+  color: #d0d0d0 !important;
+}
+body.dark-theme .p-paginator .p-paginator-page.p-highlight {
+  background-color: #1e3a5f !important;
+  color: #ffffff !important;
+}
+
+/* ── InputSwitch ── */
+body.dark-theme .p-inputswitch .p-inputswitch-slider {
+  background-color: #444444 !important;
+}
+body.dark-theme .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
+  background-color: #22c55e !important;
+}
+
+/* ── Checkbox ── */
+body.dark-theme .p-checkbox .p-checkbox-box {
+  background-color: #262626 !important;
+  border-color: #555555 !important;
+}
+body.dark-theme .p-checkbox .p-checkbox-box.p-highlight {
+  background-color: #3b82f6 !important;
+  border-color: #3b82f6 !important;
+}
+body.dark-theme .p-checkbox .p-checkbox-box .p-checkbox-icon {
+  color: #ffffff !important;
+}
+
+/* ── Radio Button ── */
+body.dark-theme .p-radiobutton .p-radiobutton-box {
+  background-color: #262626 !important;
+  border-color: #555555 !important;
+}
+body.dark-theme .p-radiobutton .p-radiobutton-box.p-highlight {
+  border-color: #3b82f6 !important;
+}
+body.dark-theme .p-radiobutton .p-radiobutton-box .p-radiobutton-icon {
+  background-color: #3b82f6 !important;
+}
+
+/* ── Buttons (text/outlined variants only — filled keep their color) ── */
+body.dark-theme .p-button.p-button-text,
+body.dark-theme .p-button.p-button-outlined {
+  color: #a0c4ff !important;
+  border-color: #444444 !important;
+}
+body.dark-theme .p-button.p-button-text:hover,
+body.dark-theme .p-button.p-button-outlined:hover {
+  background-color: rgba(255,255,255,0.06) !important;
+  color: #ffffff !important;
+}
+
+/* ── ProgressBar ── */
+body.dark-theme .p-progressbar {
+  background-color: #2e2e2e !important;
+}
+body.dark-theme .p-progressbar .p-progressbar-value {
+  background-color: #3b82f6 !important;
+}
+
+/* ── Calendar / DatePicker ── */
+body.dark-theme .p-datepicker {
+  background-color: #1a1a1a !important;
+  border: 1px solid #333333 !important;
+  color: #e0e0e0 !important;
+}
+body.dark-theme .p-datepicker-header {
+  background-color: #222222 !important;
+  border-bottom: 1px solid #333333 !important;
+  color: #e0e0e0 !important;
+}
+body.dark-theme .p-datepicker-header .p-link,
+body.dark-theme .p-datepicker-header .p-datepicker-title {
+  color: #e0e0e0 !important;
+}
+body.dark-theme .p-datepicker table th {
+  color: #a0a0a0 !important;
+}
+body.dark-theme .p-datepicker table td > span {
+  color: #e0e0e0 !important;
+}
+body.dark-theme .p-datepicker table td.p-datepicker-today > span {
+  border-color: #3b82f6 !important;
+  color: #a0c4ff !important;
+}
+body.dark-theme .p-datepicker table td > span:not(.p-highlight):hover {
+  background-color: #2e2e2e !important;
+}
+body.dark-theme .p-datepicker table td > span.p-highlight {
+  background-color: #1e3a5f !important;
+  color: #ffffff !important;
+}
+
+/* ── Tooltip ── */
+body.dark-theme .p-tooltip .p-tooltip-text {
+  background-color: #333333 !important;
+  color: #f0f0f0 !important;
+}
+body.dark-theme .p-tooltip-arrow {
+  border-top-color: #333333 !important;
+  border-bottom-color: #333333 !important;
+}
+
+/* ── Scroll Panel ── */
+body.dark-theme .p-scrollpanel-bar {
+  background-color: #444444 !important;
+}
+
+/* ── Overlay Panel ── */
+body.dark-theme .p-overlaypanel {
+  background-color: #1e1e1e !important;
+  border: 1px solid #333333 !important;
+  color: #e0e0e0 !important;
+}
+
+/* ── Inline row cards on Horarios and Presenca pages ── */
+body.dark-theme [style*="background: #f0fdf4"],
+body.dark-theme [style*="background: #fef2f2"],
+body.dark-theme [style*="background: #fafafa"],
+body.dark-theme [style*="background-color: #f0fdf4"],
+body.dark-theme [style*="background-color: #fef2f2"],
+body.dark-theme [style*="background-color: #fafafa"] {
+  background-color: #1f2b1f !important;
+  border-color: #3a3a3a !important;
+}
+
+/* ── Present/absent row overrides ── */
+body.dark-theme [style*="background: #f0fdf4"] {
+  background-color: #0d2b1a !important;
+  border-color: #22c55e !important;
+}
+body.dark-theme [style*="background: #fef2f2"] {
+  background-color: #2b0d0d !important;
+  border-color: #ef4444 !important;
+}
+
+/* Ensure inline color text on present/absent rows remain legible */
+body.dark-theme .text-green-700 { color: #ffffff !important; }
+body.dark-theme .text-red-700   { color: #f87171 !important; }
+body.dark-theme .text-gray-700  { color: #d1d5db !important; }
+body.dark-theme .text-green-600 { color: #86efac !important; }
+body.dark-theme .text-red-600   { color: #fca5a5 !important; }
+body.dark-theme .text-gray-500  { color: #9ca3af !important; }
+
+/* ── Input Number spinner buttons ── */
+body.dark-theme .p-inputnumber-button {
+  background-color: #2e2e2e !important;
+  border-color: #444444 !important;
+  color: #cccccc !important;
+}
+body.dark-theme .p-inputnumber-button:hover {
+  background-color: #3a3a3a !important;
 }

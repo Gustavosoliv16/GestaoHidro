@@ -10,6 +10,23 @@ import "primeflex/primeflex.css";
 export default function Menutopbar() {
   const menuConfig = useRef<Menu>(null);
   const [itemGirando, setItemGirando] = useState(false);
+  const navigate = useNavigate();
+
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  const toggleDarkMode = () => {
+    const newVal = !darkMode;
+    setDarkMode(newVal);
+    localStorage.setItem("darkMode", String(newVal));
+    if (newVal) {
+      document.body.classList.add("dark-theme");
+    } else {
+      document.body.classList.remove("dark-theme");
+    }
+  };
+
   const itensDoMenu = [
     {
       label: "Gerenciamento",
@@ -24,7 +41,11 @@ export default function Menutopbar() {
           icon: "pi pi-user",
           command: () => navigate("/perfil"),
         },
-        { separator: true },
+        {
+          label: darkMode ? "Modo Claro" : "Modo Acessibilidade",
+          icon: darkMode ? "pi pi-sun" : "pi pi-moon",
+          command: toggleDarkMode,
+        },
         {
           label: "Sair do Sistema",
           icon: "pi pi-power-off",
@@ -44,7 +65,6 @@ export default function Menutopbar() {
     }, 400);
   };
 
-  const navigate = useNavigate();
   const startContent = (
     <div className="flex align-items-center gap-2">
       <img
@@ -60,11 +80,8 @@ export default function Menutopbar() {
     <div className="flex flex-wrap align-items-center gap-3">
       <Tooltip target=".button-home" content="Inicio" position="bottom" />
       <Tooltip target=".button-users" content="Cadastros" position="bottom" />
-      <Tooltip
-        target=".button-schedules"
-        content="Horarios"
-        position="bottom"
-      />
+      <Tooltip target=".button-schedules" content="Horarios" position="bottom" />
+      <Tooltip target=".button-attendance" content="Chamada" position="bottom" />
 
       <button
         onClick={() => navigate("/")}
@@ -85,6 +102,12 @@ export default function Menutopbar() {
         className="button-schedules p-link inline-flex justify-content-center align-items-center text-white h-3rem w-3rem border-circle hover:bg-white-alpha-10 transition-all transition-duration-200"
       >
         <i className="pi pi-calendar text-2xl"></i>
+      </button>
+      <button
+        onClick={() => navigate("/Presenca")}
+        className="button-attendance p-link inline-flex justify-content-center align-items-center text-white h-3rem w-3rem border-circle hover:bg-white-alpha-10 transition-all transition-duration-200"
+      >
+        <i className="pi pi-check-square text-2xl"></i>
       </button>
     </div>
   );

@@ -7,11 +7,12 @@ import Modalidades from "../components/layout/Modalidades";
 import CadastroAluno from "../components/CadastroAluno";
 import Turmas from "../components/layout/Turmas"; 
 import { Divider } from "primereact/divider";
+import Financeiro from "../components/Financeiro";
 
 export default function Alunos() {
 
   const [viewAtiva, setViewAtiva] = useState<
-    "consultar" | "cadastro" | "editar" | "status" | "modalidades" | "turmas"
+    "consultar" | "cadastro" | "editar" | "status" | "modalidades" | "turmas" | "pagamentos"
   >("consultar");
   
   const [alunoSelecionado, setAlunoSelecionado] = useState<any | null>(null);
@@ -39,23 +40,17 @@ export default function Alunos() {
               {
                 label: "Alunos",
                 icon: "pi pi-user",
-                command: () => {
-                  setViewAtiva("consultar");
-                },
+                command: () => setViewAtiva("consultar"),
               },
               {
                 label: "Turmas",
                 icon: "pi pi-users",
-                command: () => {
-                  setViewAtiva("turmas");
-                },
+                command: () => setViewAtiva("turmas"),
               },
               {
                 label: "Modalidades",
                 icon: "pi pi-th-large",
-                command: () => {
-                  setViewAtiva("modalidades");
-                },
+                command: () => setViewAtiva("modalidades"),
               },
             ],
           },
@@ -77,17 +72,13 @@ export default function Alunos() {
                 key: "0_2_2",
                 label: "Turmas",
                 icon: "pi pi-users",
-                command: () => {
-                  setViewAtiva("turmas");
-                },
+                command: () => setViewAtiva("turmas"),
               },
               {
                 key: "0_2_3",
                 label: "Modalidades",
                 icon: "pi pi-th-large",
-                command: () => {
-                  setViewAtiva("modalidades");
-                },
+                command: () => setViewAtiva("modalidades"),
               },
             ],
           },
@@ -113,7 +104,15 @@ export default function Alunos() {
         items: [
           { key: "1_1", icon: "pi pi-book", label: "Relatorios" },
           { key: "1_2", icon: "pi pi-print", label: "Imprimir" },
-          { key: "1_3", icon: "pi pi-money-bill", label: "Pagamento" },
+          {
+            key: "1_3",
+            icon: "pi pi-money-bill",
+            label: "Pagamento",
+            command: () => {
+              setAlunoSelecionado(null);
+              setViewAtiva("pagamentos");
+            },
+          },
         ],
       },
     ],
@@ -170,7 +169,6 @@ export default function Alunos() {
       <div className="flex-grow-1 min-w-0">
         <div className="card surface-card p-4 border-round shadow-1 w-full">
           
-          {/* TELA: CADASTRO DE ALUNO */}
           {viewAtiva === "cadastro" && (
             <CadastroAluno
               visivel={true}
@@ -183,17 +181,10 @@ export default function Alunos() {
             />
           )}
 
-          {/* TELA: GERENCIAR MODALIDADES */}
-          {viewAtiva === "modalidades" && (
-            <Modalidades />
-          )}
+          {viewAtiva === "modalidades" && <Modalidades />}
+          {viewAtiva === "turmas" && <Turmas />}
+          {viewAtiva === "pagamentos" && <Financeiro />}
 
-          {/* 4. NOVA TELA: GERENCIAR TURMAS */}
-          {viewAtiva === "turmas" && (
-            <Turmas />
-          )}
-
-          {/* TELA: CONSULTA GERAL DE ALUNOS (Consultar, Editar, Status) */}
           {(viewAtiva === "consultar" || viewAtiva === "editar" || viewAtiva === "status") && (
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4 mt-0 text-900">

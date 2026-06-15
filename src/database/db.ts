@@ -99,7 +99,30 @@ export default async function initDatabase(): Promise<void> {
     );
   `);
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS "MENSALIDADE" (
+      "id_mensalidade" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+      "id_aluno" INTEGER NOT NULL,
+      "mes_referencia" TEXT NOT NULL,
+      "data_vencimento" TEXT NOT NULL,
+      "valor" REAL NOT NULL,
+      "status" TEXT DEFAULT 'EM_ABERTO',
+      "data_pagamento" TEXT,
+      "valor_pago" REAL,
+      "criado_em" TEXT NOT NULL,
+      FOREIGN KEY("id_aluno") REFERENCES "ALUNOS"("id_aluno"),
+      UNIQUE("id_aluno", "mes_referencia")
+    );
+  `);
+
   await db.execute("COMMIT;");
+
+  // Adicionar coluna data_cadastro em ALUNOS (ignora se já existir)
+  try {
+    await db.execute(`ALTER TABLE ALUNOS ADD COLUMN data_cadastro TEXT;`);
+  } catch (e) {
+    // Coluna já existe, ignorar
+  }
   try {
     await db.execute(
       `UPDATE ALUNOS SET dia_vencimento = CAST(dia_vencimento AS INTEGER) WHERE dia_vencimento IS NOT NULL;`,

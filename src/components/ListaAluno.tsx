@@ -69,14 +69,15 @@ export default function ListaAlunos({
   };
 
   const telefoneTemplate = (rowData: any) => (
-    <span>{formatPhone(rowData.tel)}</span>
+    <span>{formatPhone(rowData.telefone)}</span>
   );
   const documentoTemplate = (rowData: any) => (
     <span>{formatCPF(rowData.documento)}</span>
   );
 
   const vencimentoTemplate = (rowData: any) => {
-    return <span>Dia {rowData.dia_vencimento}</span>;
+    const dia = rowData.diaVencimento ? Math.round(Number(rowData.diaVencimento)) : "";
+    return <span>Dia {dia}</span>;
   };
 
   const statusTemplate = (rowData: any) => {

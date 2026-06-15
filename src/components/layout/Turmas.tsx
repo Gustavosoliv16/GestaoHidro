@@ -151,12 +151,14 @@ export default function Turmas() {
   };
 
   const formatarHorario = (rowData: any) => {
-    return `${rowData.horarioInicio}h às ${rowData.horarioFim}h`;
+    const inicio = String(Math.round(Number(rowData.horarioInicio))).padStart(2, '0');
+    const fim = String(Math.round(Number(rowData.horarioFim))).padStart(2, '0');
+    return `${inicio}h às ${fim}h`;
   };
 
   const templateLotacao = (rowData: any) => {
-    const total = rowData.totalAlunos || 0;
-    const max = rowData.capacidadeMaxima || 6;
+    const total = Math.round(Number(rowData.totalAlunos || 0));
+    const max = Math.round(Number(rowData.capacidadeMaxima || 6));
     const cheia = total >= max;
     return (
       <Tag severity={cheia ? "danger" : "success"} value={`${total} / ${max} Alunos`} />
@@ -284,7 +286,7 @@ export default function Turmas() {
 
       {/* MODAL 2: GERENCIAR ALUNOS DA TURMA */}
       <Dialog 
-        header={turmaSelecionada ? `Alunos da Turma: ${turmaSelecionada.modalidade} (${turmaSelecionada.horarioInicio}h)` : "Gerenciar Alunos"} 
+        header={turmaSelecionada ? `Alunos da Turma: ${turmaSelecionada.modalidade} (${String(Math.round(Number(turmaSelecionada.horarioInicio))).padStart(2, '0')}h)` : "Gerenciar Alunos"} 
         visible={modalGerenciarAlunos} 
         style={{ width: '550px' }} 
         onHide={() => setModalGerenciarAlunos(false)}
