@@ -7,10 +7,7 @@ async function getDb() {
 const STATUS_PRESENTE = "PRESENTE";
 const STATUS_FALTOU = "FALTOU";
 
-/**
- * Salva ou atualiza a presença de um aluno em uma turma para uma data específica.
- * Usa a tabela existente AGENDA_CALENDARIO com status 'PRESENTE' ou 'FALTOU'.
- */
+
 export async function registrarPresenca(
   turmaId: number,
   alunoId: number,
@@ -20,7 +17,6 @@ export async function registrarPresenca(
   const db = await getDb();
   const status = present ? STATUS_PRESENTE : STATUS_FALTOU;
 
-  // Try INSERT, if conflict (UNIQUE constraint) UPDATE instead
   try {
     await db.execute(
       `INSERT INTO AGENDA_CALENDARIO (id_turma, id_aluno, data_aula, status)
@@ -37,10 +33,6 @@ export async function registrarPresenca(
   return { sucesso: true };
 }
 
-/**
- * Busca o mapa de presenças de uma turma para uma data específica.
- * Retorna { [aluno_id]: true (presente) | false (faltou) }
- */
 export async function buscarPresencasDoDia(
   turmaId: number,
   date: string
@@ -59,9 +51,6 @@ export async function buscarPresencasDoDia(
   return map;
 }
 
-/**
- * Retorna o total de faltas acumuladas de uma turma (todos os dias).
- */
 export async function buscarTotalFaltasPorTurma(turmaId: number): Promise<number> {
   const db = await getDb();
   const res: any[] = await db.select(

@@ -89,7 +89,7 @@ export default function GradeHoraria() {
     return () => observer.disconnect();
   }, []);
 
-  const linhasHorarios = Array.from({ length: 15 }, (_, i) => i + 7); 
+  const linhasHorarios = Array.from({ length: 14 }, (_, i) => i + 7); 
 
   const carregarDadosDoCalendario = async () => {
     try {
@@ -333,11 +333,11 @@ export default function GradeHoraria() {
           <div className="flex gap-2">
             <div className="flex-1">
               <label className="block font-bold text-sm text-700 mb-1">Início</label>
-              <InputNumber value={novaTurma.horarioInicio} min={7} max={21} disabled className="w-full text-500" />
+              <InputNumber value={novaTurma.horarioInicio} min={7} max={20} disabled className="w-full text-500" />
             </div>
             <div className="flex-1">
               <label className="block font-bold text-sm text-700 mb-1">Término</label>
-              <InputNumber value={novaTurma.horarioFim} min={novaTurma.horarioInicio + 1} max={22} onChange={(e) => setNovaTurma({...novaTurma, horarioFim: e.value || novaTurma.horarioInicio + 1})} className="w-full" />
+              <InputNumber value={novaTurma.horarioFim} min={novaTurma.horarioInicio + 1} max={21} onChange={(e) => setNovaTurma({...novaTurma, horarioFim: e.value || novaTurma.horarioInicio + 1})} className="w-full" />
             </div>
           </div>
           <div>

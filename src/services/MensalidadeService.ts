@@ -4,13 +4,11 @@ async function obterBanco() {
   return await Database.load("sqlite:gestao_hidro.db");
 }
 
-// ─── Tipos ───────────────────────────────────────────────────────────
-
 export interface Mensalidade {
   id_mensalidade: number;
   id_aluno: number;
-  mes_referencia: string;       // "YYYY-MM"
-  data_vencimento: string;      // "YYYY-MM-DD"
+  mes_referencia: string;  
+  data_vencimento: string;     
   valor: number;
   status: "EM_ABERTO" | "PENDENTE" | "ATRASADO" | "PAGO";
   data_pagamento: string | null;
@@ -30,7 +28,6 @@ export interface ResumoFinanceiroAluno {
   totalPago: number;
 }
 
-// ─── Utilitários de Data ─────────────────────────────────────────────
 
 function obterHojeStr(): string {
   const d = new Date();
@@ -42,7 +39,6 @@ function obterMesReferenciaAtual(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-/** Retorna "YYYY-MM-DD" para o vencimento de um dado mês (vence no diaVencimento do mês seguinte) */
 function calcularDataVencimento(mesReferencia: string, diaVencimento: number): string {
   const [ano, mes] = mesReferencia.split("-").map(Number);
   let anoVenc = ano;
@@ -51,7 +47,8 @@ function calcularDataVencimento(mesReferencia: string, diaVencimento: number): s
     mesVenc = 1;
     anoVenc++;
   }
-  // Limitar o dia ao último dia do mês de vencimento (ex: dia 31 em fevereiro → 28/29)
+  
+
   const ultimoDia = new Date(anoVenc, mesVenc, 0).getDate();
   const diaReal = Math.min(diaVencimento, ultimoDia);
   return `${anoVenc}-${String(mesVenc).padStart(2, "0")}-${String(diaReal).padStart(2, "0")}`;
@@ -74,7 +71,6 @@ function gerarMesesEntre(mesInicio: string, mesFim: string): string[] {
   return meses;
 }
 
-/** Calcula os meses necessários desde o mês de cadastro até 2 meses no futuro em relação ao mês atual */
 function calcularMesesNecessarios(mesCadastro: string, mesAtual: string): string[] {
   const [anoAtual, mesAtualNum] = mesAtual.split("-").map(Number);
   let anoLimite = anoAtual;
@@ -88,14 +84,13 @@ function calcularMesesNecessarios(mesCadastro: string, mesAtual: string): string
   return gerarMesesEntre(mesCadastro, mesFim);
 }
 
-/** Calcula a diferença em dias entre duas datas "YYYY-MM-DD" */
 function diasEntre(data1: string, data2: string): number {
   const d1 = new Date(data1 + "T00:00:00");
   const d2 = new Date(data2 + "T00:00:00");
   return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-/** Determina o status correto baseado na data de vencimento e na data de hoje */
+
 function calcularStatusPorData(dataVencimento: string): "EM_ABERTO" | "PENDENTE" | "ATRASADO" {
   const hoje = obterHojeStr();
   const diff = diasEntre(dataVencimento, hoje);
@@ -109,18 +104,9 @@ function calcularStatusPorData(dataVencimento: string): "EM_ABERTO" | "PENDENTE"
   }
 }
 
-// ─── Sincronização ──────────────────────────────────────────────────
-
-/**
- * Sincroniza as mensalidades de um aluno:
- * 1. Calcula todos os meses desde a data de cadastro até hoje, respeitando o vencimento
- * 2. Cria mensalidades que não existem
- * 3. Atualiza o status das não-pagas conforme a data
- */
 export async function sincronizarMensalidades(idAluno: number): Promise<void> {
   const db = await obterBanco();
 
-  // Buscar dados do aluno
   const alunos: any[] = await db.select(
     `SELECT dia_vencimento, valor_mensalidade, data_cadastro FROM ALUNOS WHERE id_aluno = $1`,
     [idAluno]
@@ -132,13 +118,11 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
   const diaVencimento = Math.trunc(Number(aluno.dia_vencimento || 10));
   const valorMensalidade = Number(aluno.valor_mensalidade || 0);
 
-  // Determinar o mês de início
   let mesCadastro: string;
   if (aluno.data_cadastro) {
     const partes = aluno.data_cadastro.split("-");
     mesCadastro = `${partes[0]}-${partes[1]}`;
   } else {
-    // Fallback: mês atual
     mesCadastro = obterMesReferenciaAtual();
   }
 
@@ -146,7 +130,6 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
   const mesAtual = obterMesReferenciaAtual();
   const mesesNecessarios = calcularMesesNecessarios(mesCadastro, mesAtual);
 
-  // Buscar mensalidades existentes desse aluno
   const existentes: any[] = await db.select(
     `SELECT id_mensalidade, mes_referencia, status, data_vencimento FROM MENSALIDADE WHERE id_aluno = $1`,
     [idAluno]
@@ -157,7 +140,6 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
     const dataVencimento = calcularDataVencimento(mes, diaVencimento);
 
     if (!mesesExistentes.has(mes)) {
-      // Criar a mensalidade
       const statusInicial = calcularStatusPorData(dataVencimento);
       await db.execute(
         `INSERT INTO MENSALIDADE (id_aluno, mes_referencia, data_vencimento, valor, status, criado_em)
@@ -165,7 +147,6 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
         [idAluno, mes, dataVencimento, valorMensalidade, statusInicial, hoje]
       );
     } else {
-      // Atualizar status se não está pago
       const existente = mesesExistentes.get(mes)!;
       if (existente.status !== "PAGO") {
         const novoStatus = calcularStatusPorData(dataVencimento);
@@ -180,11 +161,8 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
   }
 }
 
-// ─── Consultas ──────────────────────────────────────────────────────
-
-/** Busca todas as mensalidades de um aluno (mais recentes primeiro) */
 export async function buscarMensalidadesDoAluno(idAluno: number): Promise<Mensalidade[]> {
-  // Sincronizar antes de retornar
+
   await sincronizarMensalidades(idAluno);
 
   const db = await obterBanco();
@@ -195,11 +173,9 @@ export async function buscarMensalidadesDoAluno(idAluno: number): Promise<Mensal
   return resultado;
 }
 
-/** Busca resumo financeiro de todos os alunos ativos */
 export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAluno[]> {
   const db = await obterBanco();
 
-  // Primeiro, buscar todos os alunos ativos
   const alunos: any[] = await db.select(`
     SELECT 
       a.id_aluno,
@@ -214,14 +190,12 @@ export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAl
     ORDER BY a.nome ASC
   `);
 
-  // Sincronizar mensalidades de cada aluno
   for (const aluno of alunos) {
     await sincronizarMensalidades(aluno.id_aluno);
   }
 
   const mesAtual = obterMesReferenciaAtual();
 
-  // Buscar contagens agrupadas (apenas considerando meses <= mesAtual para o status em aberto/não vencido)
   const contagens: any[] = await db.select(`
     SELECT 
       id_aluno,
@@ -250,9 +224,6 @@ export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAl
   });
 }
 
-// ─── Ações ──────────────────────────────────────────────────────────
-
-/** Registra o pagamento de uma mensalidade */
 export async function registrarPagamentoMensalidade(
   idMensalidade: number,
   valorPago: number,
@@ -270,13 +241,11 @@ export async function registrarPagamentoMensalidade(
   return { sucesso: true, mensagem: "Pagamento registrado com sucesso!" };
 }
 
-/** Estorna um pagamento (volta para o status calculado) */
 export async function estornarPagamentoMensalidade(
   idMensalidade: number
 ): Promise<{ sucesso: boolean; mensagem: string }> {
   const db = await obterBanco();
 
-  // Buscar a mensalidade para recalcular o status
   const mensalidades: any[] = await db.select(
     `SELECT data_vencimento FROM MENSALIDADE WHERE id_mensalidade = $1`,
     [idMensalidade]

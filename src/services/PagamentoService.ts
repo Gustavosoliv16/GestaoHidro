@@ -17,7 +17,6 @@ export interface StatusPagamentoAluno {
 export async function buscarStatusPagamentoAlunos(): Promise<StatusPagamentoAluno[]> {
   const db = await obterBancoPreparado();
   
-  // Seleciona os alunos ativos e busca o último pagamento registrado de cada um
   const resultado: StatusPagamentoAluno[] = await db.select(`
     SELECT 
       a.id_aluno,

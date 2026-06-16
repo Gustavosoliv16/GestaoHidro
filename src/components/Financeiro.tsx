@@ -16,8 +16,6 @@ import {
   Mensalidade,
 } from "../services/MensalidadeService";
 
-// ─── Utilitários de Formatação ──────────────────────────────────────
-
 const formatarMoeda = (valor: number): string => {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 };
@@ -49,29 +47,22 @@ const obterDataHojeLocal = (): string => {
   return `${ano}-${mes}-${dia}`;
 };
 
-// ─── Componente Principal ───────────────────────────────────────────
-
 export default function Financeiro() {
   const toast = useRef<Toast>(null);
 
-  // Tabela principal (lista de alunos)
   const [alunos, setAlunos] = useState<ResumoFinanceiroAluno[]>([]);
   const [busca, setBusca] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  // Dialog de mensalidades de um aluno
   const [modalMensalidadesVisible, setModalMensalidadesVisible] = useState(false);
   const [alunoSelecionado, setAlunoSelecionado] = useState<ResumoFinanceiroAluno | null>(null);
   const [mensalidades, setMensalidades] = useState<Mensalidade[]>([]);
   const [carregandoMensalidades, setCarregandoMensalidades] = useState(false);
 
-  // Dialog de registrar pagamento
   const [modalPagamentoVisible, setModalPagamentoVisible] = useState(false);
   const [mensalidadeSelecionada, setMensalidadeSelecionada] = useState<Mensalidade | null>(null);
   const [valorPago, setValorPago] = useState<number | null>(null);
   const [dataPagamento, setDataPagamento] = useState("");
-
-  // ─── Carregamento ────────────────────────────────────────────────
 
   const carregarAlunos = async () => {
     setCarregando(true);
@@ -93,8 +84,6 @@ export default function Financeiro() {
   useEffect(() => {
     carregarAlunos();
   }, []);
-
-  // ─── Ações ──────────────────────────────────────────────────────
 
   const abrirMensalidades = async (aluno: ResumoFinanceiroAluno) => {
     setAlunoSelecionado(aluno);
@@ -154,7 +143,6 @@ export default function Financeiro() {
       });
       setModalPagamentoVisible(false);
 
-      // Recarregar mensalidades do aluno aberto
       if (alunoSelecionado) {
         const dados = await buscarMensalidadesDoAluno(alunoSelecionado.id_aluno);
         setMensalidades(dados);
@@ -181,7 +169,6 @@ export default function Financeiro() {
         detail: "Pagamento estornado com sucesso.",
       });
 
-      // Recarregar mensalidades
       if (alunoSelecionado) {
         const dados = await buscarMensalidadesDoAluno(alunoSelecionado.id_aluno);
         setMensalidades(dados);
@@ -196,8 +183,6 @@ export default function Financeiro() {
       });
     }
   };
-
-  // ─── Templates da Tabela Principal ──────────────────────────────
 
   const alunosFiltrados = alunos.filter((a) =>
     a.nome.toLowerCase().includes(busca.toLowerCase())
@@ -238,8 +223,6 @@ export default function Financeiro() {
       onClick={() => abrirMensalidades(rowData)}
     />
   );
-
-  // ─── Templates da Tabela de Mensalidades ────────────────────────
 
   const mesReferenciaTemplate = (rowData: Mensalidade) => (
     <span className="font-bold text-900">{formatarMesReferencia(rowData.mes_referencia)}</span>
@@ -297,13 +280,10 @@ export default function Financeiro() {
     );
   };
 
-  // ─── Render ─────────────────────────────────────────────────────
-
   return (
     <div className="w-full">
       <Toast ref={toast} />
 
-      {/* Cabeçalho */}
       <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center mb-4 gap-3">
         <div>
           <h2 className="text-2xl font-bold m-0 text-900">Controle de Mensalidades</h2>
@@ -321,7 +301,6 @@ export default function Financeiro() {
         </div>
       </div>
 
-      {/* Tabela Principal */}
       <DataTable
         value={alunosFiltrados}
         loading={carregando}
@@ -347,7 +326,6 @@ export default function Financeiro() {
         />
       </DataTable>
 
-      {/* ─── DIALOG: Mensalidades do Aluno ─────────────────────────── */}
       <Dialog
         header={
           alunoSelecionado
@@ -361,7 +339,6 @@ export default function Financeiro() {
       >
         {alunoSelecionado && (
           <div className="flex flex-column gap-3">
-            {/* Resumo no topo */}
             <div className="flex gap-3 flex-wrap">
               <div className="flex-1 bg-blue-50 border-round p-3 text-center">
                 <span className="block text-xs font-semibold text-600 uppercase mb-1">
@@ -397,7 +374,6 @@ export default function Financeiro() {
               </div>
             </div>
 
-            {/* Tabela de mensalidades */}
             <DataTable
               value={mensalidades}
               loading={carregandoMensalidades}
@@ -426,7 +402,6 @@ export default function Financeiro() {
         )}
       </Dialog>
 
-      {/* ─── DIALOG: Registrar Pagamento ──────────────────────────── */}
       <Dialog
         header={
           mensalidadeSelecionada

@@ -50,7 +50,6 @@ export default function Modalidades() {
     }
   };
 
-  // Função para deletar uma modalidade
   const handleExcluirModalidade = async (id: number) => {
     if (!confirm("Deseja realmente excluir esta modalidade?")) return;
 
@@ -62,10 +61,9 @@ export default function Modalidades() {
         [id]
       );
 
-      carregarModalidades(); // Atualiza a lista
+      carregarModalidades();
     } catch (error) {
       console.error("Erro ao excluir modalidade:", error);
-      // Caso o SQLite bloqueie a exclusão por ter turmas usando essa modalidade:
       alert("Não foi possível excluir. Certifique-se de que nenhuma turma está usando esta modalidade atualmente.");
     }
   };
@@ -76,7 +74,6 @@ export default function Modalidades() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* COLUNA 1: FORMULÁRIO DE CADASTRO */}
         <div className="bg-white p-5 rounded-lg shadow-md border border-slate-200 h-fit">
           <h2 className="text-lg font-semibold text-slate-700 mb-4 pb-2 border-b">Nova Modalidade</h2>
           
@@ -103,7 +100,6 @@ export default function Modalidades() {
           </form>
         </div>
 
-        {/* COLUNA 2 e 3: LISTAGEM */}
         <div className="md:col-span-2 bg-white p-5 rounded-lg shadow-md border border-slate-200">
           <h2 className="text-lg font-semibold text-slate-700 mb-4 pb-2 border-b">
             Modalidades Cadastradas ({modalidades.length})

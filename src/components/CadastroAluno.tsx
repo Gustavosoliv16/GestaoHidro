@@ -187,7 +187,6 @@ if (erros.length > 0) {
 
   return (
     <div className="flex flex-column gap-4 w-full">
-      {/* Toast e ConfirmDialog precisam estar na raiz do componente */}
       <Toast ref={toast} />
       <ConfirmDialog />
 

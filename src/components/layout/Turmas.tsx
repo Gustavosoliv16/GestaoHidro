@@ -5,325 +5,400 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
-import { MultiSelect } from "primereact/multiselect"; 
+import { MultiSelect } from "primereact/multiselect";
 import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
+import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import Database from "@tauri-apps/plugin-sql";
 
-import { 
-  buscarTodasTurmas, 
-  criarTurma, 
-  buscarAlunosDaTurma, 
-  vincularAlunoTurma, 
-  desvincularAlunoTurma 
+import {
+  buscarTodasTurmas,
+  criarTurma,
+  editarTurma,
+  excluirTurma,
+  buscarAlunosDaTurma,
+  vincularAlunoTurma,
+  desvincularAlunoTurma,
+  verificarConflitoDeTurma,
 } from "../../services/TurmaService";
 import { buscarTodosAlunos } from "../../services/AlunoService";
+
+const FORM_VAZIO = {
+  diaSemana: 0,
+  horarioInicio: 8,
+  horarioFim: 9,
+  idModalidade: null as number | null,
+  capacidadeMaxima: 6,
+  alunosIds: [] as number[],
+};
+
+const diasSemanaOptions = [
+  { label: "Segunda-feira", value: 0 },
+  { label: "Terça-feira",   value: 1 },
+  { label: "Quarta-feira",  value: 2 },
+  { label: "Quinta-feira",  value: 3 },
+  { label: "Sexta-feira",   value: 4 },
+  { label: "Sábado",        value: 5 },
+];
 
 export default function Turmas() {
   const toast = useRef<Toast>(null);
 
-  const [turmas, setTurmas] = useState<any[]>([]);
-  const [modalidades, setModalidades] = useState<any[]>([]);
-  const [todosAlunos, setTodosAlunos] = useState<any[]>([]);
+  const [turmas,       setTurmas]       = useState<any[]>([]);
+  const [modalidades,  setModalidades]  = useState<any[]>([]);
+  const [todosAlunos,  setTodosAlunos]  = useState<any[]>([]);
   const [alunosDaTurma, setAlunosDaTurma] = useState<any[]>([]);
 
-  const [modalNovaTurma, setModalNovaTurma] = useState(false);
-  const [modalGerenciarAlunos, setModalGerenciarAlunos] = useState(false);
-  const [turmaSelecionada, setTurmaSelecionada] = useState<any | null>(null);
+  const [modalFormVisible,  setModalFormVisible]  = useState(false);
+  const [modoEdicao,        setModoEdicao]        = useState(false);
+  const [turmaEmEdicao,     setTurmaEmEdicao]     = useState<any | null>(null);
+  const [form, setForm] = useState({ ...FORM_VAZIO });
 
-  // Estado do formulário incluindo a lista de IDs dos alunos selecionados
-  const [novaTurma, setNovaTurma] = useState({
-    diaSemana: 0,
-    horarioInicio: 8,
-    horarioFim: 9,
-    idModalidade: null as number | null,
-    capacidadeMaxima: 6,
-    alunosIds: [] as number[] 
-  });
+  const [modalAlunosVisible, setModalAlunosVisible] = useState(false);
+  const [turmaSelecionada,   setTurmaSelecionada]   = useState<any | null>(null);
   const [alunoParaAdicionar, setAlunoParaAdicionar] = useState<number | null>(null);
-
-  const diasSemanaOptions = [
-    { label: "Segunda-feira", value: 0 },
-    { label: "Terça-feira", value: 1 },
-    { label: "Quarta-feira", value: 2 },
-    { label: "Quinta-feira", value: 3 },
-    { label: "Sexta-feira", value: 4 },
-    { label: "Sábado", value: 5 },
-  ];
-
-  const carregarDadosDoSistema = async () => {
+  const carregar = async () => {
     try {
-      const listaTurmas = await buscarTodasTurmas();
+      const [listaTurmas, listaAlunos] = await Promise.all([
+        buscarTodasTurmas(),
+        buscarTodosAlunos(),
+      ]);
       setTurmas(listaTurmas);
-
-      const listaAlunos = await buscarTodosAlunos();
       setTodosAlunos(listaAlunos);
 
       const db = await Database.load("sqlite:gestao_hidro.db");
-      const listaModalidades: any[] = await db.select("SELECT id_modalidade, modalidade FROM MODALIDADE ORDER BY modalidade ASC");
-      setModalidades(listaModalidades);
-    } catch (error) {
-      console.error("Erro ao carregar dados de turmas:", error);
+      const mods: any[] = await db.select(
+        "SELECT id_modalidade, modalidade FROM MODALIDADE ORDER BY modalidade ASC"
+      );
+      setModalidades(mods);
+    } catch (err) {
+      console.error("Erro ao carregar turmas:", err);
     }
   };
 
-  useEffect(() => {
-    carregarDadosDoSistema();
-  }, []);
+  useEffect(() => { carregar(); }, []);
 
-  const abrirGerenciadorAlunos = async (turma: any) => {
+  const abrirCriar = () => {
+    setModoEdicao(false);
+    setTurmaEmEdicao(null);
+    setForm({ ...FORM_VAZIO });
+    setModalFormVisible(true);
+  };
+
+  const abrirEditar = (turma: any) => {
+    setModoEdicao(true);
+    setTurmaEmEdicao(turma);
+    setForm({
+      diaSemana:      Number(turma.diaSemana),
+      horarioInicio:  Number(turma.horarioInicio),
+      horarioFim:     Number(turma.horarioFim),
+      idModalidade:   turma.id_modalidade ?? null,
+      capacidadeMaxima: Number(turma.capacidadeMaxima),
+      alunosIds: [],
+    });
+    setModalFormVisible(true);
+  };
+
+  const abrirGerenciarAlunos = async (turma: any) => {
     setTurmaSelecionada(turma);
-    try {
-      const alunos = await buscarAlunosDaTurma(turma.id_turma);
-      setAlunosDaTurma(alunos);
-      setAlunoParaAdicionar(null);
-      setModalGerenciarAlunos(true);
-    } catch (error) {
-      toast.current?.show({ severity: "error", summary: "Erro", detail: "Não foi possível carregar os alunos da turma." });
-    }
+    setAlunoParaAdicionar(null);
+    const alunos = await buscarAlunosDaTurma(turma.id_turma);
+    setAlunosDaTurma(alunos);
+    setModalAlunosVisible(true);
   };
 
-  const handleCriarTurma = async () => {
-    if (!novaTurma.idModalidade) {
+  const handleSalvar = async () => {
+    if (!form.idModalidade) {
       toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Selecione a Modalidade!" });
       return;
     }
+    if (form.horarioFim <= form.horarioInicio) {
+      toast.current?.show({ severity: "error", summary: "Erro", detail: "O horário de fim deve ser maior que o início." });
+      return;
+    }
 
-    if (novaTurma.horarioFim <= novaTurma.horarioInicio) {
-      toast.current?.show({ severity: "error", summary: "Erro de Horário", detail: "O horário de fim deve ser maior que o início!" });
+    const conflito = await verificarConflitoDeTurma(
+      form.diaSemana,
+      form.horarioInicio,
+      modoEdicao ? turmaEmEdicao?.id_turma : undefined
+    );
+    if (conflito) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Conflito de horário",
+        detail: `Já existe uma turma às ${String(form.horarioInicio).padStart(2,"0")}h neste dia da semana.`,
+        life: 5000,
+      });
       return;
     }
 
     try {
-      const resultadoTurma = await criarTurma({
-        diaSemana: novaTurma.diaSemana,
-        horarioInicio: novaTurma.horarioInicio,
-        horarioFim: novaTurma.horarioFim,
-        idModalidade: novaTurma.idModalidade,
-        capacidadeMaxima: novaTurma.capacidadeMaxima
-      });
-
-      if (novaTurma.alunosIds.length > 0 && resultadoTurma?.idTurma) {
-        for (const idAluno of novaTurma.alunosIds) {
-          await vincularAlunoTurma(idAluno, resultadoTurma.idTurma);
+      if (modoEdicao && turmaEmEdicao) {
+        await editarTurma(turmaEmEdicao.id_turma, {
+          diaSemana:       form.diaSemana,
+          horarioInicio:   form.horarioInicio,
+          horarioFim:      form.horarioFim,
+          idModalidade:    form.idModalidade,
+          capacidadeMaxima: form.capacidadeMaxima,
+        });
+        toast.current?.show({ severity: "success", summary: "Atualizado", detail: "Turma atualizada com sucesso!" });
+      } else {
+        const resultado = await criarTurma({
+          diaSemana:       form.diaSemana,
+          horarioInicio:   form.horarioInicio,
+          horarioFim:      form.horarioFim,
+          idModalidade:    form.idModalidade,
+          capacidadeMaxima: form.capacidadeMaxima,
+        });
+        if (form.alunosIds.length > 0 && resultado?.idTurma) {
+          for (const idAluno of form.alunosIds) {
+            await vincularAlunoTurma(idAluno, resultado.idTurma);
+          }
         }
+        toast.current?.show({ severity: "success", summary: "Criado", detail: "Turma criada com sucesso!" });
       }
-
-      toast.current?.show({ severity: "success", summary: "Sucesso", detail: "Turma criada e alunos vinculados!" });
-      setModalNovaTurma(false);
-      setNovaTurma({ diaSemana: 0, horarioInicio: 8, horarioFim: 9, idModalidade: null, capacidadeMaxima: 6, alunosIds: [] });
-      carregarDadosDoSistema();
-    } catch (error) {
-      toast.current?.show({ severity: "error", summary: "Erro", detail: "Erro ao salvar a turma e seus alunos." });
+      setModalFormVisible(false);
+      carregar();
+    } catch {
+      toast.current?.show({ severity: "error", summary: "Erro", detail: "Falha ao salvar a turma." });
     }
+  };
+
+  const confirmarExclusao = (turma: any) => {
+    confirmDialog({
+      message: `Excluir a turma de ${turma.modalidade} (${String(turma.horarioInicio).padStart(2,"0")}h)?
+Todos os vínculos com alunos serão removidos.`,
+      header: "Confirmar exclusão",
+      icon: "pi pi-exclamation-triangle",
+      acceptClassName: "p-button-danger",
+      acceptLabel: "Excluir",
+      rejectLabel: "Cancelar",
+      accept: async () => {
+        await excluirTurma(turma.id_turma);
+        toast.current?.show({ severity: "info", summary: "Excluída", detail: "Turma removida." });
+        carregar();
+      },
+    });
   };
 
   const handleAdicionarAluno = async () => {
     if (!alunoParaAdicionar || !turmaSelecionada) return;
-
-    const resposta = await vincularAlunoTurma(alunoParaAdicionar, turmaSelecionada.id_turma);
-
-    if (resposta.sucesso) {
-      toast.current?.show({ severity: "success", summary: "Sucesso", detail: resposta.mensagem });
-      const alunosAtualizados = await buscarAlunosDaTurma(turmaSelecionada.id_turma);
-      setAlunosDaTurma(alunosAtualizados);
+    const resp = await vincularAlunoTurma(alunoParaAdicionar, turmaSelecionada.id_turma);
+    if (resp.sucesso) {
+      toast.current?.show({ severity: "success", summary: "Matriculado", detail: resp.mensagem });
+      setAlunosDaTurma(await buscarAlunosDaTurma(turmaSelecionada.id_turma));
       setAlunoParaAdicionar(null);
-      carregarDadosDoSistema();
+      carregar();
     } else {
-      toast.current?.show({ severity: "error", summary: "Restrição", detail: resposta.mensagem });
+      toast.current?.show({ severity: "warn", summary: "Atenção", detail: resp.mensagem });
     }
   };
 
   const handleRemoverAluno = async (idAluno: number) => {
     if (!turmaSelecionada) return;
-
     await desvincularAlunoTurma(idAluno, turmaSelecionada.id_turma);
-    toast.current?.show({ severity: "info", summary: "Atualizado", detail: "Aluno removido da turma." });
-    
-    const alunosAtualizados = await buscarAlunosDaTurma(turmaSelecionada.id_turma);
-    setAlunosDaTurma(alunosAtualizados);
-    carregarDadosDoSistema();
+    toast.current?.show({ severity: "info", summary: "Removido", detail: "Aluno removido da turma." });
+    setAlunosDaTurma(await buscarAlunosDaTurma(turmaSelecionada.id_turma));
+    carregar();
   };
 
-  const formatarDiaSemana = (rowData: any) => {
-    const dia = diasSemanaOptions.find(d => d.value === Number(rowData.diaSemana));
-    return dia ? dia.label : "Não definido";
+  const formatarDia = (row: any) =>
+    diasSemanaOptions.find(d => d.value === Number(row.diaSemana))?.label ?? "—";
+
+  const formatarHorario = (row: any) =>
+    `${String(Math.round(Number(row.horarioInicio))).padStart(2,"0")}h às ${String(Math.round(Number(row.horarioFim))).padStart(2,"0")}h`;
+
+  const templateLotacao = (row: any) => {
+    const total = Math.round(Number(row.totalAlunos || 0));
+    const max   = Math.round(Number(row.capacidadeMaxima || 6));
+    return <Tag severity={total >= max ? "danger" : "success"} value={`${total} / ${max}`} />;
   };
 
-  const formatarHorario = (rowData: any) => {
-    const inicio = String(Math.round(Number(rowData.horarioInicio))).padStart(2, '0');
-    const fim = String(Math.round(Number(rowData.horarioFim))).padStart(2, '0');
-    return `${inicio}h às ${fim}h`;
-  };
-
-  const templateLotacao = (rowData: any) => {
-    const total = Math.round(Number(rowData.totalAlunos || 0));
-    const max = Math.round(Number(rowData.capacidadeMaxima || 6));
-    const cheia = total >= max;
-    return (
-      <Tag severity={cheia ? "danger" : "success"} value={`${total} / ${max} Alunos`} />
-    );
-  };
-
-  const templateAcoes = (rowData: any) => {
-    return (
-      <Button 
-        icon="pi pi-users" 
-        label="Gerenciar Alunos" 
-        className="p-button-sm p-button-outlined" 
-        onClick={() => abrirGerenciadorAlunos(rowData)} 
+  const templateAcoes = (row: any) => (
+    <div className="flex gap-2">
+      <Button
+        icon="pi pi-users"
+        label="Alunos"
+        className="p-button-sm p-button-outlined"
+        onClick={() => abrirGerenciarAlunos(row)}
       />
-    );
-  };
+      <Button
+        icon="pi pi-pencil"
+        className="p-button-sm p-button-warning p-button-outlined"
+        tooltip="Editar turma"
+        tooltipOptions={{ position: "top" }}
+        onClick={() => abrirEditar(row)}
+      />
+      <Button
+        icon="pi pi-trash"
+        className="p-button-sm p-button-danger p-button-outlined"
+        tooltip="Excluir turma"
+        tooltipOptions={{ position: "top" }}
+        onClick={() => confirmarExclusao(row)}
+      />
+    </div>
+  );
 
   return (
     <div className="w-full">
       <Toast ref={toast} />
-      
+      <ConfirmDialog />
+
       <div className="flex align-items-center justify-content-between mb-4">
         <h2 className="text-2xl font-bold m-0 text-900">Gerenciamento de Turmas</h2>
-        <Button 
-          label="Nova Turma" 
-          icon="pi pi-plus" 
-          className="p-button-success" 
-          onClick={() => setModalNovaTurma(true)} 
-        />
+        <Button label="Nova Turma" icon="pi pi-plus" className="p-button-success" onClick={abrirCriar} />
       </div>
 
-      <DataTable value={turmas} rows={10} paginator responsiveLayout="scroll" emptyMessage="Nenhuma turma cadastrada.">
-        <Column field="modalidade" header="Modalidade" sortable style={{ fontWeight: 'bold' }} />
-        <Column header="Dia da Semana" body={formatarDiaSemana} sortable />
-        <Column header="Horário" body={formatarHorario} sortable field="horarioInicio" />
-        <Column header="Ocupação / Limite" body={templateLotacao} sortable />
-        <Column header="Ações" body={templateAcoes} style={{ width: '12rem' }} />
+      <DataTable
+        value={turmas}
+        rows={10}
+        paginator
+        responsiveLayout="scroll"
+        emptyMessage="Nenhuma turma cadastrada."
+        sortField="diaSemana"
+        sortOrder={1}
+      >
+        <Column field="modalidade"  header="Modalidade"      sortable style={{ fontWeight: "bold" }} />
+        <Column header="Dia"        body={formatarDia}       sortable field="diaSemana" />
+        <Column header="Horário"    body={formatarHorario}   sortable field="horarioInicio" />
+        <Column header="Lotação"    body={templateLotacao}   />
+        <Column header="Ações"      body={templateAcoes}     style={{ width: "16rem" }} />
       </DataTable>
 
-      {/* MODAL 1: CRIAR NOVA TURMA (LARGURA FIXADA EM 480PX E GRID CORRIGIDO) */}
-      <Dialog 
-        header="Cadastrar Nova Turma" 
-        visible={modalNovaTurma} 
-        style={{ width: '480px' }} 
-        onHide={() => setModalNovaTurma(false)}
+      <Dialog
+        header={modoEdicao ? "Editar Turma" : "Cadastrar Nova Turma"}
+        visible={modalFormVisible}
+        style={{ width: "480px" }}
+        onHide={() => setModalFormVisible(false)}
         footer={
           <div>
-            <Button label="Cancelar" icon="pi pi-times" className="p-button-text" onClick={() => setModalNovaTurma(false)} />
-            <Button label="Salvar" icon="pi pi-check" className="p-button-primary" onClick={handleCriarTurma} />
+            <Button label="Cancelar" icon="pi pi-times" className="p-button-text" onClick={() => setModalFormVisible(false)} />
+            <Button label="Salvar"   icon="pi pi-check" className="p-button-primary" onClick={handleSalvar} />
           </div>
         }
       >
-        {/* p-fluid e formgrid grid garantem comportamento fluido perfeito */}
         <div className="p-fluid grid formgrid pt-2 row-gap-3">
-          
-          <div className="field col-12">
-            <label htmlFor="dia" className="font-semibold text-sm mb-1 block">Dia da Semana</label>
-            <Dropdown id="dia" value={novaTurma.diaSemana} options={diasSemanaOptions} onChange={(e) => setNovaTurma({...novaTurma, diaSemana: e.value})} />
-          </div>
 
-          {/* Divisão exata de 50% (col-6) para cada input de hora */}
-          <div className="field col-6">
-            <label htmlFor="inicio" className="font-semibold text-sm mb-1 block">Início (Hora)</label>
-            <InputNumber 
-              id="inicio" 
-              value={novaTurma.horarioInicio} 
-              onValueChange={(e) => setNovaTurma({...novaTurma, horarioInicio: e.value ?? 8})} 
-              min={0} 
-              max={23} 
-              suffix="h"
-              showButtons 
+          <div className="field col-12">
+            <label className="font-semibold text-sm mb-1 block">Dia da Semana</label>
+            <Dropdown
+            appendTo="self"
+              value={form.diaSemana}
+              options={diasSemanaOptions}
+              onChange={(e) => setForm({ ...form, diaSemana: e.value })}
             />
           </div>
-          
+
           <div className="field col-6">
-            <label htmlFor="fim" className="font-semibold text-sm mb-1 block">Fim (Hora)</label>
-            <InputNumber 
-              id="fim" 
-              value={novaTurma.horarioFim} 
-              onValueChange={(e) => setNovaTurma({...novaTurma, horarioFim: e.value ?? 9})} 
-              min={0} 
-              max={23} 
-              suffix="h"
-              showButtons 
+            <label className="font-semibold text-sm mb-1 block">Início (Hora)</label>
+            <InputNumber
+              value={form.horarioInicio}
+              onValueChange={(e) => setForm({ ...form, horarioInicio: e.value ?? 8 })}
+              min={7} max={20} suffix="h" showButtons
+            />
+          </div>
+
+          <div className="field col-6">
+            <label className="font-semibold text-sm mb-1 block">Fim (Hora)</label>
+            <InputNumber
+              value={form.horarioFim}
+              onValueChange={(e) => setForm({ ...form, horarioFim: e.value ?? 9 })}
+              min={8} max={21} suffix="h" showButtons
             />
           </div>
 
           <div className="field col-12">
-            <label htmlFor="mod" className="font-semibold text-sm mb-1 block">Modalidade</label>
-            <Dropdown 
-              id="mod" 
-              value={novaTurma.idModalidade} 
-              options={modalidades} 
-              optionLabel="modalidade" 
-              optionValue="id_modalidade" 
+            <label className="font-semibold text-sm mb-1 block">Modalidade</label>
+            <Dropdown
+              value={form.idModalidade}
+              options={modalidades}
+              optionLabel="modalidade"
+              optionValue="id_modalidade"
               placeholder="Selecione a Modalidade"
-              onChange={(e) => setNovaTurma({...novaTurma, idModalidade: e.value})} 
+              onChange={(e) => setForm({ ...form, idModalidade: e.value })}
             />
           </div>
 
           <div className="field col-12">
-            <label htmlFor="cap" className="font-semibold text-sm mb-1 block">Capacidade Máxima de Alunos</label>
-            <InputNumber id="cap" value={novaTurma.capacidadeMaxima} onValueChange={(e) => setNovaTurma({...novaTurma, capacidadeMaxima: e.value || 6})} min={1} max={50} showButtons />
-          </div>
-
-          {/* Campo solicitado para atribuir os alunos diretamente no cadastro */}
-          <div className="field col-12">
-            <label htmlFor="alunosCriacao" className="font-semibold text-sm mb-1 block">Atribuir Alunos Iniciais (Máx. {novaTurma.capacidadeMaxima})</label>
-            <MultiSelect
-              id="alunosCriacao"
-              value={novaTurma.alunosIds}
-              options={todosAlunos}
-              optionLabel="nome"
-              optionValue="id_aluno"
-              placeholder="Selecione os alunos para esta turma"
-              filter
-              selectionLimit={novaTurma.capacidadeMaxima}
-              display="chip"
-              onChange={(e) => setNovaTurma({...novaTurma, alunosIds: e.value})}
+            <label className="font-semibold text-sm mb-1 block">Capacidade Máxima</label>
+            <InputNumber
+              value={form.capacidadeMaxima}
+              onValueChange={(e) => setForm({ ...form, capacidadeMaxima: e.value || 6 })}
+              min={1} max={50} showButtons
             />
           </div>
 
+          {!modoEdicao && (
+            <div className="field col-12">
+              <label className="font-semibold text-sm mb-1 block">
+                Atribuir Alunos Iniciais (Máx. {form.capacidadeMaxima})
+              </label>
+              <MultiSelect
+              appendTo="self"
+                value={form.alunosIds}
+                options={todosAlunos}
+                optionLabel="nome"
+                optionValue="id_aluno"
+                placeholder="Selecione os alunos"
+                filter
+                selectionLimit={form.capacidadeMaxima}
+                display="chip"
+                onChange={(e) => setForm({ ...form, alunosIds: e.value })}
+              />
+            </div>
+          )}
         </div>
       </Dialog>
 
-      {/* MODAL 2: GERENCIAR ALUNOS DA TURMA */}
-      <Dialog 
-        header={turmaSelecionada ? `Alunos da Turma: ${turmaSelecionada.modalidade} (${String(Math.round(Number(turmaSelecionada.horarioInicio))).padStart(2, '0')}h)` : "Gerenciar Alunos"} 
-        visible={modalGerenciarAlunos} 
-        style={{ width: '550px' }} 
-        onHide={() => setModalGerenciarAlunos(false)}
+      <Dialog
+        header={
+          turmaSelecionada
+            ? `Alunos — ${turmaSelecionada.modalidade} (${String(Math.round(Number(turmaSelecionada.horarioInicio))).padStart(2,"0")}h)`
+            : "Gerenciar Alunos"
+        }
+        visible={modalAlunosVisible}
+        style={{ width: "550px" }}
+        onHide={() => setModalAlunosVisible(false)}
       >
         <div className="flex flex-column gap-4 pt-2">
           <div className="surface-100 p-3 border-round">
-            <h4 className="m-0 mb-2 text-sm font-bold text-700">Matricular Aluno nesta Turma</h4>
+            <h4 className="m-0 mb-2 text-sm font-bold text-700">Matricular Aluno</h4>
             <div className="flex gap-2">
-              <Dropdown 
-                value={alunoParaAdicionar} 
-                options={todosAlunos} 
-                optionLabel="nome" 
-                optionValue="id_aluno" 
-                filter 
-                placeholder="Selecione um Aluno para Adicionar" 
+              <Dropdown
+                value={alunoParaAdicionar}
+                options={todosAlunos}
+                optionLabel="nome"
+                optionValue="id_aluno"
+                filter
+                placeholder="Selecione um aluno"
                 className="flex-grow-1"
                 onChange={(e) => setAlunoParaAdicionar(e.value)}
               />
-              <Button label="Adicionar" icon="pi pi-plus" className="p-button-success p-button-sm" onClick={handleAdicionarAluno} disabled={!alunoParaAdicionar} />
+              <Button
+                label="Adicionar"
+                icon="pi pi-plus"
+                className="p-button-success p-button-sm"
+                onClick={handleAdicionarAluno}
+                disabled={!alunoParaAdicionar}
+              />
             </div>
           </div>
 
           <div>
             <h4 className="m-0 mb-2 text-sm font-bold text-700">Alunos Matriculados</h4>
-            <DataTable value={alunosDaTurma} emptyMessage="Esta turma não possui alunos matriculados." size="small">
-              <Column field="nome" header="Nome do Aluno" />
-              <Column 
-                header="Ações" 
-                style={{ width: '4rem', textAlign: 'center' }} 
-                body={(rowData) => (
-                  <Button 
-                    icon="pi pi-trash" 
-                    className="p-button-danger p-button-text p-button-sm" 
-                    title="Remover da Turma"
-                    onClick={() => handleRemoverAluno(rowData.id_aluno)} 
+            <DataTable value={alunosDaTurma} emptyMessage="Nenhum aluno matriculado." size="small">
+              <Column field="nome" header="Nome" />
+              <Column
+                header=""
+                style={{ width: "4rem", textAlign: "center" }}
+                body={(row) => (
+                  <Button
+                    icon="pi pi-trash"
+                    className="p-button-danger p-button-text p-button-sm"
+                    tooltip="Remover da turma"
+                    onClick={() => handleRemoverAluno(row.id_aluno)}
                   />
-                )} 
+                )}
               />
             </DataTable>
           </div>

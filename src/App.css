@@ -93,7 +93,6 @@ main {
   animation: full-spin 0.6s ease-in-out;
 }
 
-/* Fixed size and color for status InputSwitch */
 .fixed-status-switch.p-inputswitch {
   width: 44px !important;
   height: 24px !important;

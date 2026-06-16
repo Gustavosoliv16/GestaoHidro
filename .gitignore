@@ -11,7 +11,18 @@ node_modules
 dist
 dist-ssr
 *.local
-
+design.md
+TurmaService.test.ts
+reimportar_banco.py
+vitest.config.ts
+.config.kiro
+leitorexcel.py
+bugfix.md
+tasks.md
+gestao_hidro.db
+matriculas_consolidadas_perfeito.csv
+matriculas_consolidadas_perfeito.xlsx
+horario_aulas.csv
 
 # Editor directories and files
 .vscode/*

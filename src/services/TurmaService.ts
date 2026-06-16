@@ -29,6 +29,21 @@ export async function criarTurma(dadosTurma: {
   return { sucesso: true, idTurma: resultado.lastInsertId  };
 }
 
+export function parseDiaSemana(valor: string | number): number {
+  const n = Number(valor);
+  if (n === 7) return 6;
+  return n;
+}
+
+export function parseHora(valor: string | number): number {
+  if (typeof valor === "number") return Math.round(valor);
+  const s = String(valor).trim();
+  if (s.includes(":")) {
+    return parseInt(s.split(":")[0], 10);
+  }
+  return parseInt(s, 10);
+}
+
 export async function buscarTodasTurmas() {
   const db = await obterBancoPreparado();
   
@@ -39,6 +54,7 @@ export async function buscarTodasTurmas() {
       t.horario_inicio as horarioInicio,
       t.horario_fim as horarioFim,
       t.capacidade_maxima as capacidadeMaxima,
+      t.id_modalidade,
       m.modalidade,
       (SELECT COUNT(*) FROM ALUNO_HORARIO_PADRAO hp WHERE hp.id_turma = t.id_turma) as totalAlunos
     FROM TURMAS t
@@ -46,7 +62,12 @@ export async function buscarTodasTurmas() {
     ORDER BY t.dia_semana ASC, t.horario_inicio ASC
   `);
   
-  return turmas;
+  return turmas.map((t) => ({
+    ...t,
+    diaSemana:     parseDiaSemana(t.diaSemana),
+    horarioInicio: parseHora(t.horarioInicio),
+    horarioFim:    parseHora(t.horarioFim),
+  }));
 }
 
 export async function buscarAlunosDaTurma(idTurma: number) {
@@ -110,7 +131,42 @@ export async function desvincularAlunoTurma(idAluno: number, idTurma: number) {
   return { sucesso: true, mensagem: "Aluno removido da turma." };
 }
 
-export async function excluirTurma(idTurma: number) {
+export async function verificarConflitoDeTurma(
+  diaSemana: number,
+  horarioInicio: number,
+  idTurmaExcluir?: number 
+): Promise<boolean> {
+  const db = await obterBancoPreparado();
+  const rows: any[] = await db.select(
+    `SELECT id_turma FROM TURMAS
+     WHERE dia_semana = $1
+       AND CAST(horario_inicio AS INTEGER) = $2
+       AND ($3 IS NULL OR id_turma != $3)`,
+    [diaSemana, horarioInicio, idTurmaExcluir ?? null]
+  );
+  return rows.length > 0;
+}
+
+export async function editarTurma(idTurma: number, dados: {
+  diaSemana: number;
+  horarioInicio: number;
+  horarioFim: number;
+  idModalidade: number;
+  capacidadeMaxima: number;
+}) {
+  const db = await obterBancoPreparado();
+  await db.execute(
+    `UPDATE TURMAS
+     SET dia_semana = $1, horario_inicio = $2, horario_fim = $3,
+         id_modalidade = $4, capacidade_maxima = $5
+     WHERE id_turma = $6`,
+    [dados.diaSemana, dados.horarioInicio, dados.horarioFim,
+     dados.idModalidade, dados.capacidadeMaxima, idTurma]
+  );
+  return { sucesso: true, mensagem: "Turma atualizada com sucesso!" };
+}
+
+export async function excluirTurma(idTurma: number){
   const db = await obterBancoPreparado();
   await db.execute(`DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_turma = $1`, [idTurma]);
   await db.execute(`DELETE FROM TURMAS WHERE id_turma = $1`, [idTurma]);

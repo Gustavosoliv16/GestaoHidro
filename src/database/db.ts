@@ -117,11 +117,10 @@ export default async function initDatabase(): Promise<void> {
 
   await db.execute("COMMIT;");
 
-  // Adicionar coluna data_cadastro em ALUNOS (ignora se já existir)
   try {
     await db.execute(`ALTER TABLE ALUNOS ADD COLUMN data_cadastro TEXT;`);
   } catch (e) {
-    // Coluna já existe, ignorar
+
   }
   try {
     await db.execute(

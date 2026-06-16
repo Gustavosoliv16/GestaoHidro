@@ -25,7 +25,6 @@ export async function salvarAlunoCompleto(dadosForm: any) {
     );
     const idEnderecoGerado = resultadoEndereco.lastInsertId;
 
-    // Data de cadastro = hoje (YYYY-MM-DD)
     const hoje = new Date();
     const dataCadastro = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
 
@@ -201,4 +200,4 @@ export async function alternarStatusAluno(
     idAluno,
   ]);
   return novoStatus;
-}
+}
