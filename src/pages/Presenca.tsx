@@ -7,10 +7,11 @@ import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
 import { Divider } from "primereact/divider";
 import { ProgressBar } from "primereact/progressbar";
-import { Dropdown } from "primereact/dropdown";
+import { SelectButton } from "primereact/selectbutton";
 import Database from "@tauri-apps/plugin-sql";
 
 import { buscarTodasTurmas, buscarAlunosDaTurma } from "../services/TurmaService";
+import { salvarChamada, verificarChamadaSalva } from "../services/AttendanceService";
 
 async function getDb() {
   return await Database.load("sqlite:gestao_hidro.db");
@@ -63,43 +64,88 @@ async function buscarPresencasComAlunos(idTurma: number, date: string): Promise<
 
 
 const DIAS = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
+const DIAS_CURTOS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function diaSemanaIdx(d: Date): number {
+  // 0=Dom → 6, 1=Seg → 0 ... 6=Sab → 5
+  return d.getDay() === 0 ? 6 : d.getDay() - 1;
+}
 
 export default function Presenca() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const toast = useRef<Toast>(null);
 
-  const today = new Date().toISOString().split("T")[0];
-  const todayFormatted = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long", year: "numeric" });
+  // Hoje e ontem como objetos fixos para o ciclo de render
+  const hoje = new Date();
+  const ontem = new Date(hoje);
+  ontem.setDate(hoje.getDate() - 1);
+
+  const opcoesDia = [
+    { label: "Hoje",  value: "hoje"  },
+    { label: "Ontem", value: "ontem" },
+  ];
+
+  const [diaAtivo, setDiaAtivo] = useState<"hoje" | "ontem">("hoje");
+
+  // Data efetiva conforme seleção
+  const dataEfetiva     = diaAtivo === "hoje" ? hoje : ontem;
+  const dateStr         = toDateStr(dataEfetiva);
+  const diaIdx          = diaSemanaIdx(dataEfetiva);
+  const dataFormatada   = dataEfetiva.toLocaleDateString("pt-BR", {
+    weekday: "long", day: "2-digit", month: "long", year: "numeric",
+  });
 
   const [turmas, setTurmas] = useState<any[]>([]);
   const [turmaSelecionada, setTurmaSelecionada] = useState<any>(null);
+  const [diaSelecionado, setDiaSelecionado] = useState<number | null>(null);
   const [alunos, setAlunos] = useState<any[]>([]);
   const [presencas, setPresencas] = useState<Record<number, boolean>>({});
   const [totalFaltas, setTotalFaltas] = useState<number>(0);
   const [loading, setLoading] = useState(false);
+  const [chamadaSalva, setChamadaSalva] = useState(false);
+  const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
     buscarTodasTurmas().then(lista => {
       setTurmas(lista);
+      // Pré-seleciona o dia da semana atual
+      setDiaSelecionado(diaSemanaIdx(dataEfetiva));
 
       const paramId = searchParams.get("turma");
       if (paramId) {
         const found = lista.find((t: any) => String(t.id_turma) === paramId);
-        if (found) setTurmaSelecionada(found);
+        if (found) {
+          setDiaSelecionado(Number(found.diaSemana));
+          setTurmaSelecionada(found);
+        }
       }
     });
   }, []);
+
+  // Ao trocar de dia (hoje/ontem), reseta tudo e pré-seleciona o dia correto
+  useEffect(() => {
+    setDiaSelecionado(diaSemanaIdx(dataEfetiva));
+    setTurmaSelecionada(null);
+    setAlunos([]);
+    setPresencas({});
+    setTotalFaltas(0);
+    setChamadaSalva(false);
+  }, [diaAtivo]);
 
   useEffect(() => {
     if (!turmaSelecionada) return;
     setLoading(true);
     Promise.all([
       buscarAlunosDaTurma(turmaSelecionada.id_turma),
-      buscarPresencasComAlunos(turmaSelecionada.id_turma, today),
+      buscarPresencasComAlunos(turmaSelecionada.id_turma, dateStr),
       buscarTotalFaltasPorTurma(turmaSelecionada.id_turma),
-    ]).then(([listaAlunos, presencasDetalhadas, faltas]) => {
+      verificarChamadaSalva(turmaSelecionada.id_turma, dateStr),
+    ]).then(([listaAlunos, presencasDetalhadas, faltas, jaFoiSalva]) => {
       setAlunos(listaAlunos);
       const map: Record<number, boolean> = {};
       presencasDetalhadas.forEach(p => {
@@ -109,11 +155,13 @@ export default function Presenca() {
       });
       setPresencas(map);
       setTotalFaltas(faltas);
+      setChamadaSalva(jaFoiSalva);
       setLoading(false);
     });
-  }, [turmaSelecionada]);
+  }, [turmaSelecionada, dateStr]);
 
   const alterarPresenca = async (alunoId: number, tipo: "PRESENTE" | "FALTOU") => {
+    if (somenteLeitura) return; // chamada travada, não permite edição
     const estadoAtual = presencas[alunoId];
     
     let novoStatus: "PRESENTE" | "FALTOU" | "AGENDADO";
@@ -147,7 +195,7 @@ export default function Presenca() {
       return copia;
     });
 
-    await salvarPresenca(turmaSelecionada.id_turma, alunoId, today, novoStatus);
+    await salvarPresenca(turmaSelecionada.id_turma, alunoId, dateStr, novoStatus);
     const faltas = await buscarTotalFaltasPorTurma(turmaSelecionada.id_turma);
     setTotalFaltas(faltas);
 
@@ -174,17 +222,48 @@ export default function Presenca() {
     });
   };
 
-  const hoje = new Date();
-  const diaHojeIdx = hoje.getDay() === 0 ? 6 : hoje.getDay() - 1;
+  // Dias que têm ao menos uma turma cadastrada (para montar os botões de dia)
+  const diasComTurmas = Array.from(new Set(turmas.map(t => Number(t.diaSemana)))).sort();
 
-  const turmasDeHoje = turmas
-    .filter(t => Number(t.diaSemana) === diaHojeIdx)
+  // Turmas do dia selecionado, ordenadas por horário
+  const turmasDoDia = turmas
+    .filter(t => Number(t.diaSemana) === diaSelecionado)
     .sort((a, b) => Number(a.horarioInicio) - Number(b.horarioInicio));
 
-  const presentes    = alunos.filter(a => presencas[a.id_aluno] === true).length;
-  const faltantes    = alunos.filter(a => presencas[a.id_aluno] === false).length;
+  const presentes   = alunos.filter(a => presencas[a.id_aluno] === true).length;
+  const faltantes   = alunos.filter(a => presencas[a.id_aluno] === false).length;
   const naoMarcados = alunos.length - presentes - faltantes;
   const percentPresente = alunos.length ? Math.round((presentes / alunos.length) * 100) : 0;
+
+  // Uma chamada é somente-leitura quando está no dia anterior E já foi salva,
+  // ou quando a data é anterior a ontem (>= 2 dias atrás).
+  // Como a tela só oferece "hoje" e "ontem", o único caso de bloqueio é:
+  // diaAtivo === "ontem" && chamadaSalva === true
+  const somenteLeitura = diaAtivo === "ontem" && chamadaSalva;
+
+  const handleSalvarChamada = async () => {
+    if (!turmaSelecionada) return;
+    setSalvando(true);
+    try {
+      const resultado = await salvarChamada(turmaSelecionada.id_turma, dateStr);
+      setChamadaSalva(true);
+      toast.current?.show({
+        severity: "success",
+        summary: resultado.jaExistia ? "Chamada Atualizada" : "Chamada Salva",
+        detail: resultado.mensagem,
+        life: 3000,
+      });
+    } catch (err) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Erro",
+        detail: "Não foi possível salvar a chamada.",
+        life: 3000,
+      });
+    } finally {
+      setSalvando(false);
+    }
+  };
 
   return (
     <div className="p-4" style={{ maxWidth: 860, margin: "0 auto" }}>
@@ -197,91 +276,166 @@ export default function Presenca() {
           onClick={() => navigate("/Horarios")}
           tooltip="Voltar ao início"
         />
-        <div>
+        <div className="flex-1">
           <h2 className="text-2xl font-bold m-0 text-900">Registro de Chamada</h2>
-          <p className="text-sm text-500 m-0 capitalize">{todayFormatted}</p>
+          <p className="text-sm text-500 m-0 capitalize">{dataFormatada}</p>
         </div>
+        {/* Seletor Hoje / Ontem */}
+        <SelectButton
+          value={diaAtivo}
+          options={opcoesDia}
+          onChange={e => e.value && setDiaAtivo(e.value)}
+          className="p-button-sm"
+        />
       </div>
 
-      <Card className="mb-4 shadow-2">
-        <div className="flex flex-column md:flex-row align-items-start md:align-items-center gap-3">
-        <div className="flex-1">
-            <label className="block text-xs font-bold text-600 uppercase mb-1">
-              Selecionar Turma — {DIAS[diaHojeIdx]}
-            </label>
-            {turmasDeHoje.length === 0 ? (
-              <div className="p-3 border-round border-1 surface-border text-500 text-sm">
-                <i className="pi pi-calendar-times mr-2" />
-                Nenhuma turma cadastrada para hoje.
-              </div>
-            ) : (
-              <Dropdown
-                value={turmaSelecionada}
-                options={turmasDeHoje}
-                onChange={e => setTurmaSelecionada(e.value)}
-                optionLabel="modalidade"
-                placeholder="Escolha uma turma..."
-                className="w-full"
-                itemTemplate={opt => (
-                  <div className="flex align-items-center gap-2">
-                    <i className="pi pi-clock text-primary" />
-                    <span className="font-bold">
-                      {String(Math.round(Number(opt.horarioInicio))).padStart(2,"0")}h
-                      {" às "}
-                      {String(Math.round(Number(opt.horarioFim))).padStart(2,"0")}h
-                    </span>
-                    <span className="text-600">—</span>
-                    <span>{opt.modalidade}</span>
-                    <Tag
-                      value={`${opt.totalAlunos}/${opt.capacidadeMaxima}`}
-                      severity="info"
-                      className="ml-auto text-xs"
-                    />
-                  </div>
-                )}
-                valueTemplate={opt => opt ? (
-                  <div className="flex align-items-center gap-2">
-                    <i className="pi pi-clock text-primary" />
-                    <span className="font-bold">
-                      {String(Math.round(Number(opt.horarioInicio))).padStart(2,"0")}h
-                      {" às "}
-                      {String(Math.round(Number(opt.horarioFim))).padStart(2,"0")}h
-                    </span>
-                    <span className="text-600">—</span>
-                    <span>{opt.modalidade}</span>
-                  </div>
-                ) : <span className="text-400">Escolha uma turma...</span>}
-              />
-            )}
-          </div>
-          {turmaSelecionada && (
-            <div className="flex gap-3">
-              <div className="text-center px-3 py-2 border-round" style={{ background: "#f0fdf4", border: "1px solid #22c55e" }}>
-                <div className="text-lg font-bold text-green-700">{presentes}</div>
-                <div className="text-xs text-green-600">Presentes</div>
-              </div>
-              <div className="text-center px-3 py-2 border-round" style={{ background: "#fef2f2", border: "1px solid #ef4444" }}>
-                <div className="text-lg font-bold text-red-700">{faltantes}</div>
-                <div className="text-xs text-red-600">Faltantes</div>
-              </div>
-              <div className="text-center px-3 py-2 border-round" style={{ background: "#fafafa", border: "1px solid #d1d5db" }}>
-                <div className="text-lg font-bold text-gray-700">{naoMarcados}</div>
-                <div className="text-xs text-gray-500">Não marcados</div>
-              </div>
-            </div>
-          )}
+      {/* ── Painel 1: Seleção de Dia da Semana ── */}
+      <Card className="mb-3 shadow-1">
+        <div className="mb-2">
+          <span className="text-xs font-bold text-600 uppercase">Dia da semana</span>
         </div>
+        {diasComTurmas.length === 0 ? (
+          <div className="text-sm text-500 p-2">
+            <i className="pi pi-calendar-times mr-2" />
+            Nenhuma turma cadastrada.
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {diasComTurmas.map(diaId => {
+              const ehHoje = diaId === diaSemanaIdx(hoje);
+              const ehOntem = diaId === diaSemanaIdx(ontem);
+              const ativo = diaSelecionado === diaId;
 
-        {turmaSelecionada && (
-          <div className="mt-3">
-            <div className="flex justify-content-between text-xs text-500 mb-1">
-              <span>Presença hoje</span>
-              <span>{percentPresente}%</span>
-            </div>
-            <ProgressBar value={percentPresente} showValue={false} style={{ height: "6px" }} />
+              return (
+                <button
+                  key={diaId}
+                  onClick={() => {
+                    setDiaSelecionado(diaId);
+                    setTurmaSelecionada(null);
+                    setAlunos([]);
+                    setPresencas({});
+                    setTotalFaltas(0);
+                    setChamadaSalva(false);
+                  }}
+                  className="border-round font-semibold text-sm px-3 py-2 cursor-pointer transition-all"
+                  style={{
+                    border: ativo ? "2px solid #3b82f6" : "2px solid #e5e7eb",
+                    background: ativo ? "#eff6ff" : "#fafafa",
+                    color: ativo ? "#1d4ed8" : "#374151",
+                    outline: "none",
+                    position: "relative",
+                  }}
+                >
+                  {DIAS_CURTOS[diaId]}
+                  {/* Indicador visual de "hoje" ou "ontem" */}
+                  {(ehHoje || ehOntem) && (
+                    <span
+                      className="absolute"
+                      style={{
+                        top: -6, right: -6,
+                        width: 10, height: 10,
+                        borderRadius: "50%",
+                        background: ehHoje ? "#22c55e" : "#f59e0b",
+                        border: "2px solid #fff",
+                      }}
+                    />
+                  )}
+                </button>
+              );
+            })}
           </div>
         )}
+        {/* Legenda */}
+        <div className="flex gap-3 mt-3">
+          <div className="flex align-items-center gap-1 text-xs text-500">
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#22c55e", display: "inline-block" }} />
+            Hoje
+          </div>
+          <div className="flex align-items-center gap-1 text-xs text-500">
+            <span style={{ width: 10, height: 10, borderRadius: "50%", background: "#f59e0b", display: "inline-block" }} />
+            Ontem
+          </div>
+        </div>
       </Card>
+
+      {/* ── Painel 2: Seleção de Horário ── */}
+      {diaSelecionado !== null && (
+        <Card className="mb-4 shadow-1">
+          <div className="mb-2 flex align-items-center justify-content-between">
+            <span className="text-xs font-bold text-600 uppercase">
+              Horários — {DIAS[diaSelecionado]}
+            </span>
+            {turmaSelecionada && (
+              <div className="flex gap-2">
+                <div className="text-center px-3 py-1 border-round" style={{ background: "#f0fdf4", border: "1px solid #22c55e" }}>
+                  <span className="text-sm font-bold text-green-700">{presentes}</span>
+                  <span className="text-xs text-green-600 ml-1">Pres.</span>
+                </div>
+                <div className="text-center px-3 py-1 border-round" style={{ background: "#fef2f2", border: "1px solid #ef4444" }}>
+                  <span className="text-sm font-bold text-red-700">{faltantes}</span>
+                  <span className="text-xs text-red-600 ml-1">Falt.</span>
+                </div>
+                <div className="text-center px-3 py-1 border-round" style={{ background: "#fafafa", border: "1px solid #d1d5db" }}>
+                  <span className="text-sm font-bold text-gray-700">{naoMarcados}</span>
+                  <span className="text-xs text-gray-500 ml-1">N/M</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {turmasDoDia.length === 0 ? (
+            <div className="text-sm text-500 p-2">
+              <i className="pi pi-clock mr-2" />
+              Nenhuma turma neste dia.
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {turmasDoDia.map(turma => {
+                const ativo = turmaSelecionada?.id_turma === turma.id_turma;
+                const total = Math.round(Number(turma.totalAlunos || 0));
+                const max   = Math.round(Number(turma.capacidadeMaxima || 6));
+                const cheia = total >= max;
+
+                return (
+                  <button
+                    key={turma.id_turma}
+                    onClick={() => setTurmaSelecionada(ativo ? null : turma)}
+                    className="border-round text-sm cursor-pointer transition-all flex flex-column align-items-center"
+                    style={{
+                      border: ativo ? "2px solid #3b82f6" : "2px solid #e5e7eb",
+                      background: ativo ? "#eff6ff" : "#fafafa",
+                      color: ativo ? "#1d4ed8" : "#374151",
+                      outline: "none",
+                      padding: "0.5rem 1rem",
+                      minWidth: 90,
+                    }}
+                  >
+                    <span className="font-bold">
+                      {String(Math.round(Number(turma.horarioInicio))).padStart(2, "0")}h
+                    </span>
+                    <span className="text-xs" style={{ opacity: 0.75 }}>{turma.modalidade}</span>
+                    <Tag
+                      value={`${total}/${max}`}
+                      severity={cheia ? "danger" : "success"}
+                      style={{ fontSize: "9px", padding: "1px 5px", marginTop: 4 }}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {turmaSelecionada && (
+            <div className="mt-3">
+              <div className="flex justify-content-between text-xs text-500 mb-1">
+                <span>Presença {diaAtivo === "hoje" ? "hoje" : "ontem"}</span>
+                <span>{percentPresente}%</span>
+              </div>
+              <ProgressBar value={percentPresente} showValue={false} style={{ height: "6px" }} />
+            </div>
+          )}
+        </Card>
+      )}
 
       {turmaSelecionada && (
         <Card className="shadow-2">
@@ -346,41 +500,97 @@ export default function Presenca() {
                     
                       {isPresente && <Tag value="Presente" severity="success" icon="pi pi-check" className="text-xs" />}
                       {isFaltante && <Tag value="Faltou" severity="danger" icon="pi pi-times" className="text-xs" />}
+                      {!isPresente && !isFaltante && somenteLeitura && (
+                        <Tag value="Não marcado" severity="secondary" className="text-xs" />
+                      )}
                      
-                      <div className="flex align-items-center gap-1">
-                        <Checkbox
-                          inputId={`present-${aluno.id_aluno}`}
-                          checked={isPresente}
-                          onChange={() => alterarPresenca(aluno.id_aluno, "PRESENTE")}
-                        />
-                        <label htmlFor={`present-${aluno.id_aluno}`} className="text-xs text-green-700 font-semibold cursor-pointer">
-                          Presente
-                        </label>
-                      </div>
-                      <div className="flex align-items-center gap-1">
-                        <Checkbox
-                          inputId={`absent-${aluno.id_aluno}`}
-                          checked={isFaltante}
-                          onChange={() => alterarPresenca(aluno.id_aluno, "FALTOU")}
-                        />
-                        <label htmlFor={`absent-${aluno.id_aluno}`} className="text-xs text-red-700 font-semibold cursor-pointer">
-                          Faltou
-                        </label>
-                      </div>
+                      {!somenteLeitura && (
+                        <>
+                          <div className="flex align-items-center gap-1">
+                            <Checkbox
+                              inputId={`present-${aluno.id_aluno}`}
+                              checked={isPresente}
+                              onChange={() => alterarPresenca(aluno.id_aluno, "PRESENTE")}
+                            />
+                            <label htmlFor={`present-${aluno.id_aluno}`} className="text-xs text-green-700 font-semibold cursor-pointer">
+                              Presente
+                            </label>
+                          </div>
+                          <div className="flex align-items-center gap-1">
+                            <Checkbox
+                              inputId={`absent-${aluno.id_aluno}`}
+                              checked={isFaltante}
+                              onChange={() => alterarPresenca(aluno.id_aluno, "FALTOU")}
+                            />
+                            <label htmlFor={`absent-${aluno.id_aluno}`} className="text-xs text-red-700 font-semibold cursor-pointer">
+                              Faltou
+                            </label>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
               })}
             </div>
           )}
+
+          {/* Rodapé — botão salvar chamada */}
+          {!loading && alunos.length > 0 && (
+            <>
+              <Divider className="mb-2 mt-3" />
+              <div className="flex align-items-center justify-content-between gap-3 pt-1">
+                {somenteLeitura ? (
+                  <div
+                    className="flex align-items-center gap-2 w-full p-3 border-round"
+                    style={{ background: "#fef9ec", border: "1px solid #f59e0b" }}
+                  >
+                    <i className="pi pi-lock text-orange-500 text-lg" />
+                    <div>
+                      <span className="text-sm font-bold text-orange-700">Chamada encerrada — somente leitura</span>
+                      <p className="text-xs text-orange-600 m-0 mt-1">
+                        Esta chamada foi salva e não pode mais ser editada. Chamadas só podem ser alteradas no mesmo dia ou no dia seguinte.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {chamadaSalva ? (
+                      <div className="flex align-items-center gap-2">
+                        <i className="pi pi-check-circle text-green-500 text-lg" />
+                        <span className="text-sm font-semibold text-green-600">
+                          Chamada salva
+                        </span>
+                        <span className="text-xs text-500">(clique em salvar novamente para atualizar)</span>
+                      </div>
+                    ) : (
+                      <div className="flex align-items-center gap-2 text-400">
+                        <i className="pi pi-info-circle" />
+                        <span className="text-xs">Chamada ainda não foi salva {diaAtivo === "hoje" ? "hoje" : "para ontem"}.</span>
+                      </div>
+                    )}
+                    <Button
+                      label={chamadaSalva ? "Atualizar Chamada" : "Salvar Chamada"}
+                      icon={salvando ? "pi pi-spin pi-spinner" : chamadaSalva ? "pi pi-refresh" : "pi pi-save"}
+                      className={chamadaSalva ? "p-button-outlined p-button-success p-button-sm font-bold" : "p-button-success p-button-sm font-bold"}
+                      disabled={salvando || naoMarcados === alunos.length}
+                      tooltip={naoMarcados === alunos.length ? "Registre a presença de ao menos um aluno antes de salvar" : undefined}
+                      tooltipOptions={{ position: "top" }}
+                      onClick={handleSalvarChamada}
+                    />
+                  </>
+                )}
+              </div>
+            </>
+          )}
         </Card>
       )}
 
-      {!turmaSelecionada && turmasDeHoje.length > 0 && (
+      {diaSelecionado !== null && !turmaSelecionada && turmasDoDia.length > 0 && (
         <div className="flex flex-column align-items-center justify-content-center text-center py-6 text-400">
           <i className="pi pi-check-square text-5xl mb-3" style={{ color: "#93c5fd" }} />
-          <h3 className="text-700 font-semibold">Selecione uma turma acima</h3>
-          <p className="text-sm">para registrar a chamada de hoje ({DIAS[diaHojeIdx]}).</p>
+          <h3 className="text-700 font-semibold">Selecione um horário acima</h3>
+          <p className="text-sm">para registrar a chamada de {diaAtivo === "hoje" ? "hoje" : "ontem"} ({DIAS[diaSelecionado]}).</p>
         </div>
       )}
     </div>

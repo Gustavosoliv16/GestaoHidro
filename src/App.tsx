@@ -7,6 +7,7 @@ import Alunos from "../src/pages/Cadastros";
 import Footer from "../src/components/layout/Footer";
 import Horarios from "./pages/Horarios";
 import Prensenca from "./pages/Presenca";
+import Relatorios from "./pages/Relatorios";
 import "./App.css";
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="/alunos" element={<Alunos />} />
             <Route path="/Horarios" element={<Horarios />} />
             <Route path="/Presenca" element={<Prensenca />} />
+            <Route path="/Relatorios" element={<Relatorios />} />
           </Routes>
         </main>
 

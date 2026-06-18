@@ -82,6 +82,7 @@ export default function Menutopbar() {
       <Tooltip target=".button-users" content="Cadastros" position="bottom" />
       <Tooltip target=".button-schedules" content="Horarios" position="bottom" />
       <Tooltip target=".button-attendance" content="Chamada" position="bottom" />
+      <Tooltip target=".button-reports" content="Relatórios" position="bottom" />
 
       <button
         onClick={() => navigate("/")}
@@ -108,6 +109,12 @@ export default function Menutopbar() {
         className="button-attendance p-link inline-flex justify-content-center align-items-center text-white h-3rem w-3rem border-circle hover:bg-white-alpha-10 transition-all transition-duration-200"
       >
         <i className="pi pi-check-square text-2xl"></i>
+      </button>
+      <button
+        onClick={() => navigate("/Relatorios")}
+        className="button-reports p-link inline-flex justify-content-center align-items-center text-white h-3rem w-3rem border-circle hover:bg-white-alpha-10 transition-all transition-duration-200"
+      >
+        <i className="pi pi-chart-bar text-2xl"></i>
       </button>
     </div>
   );

@@ -8,11 +8,11 @@ import CadastroAluno from "../components/CadastroAluno";
 import Turmas from "../components/layout/Turmas"; 
 import { Divider } from "primereact/divider";
 import Financeiro from "../components/Financeiro";
+import Relatorios from "./Relatorios";
 
 export default function Alunos() {
-
   const [viewAtiva, setViewAtiva] = useState<
-    "consultar" | "cadastro" | "editar" | "status" | "modalidades" | "turmas" | "pagamentos"
+    "consultar" | "cadastro" | "editar" | "status" | "modalidades" | "turmas" | "pagamentos" | "relatorios"
   >("consultar");
   
   const [alunoSelecionado, setAlunoSelecionado] = useState<any | null>(null);
@@ -102,7 +102,7 @@ export default function Alunos() {
         icon: "pi pi-server",
         expanded: true,
         items: [
-          { key: "1_1", icon: "pi pi-book", label: "Relatorios" },
+          { key: "1_1", icon: "pi pi-book", label: "Relatorios", command: () => setViewAtiva("relatorios") },
           { key: "1_2", icon: "pi pi-print", label: "Imprimir" },
           {
             key: "1_3",
@@ -184,6 +184,7 @@ export default function Alunos() {
           {viewAtiva === "modalidades" && <Modalidades />}
           {viewAtiva === "turmas" && <Turmas />}
           {viewAtiva === "pagamentos" && <Financeiro />}
+          {viewAtiva === "relatorios" && <Relatorios />}
 
           {(viewAtiva === "consultar" || viewAtiva === "editar" || viewAtiva === "status") && (
             <div className="w-full">

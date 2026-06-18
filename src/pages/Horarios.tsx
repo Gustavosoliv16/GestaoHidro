@@ -13,8 +13,7 @@ import {
   criarTurma, 
   buscarAlunosDaTurma, 
   vincularAlunoTurma, 
-  desvincularAlunoTurma,
-  excluirTurma 
+  desvincularAlunoTurma
 } from "../services/TurmaService";
 
 async function buscarTodosAlunosDoSistema() {
@@ -33,20 +32,35 @@ const formatarHora = (hora: any): string => {
   return String(h).padStart(2, "0");
 };
 
-const obterEstiloTurma = (idTurma: number, isDark: boolean) => {
-  const cores = [
-    { bg: isDark ? "#ffff00" : "#eff6ff", border: "#5f5100", text: isDark ? "#93c5fd" : "#1e3a8a", badge: "success" },       // Blue
-    { bg: isDark ? "#312c48" : "#e6fffa", border: "#2dd4bf", text: isDark ? "#5eead4" : "#234e52", badge: "success" },    // Teal
-    { bg: isDark ? "#312c48" : "#faf5ff", border: "#5c13ec", text: isDark ? "#927ee6" : "#553c9a", badge: "success" },    // Purple
-    { bg: isDark ? "#3a4240" : "#eef2ff", border: "#6366f1", text: isDark ? "#a5b4fc" : "#312e81", badge: "success" },    // Indigo
-    { bg: isDark ? "#3a4240" : "#fff7ed", border: "#f97316", text: isDark ? "#fdba74" : "#7c2d12", badge: "success" },     // Orange
-    { bg: isDark ? "#3a4240" : "#fdf2f8", border: "#ec4899", text: isDark ? "#f9a8d4" : "#701a75", badge: "success" },     // Pink
-    { bg: isDark ? "#3a4240" : "#ecfeff", border: "#06b6d4", text: isDark ? "#67e8f9" : "#083344", badge: "success" },       // Cyan
-    { bg: isDark ? "#3a4240" : "#fefce8", border: "#eab308", text: isDark ? "#fde047" : "#713f12", badge: "success" },    // Yellow
-    { bg: isDark ? "#3a4240" : "#f0fdf4", border: "#22c55e", text: isDark ? "#86efac" : "#14532d", badge: "success" },    // Green
-  ];
-  const idSafe = Number.isFinite(idTurma) ? Math.round(idTurma) : 0;
-  return cores[idSafe % cores.length];
+// Mapeamento fixo de cores por modalidade (chaves sem acento, lowercase)
+const COR_POR_MODALIDADE: Record<string, { bg: string; bgDark: string; border: string; text: string; textDark: string }> = {
+  "hidroginastica":  { bg: "#fdf2f8", bgDark: "#3a2535", border: "#ec4899", text: "#9d174d", textDark: "#f9a8d4" },
+  "natacao bebe":    { bg: "#eff6ff", bgDark: "#1e3a5f", border: "#3b82f6", text: "#1e40af", textDark: "#93c5fd" },
+  "natacao infantil":{ bg: "#f0fdf4", bgDark: "#14362b", border: "#22c55e", text: "#15803d", textDark: "#86efac" },
+  "natacao adulto":  { bg: "#fff7ed", bgDark: "#3a2010", border: "#f97316", text: "#c2410c", textDark: "#fdba74" },
+  "fisioterapia":    { bg: "#fef2f2", bgDark: "#3a1515", border: "#ef4444", text: "#b91c1c", textDark: "#fca5a5" },
+};
+
+const COR_FALLBACK = { bg: "#f8fafc", bgDark: "#2d3748", border: "#94a3b8", text: "#475569", textDark: "#cbd5e1" };
+
+// Remove acentos e normaliza para busca sem depender de grafia exata
+function normalizarChave(s: string): string {
+  return s
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+const obterEstiloTurma = (nomeModalidade: string, isDark: boolean) => {
+  const chave = normalizarChave(nomeModalidade ?? "");
+  const cor = COR_POR_MODALIDADE[chave] ?? COR_FALLBACK;
+  return {
+    bg:     isDark ? cor.bgDark : cor.bg,
+    border: cor.border,
+    text:   isDark ? cor.textDark : cor.text,
+    badge:  "success",
+  };
 };
 
 export default function GradeHoraria() {
@@ -216,22 +230,6 @@ export default function GradeHoraria() {
     }
   };
 
-  
-  const gerenciarExclusaoTurma = async () => {
-    if (!turmaSelecionada) return;
-
-    if (confirm(`Tem certeza que deseja apagar permanentemente esta turma de ${turmaSelecionada.modalidade}?.`)) {
-      try {
-        const resposta = await excluirTurma(turmaSelecionada.id_turma);
-        toast.current?.show({ severity: "success", summary: "Excluída", detail: resposta.mensagem });
-        setModalDetalhesVisible(false);
-        carregarDadosDoCalendario();
-      } catch (error) {
-        toast.current?.show({ severity: "error", summary: "Erro", detail: "Falha ao apagar turma." });
-      }
-    }
-  };
-
   return (
     <div className="w-full h-full p-2 relative">
       <Toast ref={toast} />
@@ -286,7 +284,7 @@ export default function GradeHoraria() {
                         const total = Math.round(Number(turma.totalAlunos || 0));
                         const max = Math.round(Number(turma.capacidadeMaxima || 6));
                         const estaCheia = total >= max;
-                        const estilo = obterEstiloTurma(turma.id_turma, isDark);
+                        const estilo = obterEstiloTurma(turma.modalidade, isDark);
 
                         return (
                           <div key={turma.id_turma} onClick={(e) => handleCardClick(e, turma)}
@@ -395,8 +393,7 @@ export default function GradeHoraria() {
             </div>
 
            
-            <div className="border-top-1 surface-border pt-3 mt-2 flex justify-content-between">
-              <Button label="Excluir Turma" icon="pi pi-trash" onClick={gerenciarExclusaoTurma} className="p-button-outlined p-button-danger p-button-sm" />
+            <div className="border-top-1 surface-border pt-3 mt-2 flex justify-content-end">
               <div className="flex gap-2">
                 {(() => {
                   const eHojeADiaDaTurma = turmaSelecionada && diaAtualId === Number(turmaSelecionada.diaSemana);
