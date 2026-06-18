@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
+import { IconField } from "primereact/iconfield";
+import { InputIcon } from "primereact/inputicon";
 import { InputSwitch } from "primereact/inputswitch";
 import { Tag } from "primereact/tag";
 import {
@@ -22,6 +25,18 @@ export default function ListaAlunos({
 }: ListaAlunosProps) {
   const [alunos, setAlunos] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(false);
+  const [busca, setBusca] = useState("");
+
+  // Filtra por nome ou CPF (ignora formatação)
+  const alunosFiltrados = busca.trim() === ""
+    ? alunos
+    : alunos.filter(a => {
+        const termo = busca.toLowerCase().replace(/\D/g, "") || busca.toLowerCase();
+        const nomeBate  = a.nome?.toLowerCase().includes(busca.toLowerCase());
+        const cpfLimpo  = String(a.documento ?? "").replace(/\D/g, "");
+        const cpfBate   = cpfLimpo.includes(busca.replace(/\D/g, ""));
+        return nomeBate || cpfBate;
+      });
 
   const carregarDadosDoBanco = async () => {
     setCarregando(true);
@@ -125,42 +140,67 @@ export default function ListaAlunos({
     );
   };
 
-  const acoesTemplate = (rowData: any) => {
-    if (mode === "editar") {
-      return (
-        <Button
-          type="button"
-          icon="pi pi-pencil"
-          className="p-button-rounded p-button-text p-button-info"
-          onClick={() => onEditarAluno(rowData)}
-        />
-      );
+  const responsavelTemplate = (rowData: any) => {
+    if (!rowData.nomeResponsavel) {
+      return <span className="text-400 text-xs">—</span>;
     }
-
-    if (mode === "status") {
-      const ativo = rowData.ativo !== 0;
-      return (
-        <Button
-          type="button"
-          icon={ativo ? "pi pi-toggle-on" : "pi pi-toggle-off"}
-          className={`p-button-rounded p-button-text ${ativo ? "p-button-success" : "p-button-secondary"}`}
-          onClick={() => lidarComMudancaStatus(rowData)}
-        />
-      );
-    }
-
-    return null;
+    return (
+      <div className="flex flex-column">
+        <span className="text-sm font-semibold text-800">{rowData.nomeResponsavel}</span>
+        {rowData.telefoneResponsavel && (
+          <span className="text-xs text-500">{formatPhone(rowData.telefoneResponsavel)}</span>
+        )}
+      </div>
+    );
   };
+
+  const acoesTemplate = (rowData: any) => (
+    <div className="flex gap-1 justify-content-center">
+      <Button
+        icon="pi pi-pencil"
+        className="p-button-sm p-button-warning p-button-outlined"
+        tooltip="Editar aluno"
+        tooltipOptions={{ position: "top" }}
+        onClick={() => onEditarAluno(rowData)}
+      />
+    </div>
+  );
   return (
     <div className="card surface-card border-1 surface-border p-0 w-full">
+      {/* Barra de busca */}
+      <div className="flex align-items-center gap-2 p-3 border-bottom-1 surface-border">
+        <IconField iconPosition="left" className="flex-1">
+          <InputIcon className="pi pi-search" />
+          <InputText
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            placeholder="Buscar por nome ou CPF..."
+            className="w-full"
+          />
+        </IconField>
+        {busca && (
+          <Button
+            icon="pi pi-times"
+            className="p-button-text p-button-secondary p-button-sm"
+            tooltip="Limpar busca"
+            onClick={() => setBusca("")}
+          />
+        )}
+        {busca && (
+          <span className="text-xs text-500 white-space-nowrap">
+            {alunosFiltrados.length} resultado{alunosFiltrados.length !== 1 ? "s" : ""}
+          </span>
+        )}
+      </div>
+
       <DataTable
         tableStyle={{ tableLayout: "auto", width: "100%" }}
-        value={alunos}
+        value={alunosFiltrados}
         loading={carregando}
         stripedRows
         paginator
         rows={5}
-        emptyMessage="Nenhum aluno encontrado."
+        emptyMessage={busca ? `Nenhum aluno encontrado para "${busca}".` : "Nenhum aluno encontrado."}
         className="p-datatable-sm"
         scrollable
       >
@@ -194,6 +234,11 @@ export default function ListaAlunos({
           header="Modalidade"
           sortable
           style={{ minWidth: "140px", whiteSpace: "normal" }}
+        />
+        <Column
+          header="Responsável"
+          body={responsavelTemplate}
+          style={{ minWidth: "160px", whiteSpace: "normal" }}
         />
         <Column
           field="diaVencimento"

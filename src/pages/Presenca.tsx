@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
@@ -12,6 +13,11 @@ import Database from "@tauri-apps/plugin-sql";
 
 import { buscarTodasTurmas, buscarAlunosDaTurma } from "../services/TurmaService";
 import { salvarChamada, verificarChamadaSalva } from "../services/AttendanceService";
+import {
+  buscarReposicoesParaChamada,
+  marcarReposicaoRealizada,
+  ReposicaoChamada,
+} from "../services/ReposicaoService";
 
 async function getDb() {
   return await Database.load("sqlite:gestao_hidro.db");
@@ -34,11 +40,13 @@ async function salvarPresenca(idTurma: number, idAluno: number, date: string, st
   }
 }
 
-async function buscarTotalFaltasPorTurma(idTurma: number): Promise<number> {
+async function buscarTotalFaltasPorTurma(idTurma: number, mesReferencia: string): Promise<number> {
   const db = await getDb();
+  // mesReferencia no formato "YYYY-MM" — filtra só o mês atual
   const res: any[] = await db.select(
-    `SELECT COUNT(*) as total FROM AGENDA_CALENDARIO WHERE id_turma = $1 AND status = 'FALTOU'`,
-    [idTurma]
+    `SELECT COUNT(*) as total FROM AGENDA_CALENDARIO 
+     WHERE id_turma = $1 AND status = 'FALTOU' AND data_aula LIKE $2`,
+    [idTurma, `${mesReferencia}-%`]
   );
   return res[0]?.total ?? 0;
 }
@@ -109,6 +117,8 @@ export default function Presenca() {
   const [loading, setLoading] = useState(false);
   const [chamadaSalva, setChamadaSalva] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  const [reposicoes, setReposicoes] = useState<ReposicaoChamada[]>([]);
+  const [presencasReposicao, setPresencasReposicao] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     buscarTodasTurmas().then(lista => {
@@ -135,6 +145,8 @@ export default function Presenca() {
     setPresencas({});
     setTotalFaltas(0);
     setChamadaSalva(false);
+    setReposicoes([]);
+    setPresencasReposicao({});
   }, [diaAtivo]);
 
   useEffect(() => {
@@ -143,19 +155,26 @@ export default function Presenca() {
     Promise.all([
       buscarAlunosDaTurma(turmaSelecionada.id_turma),
       buscarPresencasComAlunos(turmaSelecionada.id_turma, dateStr),
-      buscarTotalFaltasPorTurma(turmaSelecionada.id_turma),
+      buscarTotalFaltasPorTurma(turmaSelecionada.id_turma, dateStr.slice(0, 7)),
       verificarChamadaSalva(turmaSelecionada.id_turma, dateStr),
-    ]).then(([listaAlunos, presencasDetalhadas, faltas, jaFoiSalva]) => {
+      buscarReposicoesParaChamada(turmaSelecionada.id_turma, dateStr),
+    ]).then(([listaAlunos, presencasDetalhadas, faltas, jaFoiSalva, listaReposicoes]) => {
       setAlunos(listaAlunos);
       const map: Record<number, boolean> = {};
       presencasDetalhadas.forEach(p => {
-        if (p.present !== null) {
-          map[p.id_aluno] = p.present;
-        }
+        if (p.present !== null) map[p.id_aluno] = p.present;
       });
       setPresencas(map);
       setTotalFaltas(faltas);
       setChamadaSalva(jaFoiSalva);
+      setReposicoes(listaReposicoes as ReposicaoChamada[]);
+      // Presença de reposição já registrada no AGENDA_CALENDARIO
+      const mapRep: Record<number, boolean> = {};
+      presencasDetalhadas.forEach(p => {
+        const eReposicao = (listaReposicoes as ReposicaoChamada[]).some(r => r.id_aluno === p.id_aluno);
+        if (eReposicao && p.present !== null) mapRep[p.id_aluno] = p.present;
+      });
+      setPresencasReposicao(mapRep);
       setLoading(false);
     });
   }, [turmaSelecionada, dateStr]);
@@ -196,7 +215,7 @@ export default function Presenca() {
     });
 
     await salvarPresenca(turmaSelecionada.id_turma, alunoId, dateStr, novoStatus);
-    const faltas = await buscarTotalFaltasPorTurma(turmaSelecionada.id_turma);
+    const faltas = await buscarTotalFaltasPorTurma(turmaSelecionada.id_turma, mesReferencia);
     setTotalFaltas(faltas);
 
     let msg = "";
@@ -235,11 +254,52 @@ export default function Presenca() {
   const naoMarcados = alunos.length - presentes - faltantes;
   const percentPresente = alunos.length ? Math.round((presentes / alunos.length) * 100) : 0;
 
-  // Uma chamada é somente-leitura quando está no dia anterior E já foi salva,
+  // Mês de referência derivado da data efetiva (ex: "2025-06")
+  const mesReferencia = dateStr.slice(0, 7);
   // ou quando a data é anterior a ontem (>= 2 dias atrás).
   // Como a tela só oferece "hoje" e "ontem", o único caso de bloqueio é:
   // diaAtivo === "ontem" && chamadaSalva === true
   const somenteLeitura = diaAtivo === "ontem" && chamadaSalva;
+
+  const alterarPresencaReposicao = async (rep: ReposicaoChamada, tipo: "PRESENTE" | "FALTOU") => {
+    if (somenteLeitura) return;
+    const atual = presencasReposicao[rep.id_aluno];
+    let novoStatus: "PRESENTE" | "FALTOU" | "AGENDADO";
+    let novoValor: boolean | undefined;
+
+    if (tipo === "PRESENTE") {
+      novoStatus = atual === true ? "AGENDADO" : "PRESENTE";
+      novoValor  = atual === true ? undefined  : true;
+    } else {
+      novoStatus = atual === false ? "AGENDADO" : "FALTOU";
+      novoValor  = atual === false ? undefined  : false;
+    }
+
+    setPresencasReposicao(prev => {
+      const copia = { ...prev };
+      if (novoValor === undefined) delete copia[rep.id_aluno];
+      else copia[rep.id_aluno] = novoValor;
+      return copia;
+    });
+
+    await salvarPresenca(turmaSelecionada.id_turma, rep.id_aluno, dateStr, novoStatus);
+
+    // Se marcou PRESENTE, atualiza status da reposição para REALIZADA
+    if (novoStatus === "PRESENTE") {
+      await marcarReposicaoRealizada(rep.id_reposicao);
+    }
+
+    toast.current?.show({
+      severity: novoStatus === "PRESENTE" ? "success" : novoStatus === "FALTOU" ? "warn" : "info",
+      summary: "Reposição",
+      detail: novoStatus === "PRESENTE"
+        ? `Presença de reposição registrada para ${rep.nome}`
+        : novoStatus === "FALTOU"
+        ? `Falta registrada para ${rep.nome}`
+        : `Marcação removida para ${rep.nome}`,
+      life: 2000,
+    });
+  };
 
   const handleSalvarChamada = async () => {
     if (!turmaSelecionada) return;
@@ -445,7 +505,7 @@ export default function Presenca() {
             Alunos Matriculados
             </span>
             <Tag
-              value={`Total de faltas acumuladas: ${totalFaltas}`}
+              value={`Faltas no mês: ${totalFaltas}`}
               severity={totalFaltas > 0 ? "danger" : "success"}
               icon={totalFaltas > 0 ? "pi pi-exclamation-triangle" : "pi pi-check"}
             />
@@ -533,6 +593,67 @@ export default function Presenca() {
                 );
               })}
             </div>
+          )}
+
+          {/* ── Seção Reposições ── */}
+          {!loading && reposicoes.length > 0 && (
+            <>
+              <Divider className="my-3">
+                <span className="text-xs font-bold text-600 uppercase px-2">
+                  <i className="pi pi-calendar-plus mr-1" />
+                  Reposições ({reposicoes.length})
+                </span>
+              </Divider>
+              <div className="flex flex-column gap-2">
+                {reposicoes.map(rep => {
+                  const isPresente = presencasReposicao[rep.id_aluno] === true;
+                  const isFaltante = presencasReposicao[rep.id_aluno] === false;
+                  return (
+                    <div
+                      key={rep.id_reposicao}
+                      className="flex align-items-center justify-content-between p-3 border-round border-1"
+                      style={{
+                        background:   isPresente ? "#f0fdf4" : isFaltante ? "#fef2f2" : "#eff6ff",
+                        borderColor:  isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#93c5fd",
+                        borderLeft: `4px solid ${isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#3b82f6"}`,
+                      }}
+                    >
+                      <div className="flex align-items-center gap-3">
+                        <div className="flex align-items-center justify-content-center border-circle font-bold text-white text-sm"
+                          style={{ width: 36, height: 36, background: isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#3b82f6", flexShrink: 0 }}>
+                          {rep.nome?.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-800 text-sm">{rep.nome}</div>
+                          <Tag value="Reposição" severity="info" className="text-xs mt-1" style={{ fontSize: "10px" }} />
+                        </div>
+                      </div>
+                      <div className="flex align-items-center gap-3">
+                        {isPresente && <Tag value="Presente" severity="success" icon="pi pi-check" className="text-xs" />}
+                        {isFaltante && <Tag value="Faltou"   severity="danger"  icon="pi pi-times" className="text-xs" />}
+                        {!somenteLeitura && (
+                          <>
+                            <div className="flex align-items-center gap-1">
+                              <Checkbox inputId={`rep-pres-${rep.id_aluno}`} checked={isPresente}
+                                onChange={() => alterarPresencaReposicao(rep, "PRESENTE")} />
+                              <label htmlFor={`rep-pres-${rep.id_aluno}`} className="text-xs text-green-700 font-semibold cursor-pointer">Presente</label>
+                            </div>
+                            <div className="flex align-items-center gap-1">
+                              <Checkbox inputId={`rep-falt-${rep.id_aluno}`} checked={isFaltante}
+                                onChange={() => alterarPresencaReposicao(rep, "FALTOU")} />
+                              <label htmlFor={`rep-falt-${rep.id_aluno}`} className="text-xs text-red-700 font-semibold cursor-pointer">Faltou</label>
+                            </div>
+                          </>
+                        )}
+                        {somenteLeitura && !isPresente && !isFaltante && (
+                          <Tag value="Não marcado" severity="secondary" className="text-xs" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
 
           {/* Rodapé — botão salvar chamada */}

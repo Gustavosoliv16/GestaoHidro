@@ -1,24 +1,29 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Button } from "primereact/button";
 import { PanelMenu } from "primereact/panelmenu";
 import { Sidebar } from "primereact/sidebar";
 import ListaAlunos from "../components/ListaAluno";
 import Modalidades from "../components/layout/Modalidades";
 import CadastroAluno from "../components/CadastroAluno";
-import Turmas from "../components/layout/Turmas"; 
+import Turmas from "../components/layout/Turmas";
 import { Divider } from "primereact/divider";
 import Financeiro from "../components/Financeiro";
 import Relatorios from "./Relatorios";
+import Reposicoes from "./Reposicoes";
 
 export default function Alunos() {
   const [viewAtiva, setViewAtiva] = useState<
-    "consultar" | "cadastro" | "editar" | "status" | "modalidades" | "turmas" | "pagamentos" | "relatorios"
+    "consultar" | "cadastro" | "status" | "modalidades" | "turmas" | "pagamentos" | "relatorios" | "reposicoes"
   >("consultar");
-  
+
   const [alunoSelecionado, setAlunoSelecionado] = useState<any | null>(null);
   const [showAside, setShowAside] = useState(false);
   const [atualizarTabelaGatilho, setAtualizarTabelaGatilho] = useState(0);
   const [expandedKeys, setExpandedKeys] = useState<any>({});
+
+  const trocarView = useCallback((view: typeof viewAtiva) => {
+    setViewAtiva(view);
+  }, []);
 
   const itensMenu = useMemo(
     () => [
@@ -32,26 +37,11 @@ export default function Alunos() {
             key: "0_1",
             label: "Consultar",
             icon: "pi pi-search",
-            command: () => {
-              setAlunoSelecionado(null);
-              setViewAtiva("consultar");
-            },
+            command: () => { setAlunoSelecionado(null); trocarView("consultar"); },
             items: [
-              {
-                label: "Alunos",
-                icon: "pi pi-user",
-                command: () => setViewAtiva("consultar"),
-              },
-              {
-                label: "Turmas",
-                icon: "pi pi-users",
-                command: () => setViewAtiva("turmas"),
-              },
-              {
-                label: "Modalidades",
-                icon: "pi pi-th-large",
-                command: () => setViewAtiva("modalidades"),
-              },
+              { label: "Alunos",      icon: "pi pi-user",     command: () => trocarView("consultar") },
+              { label: "Turmas",      icon: "pi pi-users",    command: () => trocarView("turmas") },
+              { label: "Modalidades", icon: "pi pi-th-large", command: () => trocarView("modalidades") },
             ],
           },
           {
@@ -59,40 +49,16 @@ export default function Alunos() {
             label: "Novo",
             icon: "pi pi-plus",
             items: [
-              {
-                key: "0_2_1",
-                label: "Aluno",
-                icon: "pi pi-user",
-                command: () => {
-                  setAlunoSelecionado(null);
-                  setViewAtiva("cadastro");
-                },
-              },
-              {
-                key: "0_2_2",
-                label: "Turmas",
-                icon: "pi pi-users",
-                command: () => setViewAtiva("turmas"),
-              },
-              {
-                key: "0_2_3",
-                label: "Modalidades",
-                icon: "pi pi-th-large",
-                command: () => setViewAtiva("modalidades"),
-              },
+              { key: "0_2_1", label: "Aluno",       icon: "pi pi-user",     command: () => { setAlunoSelecionado(null); trocarView("cadastro"); } },
+              { key: "0_2_2", label: "Turmas",      icon: "pi pi-users",    command: () => trocarView("turmas") },
+              { key: "0_2_3", label: "Modalidades", icon: "pi pi-th-large", command: () => trocarView("modalidades") },
             ],
           },
           {
             key: "0_3",
-            label: "Editar",
-            icon: "pi pi-pencil",
-            command: () => setViewAtiva("editar"),
-          },
-          {
-            key: "0_4",
             label: "Status",
             icon: "pi pi-info-circle",
-            command: () => setViewAtiva("status"),
+            command: () => trocarView("status"),
           },
         ],
       },
@@ -102,21 +68,14 @@ export default function Alunos() {
         icon: "pi pi-server",
         expanded: true,
         items: [
-          { key: "1_1", icon: "pi pi-book", label: "Relatorios", command: () => setViewAtiva("relatorios") },
-          { key: "1_2", icon: "pi pi-print", label: "Imprimir" },
-          {
-            key: "1_3",
-            icon: "pi pi-money-bill",
-            label: "Pagamento",
-            command: () => {
-              setAlunoSelecionado(null);
-              setViewAtiva("pagamentos");
-            },
-          },
+          { key: "1_1", icon: "pi pi-book",          label: "Relatorios",  command: () => trocarView("relatorios") },
+          { key: "1_2", icon: "pi pi-calendar-plus", label: "Reposições",  command: () => trocarView("reposicoes") },
+          { key: "1_3", icon: "pi pi-print",         label: "Imprimir" },
+          { key: "1_4", icon: "pi pi-money-bill",    label: "Pagamento",   command: () => { setAlunoSelecionado(null); trocarView("pagamentos"); } },
         ],
       },
     ],
-    [setAlunoSelecionado, setViewAtiva]
+    [trocarView]
   );
 
   const lidarComEditar = (aluno: any) => {
@@ -150,7 +109,7 @@ export default function Alunos() {
             text
             onClick={() => {
               setAlunoSelecionado(null);
-              setViewAtiva("consultar");
+              trocarView("consultar");
               toggleAll();
             }}
             className="p-button-sm w-full"
@@ -168,25 +127,26 @@ export default function Alunos() {
 
       <div className="flex-grow-1 min-w-0">
         <div className="card surface-card p-4 border-round shadow-1 w-full">
-          
+
           {viewAtiva === "cadastro" && (
             <CadastroAluno
               visivel={true}
               alunoParaEditar={alunoSelecionado}
-              aoFechar={() => setViewAtiva("consultar")}
+              aoFechar={() => trocarView("consultar")}
               aoSalvar={() => {
-                setViewAtiva("consultar");
+                trocarView("consultar");
                 setAtualizarTabelaGatilho((prev) => prev + 1);
               }}
             />
           )}
 
           {viewAtiva === "modalidades" && <Modalidades />}
-          {viewAtiva === "turmas" && <Turmas />}
-          {viewAtiva === "pagamentos" && <Financeiro />}
-          {viewAtiva === "relatorios" && <Relatorios />}
+          {viewAtiva === "turmas"      && <Turmas />}
+          {viewAtiva === "pagamentos"  && <Financeiro />}
+          {viewAtiva === "relatorios"  && <Relatorios />}
+          {viewAtiva === "reposicoes"  && <Reposicoes />}
 
-          {(viewAtiva === "consultar" || viewAtiva === "editar" || viewAtiva === "status") && (
+          {(viewAtiva === "consultar" || viewAtiva === "status") && (
             <div className="w-full">
               <h2 className="text-2xl font-bold mb-4 mt-0 text-900">
                 Consulta Geral de Alunos
@@ -224,7 +184,7 @@ export default function Alunos() {
               </Sidebar>
             </div>
           )}
-          
+
         </div>
       </div>
     </div>

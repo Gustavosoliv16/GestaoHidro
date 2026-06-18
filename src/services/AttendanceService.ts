@@ -212,7 +212,9 @@ export async function buscarChamadasSalvas(filtros?: {
   return await db.select(query, params);
 }
 
-/** Busca o detalhe individual de presença de cada aluno em uma chamada salva. */
+/** Busca o detalhe individual de presença de cada aluno em uma chamada salva.
+ *  Usa AGENDA_CALENDARIO como fonte — preserva o histórico mesmo que o aluno
+ *  tenha sido removido da turma ou inativado depois da chamada ser salva. */
 export async function buscarDetalhesChamada(
   idTurma: number,
   dataAula: string
@@ -224,14 +226,11 @@ export async function buscarDetalhesChamada(
        a.id_aluno,
        a.nome,
        a.tel as telefone,
-       COALESCE(ac.status, 'AGENDADO') as status
-     FROM ALUNO_HORARIO_PADRAO hp
-     JOIN ALUNOS a ON hp.id_aluno = a.id_aluno
-     LEFT JOIN AGENDA_CALENDARIO ac
-       ON ac.id_aluno = a.id_aluno
-      AND ac.id_turma = hp.id_turma
-      AND ac.data_aula = $2
-     WHERE hp.id_turma = $1
+       ac.status
+     FROM AGENDA_CALENDARIO ac
+     JOIN ALUNOS a ON ac.id_aluno = a.id_aluno
+     WHERE ac.id_turma = $1
+       AND ac.data_aula = $2
      ORDER BY a.nome ASC`,
     [idTurma, dataAula]
   );

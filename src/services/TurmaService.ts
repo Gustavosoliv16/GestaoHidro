@@ -6,9 +6,9 @@ async function obterBancoPreparado() {
 }
 
 export async function criarTurma(dadosTurma: {
-  diaSemana: number;  
-  horarioInicio: number;  
-  horarioFim: number;     
+  diaSemana: number;
+  horarioInicio: number;
+  horarioFim: number;
   idModalidade: number;
   capacidadeMaxima?: number;
 }) {
@@ -18,15 +18,9 @@ export async function criarTurma(dadosTurma: {
   const resultado: any = await db.execute(
     `INSERT INTO TURMAS (dia_semana, horario_inicio, horario_fim, id_modalidade, capacidade_maxima) 
      VALUES ($1, $2, $3, $4, $5)`,
-    [
-      dadosTurma.diaSemana,
-      dadosTurma.horarioInicio,
-      dadosTurma.horarioFim,
-      dadosTurma.idModalidade,
-      capMax,
-    ]
+    [dadosTurma.diaSemana, dadosTurma.horarioInicio, dadosTurma.horarioFim, dadosTurma.idModalidade, capMax]
   );
-  return { sucesso: true, idTurma: resultado.lastInsertId  };
+  return { sucesso: true, idTurma: resultado.lastInsertId };
 }
 
 export function parseDiaSemana(valor: string | number): number {
@@ -38,15 +32,13 @@ export function parseDiaSemana(valor: string | number): number {
 export function parseHora(valor: string | number): number {
   if (typeof valor === "number") return Math.round(valor);
   const s = String(valor).trim();
-  if (s.includes(":")) {
-    return parseInt(s.split(":")[0], 10);
-  }
+  if (s.includes(":")) return parseInt(s.split(":")[0], 10);
   return parseInt(s, 10);
 }
 
 export async function buscarTodasTurmas() {
   const db = await obterBancoPreparado();
-  
+
   const turmas: any[] = await db.select(`
     SELECT 
       t.id_turma,
@@ -61,7 +53,7 @@ export async function buscarTodasTurmas() {
     LEFT JOIN MODALIDADE m ON t.id_modalidade = m.id_modalidade
     ORDER BY t.dia_semana ASC, t.horario_inicio ASC
   `);
-  
+
   return turmas.map((t) => ({
     ...t,
     diaSemana:     parseDiaSemana(t.diaSemana),
@@ -72,7 +64,7 @@ export async function buscarTodasTurmas() {
 
 export async function buscarAlunosDaTurma(idTurma: number) {
   const db = await obterBancoPreparado();
-  
+
   const alunos: any[] = await db.select(`
     SELECT a.id_aluno, a.nome, a.tel as telefone, a.ativo
     FROM ALUNO_HORARIO_PADRAO hp
@@ -80,12 +72,23 @@ export async function buscarAlunosDaTurma(idTurma: number) {
     WHERE hp.id_turma = $1
     ORDER BY a.nome ASC
   `, [idTurma]);
-  
+
   return alunos;
 }
 
 export async function vincularAlunoTurma(idAluno: number, idTurma: number) {
   const db = await obterBancoPreparado();
+
+  // Bloqueia aluno inativo
+  const infoAluno: any[] = await db.select(
+    `SELECT ativo FROM ALUNOS WHERE id_aluno = $1`, [idAluno]
+  );
+  if (infoAluno.length === 0) {
+    return { sucesso: false, mensagem: "Aluno não encontrado." };
+  }
+  if (Number(infoAluno[0].ativo) === 0) {
+    return { sucesso: false, mensagem: "Aluno inativo não pode ser matriculado em uma turma." };
+  }
 
   const infoTurma: any[] = await db.select(`
     SELECT 
@@ -101,7 +104,6 @@ export async function vincularAlunoTurma(idAluno: number, idTurma: number) {
 
   const { capacidadeMaxima, totalAlunos } = infoTurma[0];
 
-
   if (totalAlunos >= capacidadeMaxima) {
     return { sucesso: false, mensagem: `A turma já atingiu o limite máximo de ${capacidadeMaxima} alunos.` };
   }
@@ -113,7 +115,6 @@ export async function vincularAlunoTurma(idAluno: number, idTurma: number) {
     );
     return { sucesso: true, mensagem: "Aluno vinculado à turma com sucesso!" };
   } catch (error: any) {
-
     if (error.toString().includes("UNIQUE constraint failed")) {
       return { sucesso: false, mensagem: "Este aluno já está matriculado nesta turma." };
     }
@@ -123,7 +124,7 @@ export async function vincularAlunoTurma(idAluno: number, idTurma: number) {
 
 export async function desvincularAlunoTurma(idAluno: number, idTurma: number) {
   const db = await obterBancoPreparado();
-  
+
   await db.execute(
     `DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_aluno = $1 AND id_turma = $2`,
     [idAluno, idTurma]
@@ -134,7 +135,7 @@ export async function desvincularAlunoTurma(idAluno: number, idTurma: number) {
 export async function verificarConflitoDeTurma(
   diaSemana: number,
   horarioInicio: number,
-  idTurmaExcluir?: number 
+  idTurmaExcluir?: number
 ): Promise<boolean> {
   const db = await obterBancoPreparado();
   const rows: any[] = await db.select(
@@ -166,7 +167,7 @@ export async function editarTurma(idTurma: number, dados: {
   return { sucesso: true, mensagem: "Turma atualizada com sucesso!" };
 }
 
-export async function excluirTurma(idTurma: number){
+export async function excluirTurma(idTurma: number) {
   const db = await obterBancoPreparado();
   await db.execute(`DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_turma = $1`, [idTurma]);
   await db.execute(`DELETE FROM TURMAS WHERE id_turma = $1`, [idTurma]);

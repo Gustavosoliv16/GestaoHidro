@@ -123,6 +123,28 @@ export default async function initDatabase(): Promise<void> {
 
   }
   try {
+    await db.execute(`ALTER TABLE ALUNOS ADD COLUMN id_responsavel INTEGER REFERENCES RESPONSAVEL(id_responsavel);`);
+  } catch (e) {
+    // coluna já existe — ignorar
+  }
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS "REPOSICAO_AULA" (
+        "id_reposicao"       INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        "id_aluno"           INTEGER NOT NULL,
+        "id_turma_reposicao" INTEGER NOT NULL,
+        "data_reposicao"     TEXT NOT NULL,
+        "status"             TEXT NOT NULL DEFAULT 'AGENDADA',
+        "observacao"         TEXT,
+        FOREIGN KEY("id_aluno")           REFERENCES "ALUNOS"("id_aluno"),
+        FOREIGN KEY("id_turma_reposicao") REFERENCES "TURMAS"("id_turma"),
+        UNIQUE("id_aluno", "id_turma_reposicao", "data_reposicao")
+      );
+    `);
+  } catch (e) {
+    // tabela já existe — ignorar
+  }
+  try {
     await db.execute(
       `UPDATE ALUNOS SET dia_vencimento = CAST(dia_vencimento AS INTEGER) WHERE dia_vencimento IS NOT NULL;`,
     );

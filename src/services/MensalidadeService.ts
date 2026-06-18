@@ -159,6 +159,26 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
       }
     }
   }
+
+  // Auto-inativar aluno se tiver mensalidade ATRASADA e ainda estiver ativo
+  const atrasadas: any[] = await db.select(
+    `SELECT COUNT(*) as total FROM MENSALIDADE WHERE id_aluno = $1 AND status = 'ATRASADO'`,
+    [idAluno]
+  );
+  const temAtrasada = Number(atrasadas[0]?.total ?? 0) > 0;
+
+  if (temAtrasada) {
+    // Inativa o aluno
+    await db.execute(
+      `UPDATE ALUNOS SET ativo = 0 WHERE id_aluno = $1 AND ativo = 1`,
+      [idAluno]
+    );
+    // Remove de todas as turmas
+    await db.execute(
+      `DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_aluno = $1`,
+      [idAluno]
+    );
+  }
 }
 
 export async function buscarMensalidadesDoAluno(idAluno: number): Promise<Mensalidade[]> {

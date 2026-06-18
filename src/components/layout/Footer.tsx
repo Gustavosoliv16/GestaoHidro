@@ -5,7 +5,7 @@ export default function Footer() {
     <Card className="border-noround m-0 surface-border">
       <div className="text-center text-600 text-sm py-2">
         <p>
-          &copy; 2026 Sistema de Gestão Hidro. Todos os direitos reservados.
+          &copy; 2026 Sistema de Gestão HidroFIT. Todos os direitos reservados.
         </p>
       </div>
     </Card>
