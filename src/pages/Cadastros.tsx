@@ -10,10 +10,12 @@ import { Divider } from "primereact/divider";
 import Financeiro from "../components/Financeiro";
 import Relatorios from "./Relatorios";
 import Reposicoes from "./Reposicoes";
+import Professores from "./Professores";
+import Impressao from "./Impressao";
 
 export default function Alunos() {
   const [viewAtiva, setViewAtiva] = useState<
-    "consultar" | "cadastro" | "status" | "modalidades" | "turmas" | "pagamentos" | "relatorios" | "reposicoes"
+    "consultar" | "cadastro" | "status" | "modalidades" | "turmas" | "pagamentos" | "relatorios" | "reposicoes" | "professores" | "impressao"
   >("consultar");
 
   const [alunoSelecionado, setAlunoSelecionado] = useState<any | null>(null);
@@ -39,9 +41,10 @@ export default function Alunos() {
             icon: "pi pi-search",
             command: () => { setAlunoSelecionado(null); trocarView("consultar"); },
             items: [
-              { label: "Alunos",      icon: "pi pi-user",     command: () => trocarView("consultar") },
-              { label: "Turmas",      icon: "pi pi-users",    command: () => trocarView("turmas") },
-              { label: "Modalidades", icon: "pi pi-th-large", command: () => trocarView("modalidades") },
+              { label: "Alunos",       icon: "pi pi-user",     command: () => trocarView("consultar") },
+              { label: "Turmas",       icon: "pi pi-users",    command: () => trocarView("turmas") },
+              { label: "Modalidades",  icon: "pi pi-th-large", command: () => trocarView("modalidades") },
+              { label: "Professores",  icon: "pi pi-id-card",  command: () => trocarView("professores") },
             ],
           },
           {
@@ -52,6 +55,7 @@ export default function Alunos() {
               { key: "0_2_1", label: "Aluno",       icon: "pi pi-user",     command: () => { setAlunoSelecionado(null); trocarView("cadastro"); } },
               { key: "0_2_2", label: "Turmas",      icon: "pi pi-users",    command: () => trocarView("turmas") },
               { key: "0_2_3", label: "Modalidades", icon: "pi pi-th-large", command: () => trocarView("modalidades") },
+              { key: "0_2_4", label: "Professores", icon: "pi pi-id-card",  command: () => trocarView("professores") },
             ],
           },
           {
@@ -70,7 +74,7 @@ export default function Alunos() {
         items: [
           { key: "1_1", icon: "pi pi-book",          label: "Relatorios",  command: () => trocarView("relatorios") },
           { key: "1_2", icon: "pi pi-calendar-plus", label: "Reposições",  command: () => trocarView("reposicoes") },
-          { key: "1_3", icon: "pi pi-print",         label: "Imprimir" },
+          { key: "1_3", icon: "pi pi-print",         label: "Imprimir",    command: () => trocarView("impressao") },
           { key: "1_4", icon: "pi pi-money-bill",    label: "Pagamento",   command: () => { setAlunoSelecionado(null); trocarView("pagamentos"); } },
         ],
       },
@@ -140,11 +144,13 @@ export default function Alunos() {
             />
           )}
 
-          {viewAtiva === "modalidades" && <Modalidades />}
-          {viewAtiva === "turmas"      && <Turmas />}
-          {viewAtiva === "pagamentos"  && <Financeiro />}
-          {viewAtiva === "relatorios"  && <Relatorios />}
-          {viewAtiva === "reposicoes"  && <Reposicoes />}
+          {viewAtiva === "modalidades"  && <Modalidades />}
+          {viewAtiva === "turmas"       && <Turmas />}
+          {viewAtiva === "pagamentos"   && <Financeiro />}
+          {viewAtiva === "relatorios"   && <Relatorios />}
+          {viewAtiva === "reposicoes"   && <Reposicoes />}
+          {viewAtiva === "professores"  && <Professores />}
+          {viewAtiva === "impressao"    && <Impressao />}
 
           {(viewAtiva === "consultar" || viewAtiva === "status") && (
             <div className="w-full">
@@ -154,7 +160,6 @@ export default function Alunos() {
               <ListaAlunos
                 onEditarAluno={lidarComEditar}
                 refreshTrigger={atualizarTabelaGatilho}
-                mode={viewAtiva}
               />
               <Sidebar
                 visible={showAside}

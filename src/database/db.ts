@@ -145,6 +145,18 @@ export default async function initDatabase(): Promise<void> {
     // tabela já existe — ignorar
   }
   try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS "PROFESSOR" (
+        "id_professor"  INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        "nome"          TEXT NOT NULL,
+        "id_modalidade" INTEGER,
+        FOREIGN KEY("id_modalidade") REFERENCES "MODALIDADE"("id_modalidade")
+      );
+    `);
+  } catch (e) {
+    // tabela já existe — ignorar
+  }
+  try {
     await db.execute(
       `UPDATE ALUNOS SET dia_vencimento = CAST(dia_vencimento AS INTEGER) WHERE dia_vencimento IS NOT NULL;`,
     );

@@ -1,4 +1,5 @@
 import Database from "@tauri-apps/plugin-sql";
+import { cancelarReposicoesDoAluno } from "./ReposicaoService";
 
 async function obterBanco() {
   return await Database.load("sqlite:gestao_hidro.db");
@@ -178,6 +179,8 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
       `DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_aluno = $1`,
       [idAluno]
     );
+    // Cancela todas as reposições agendadas do aluno
+    await cancelarReposicoesDoAluno(idAluno);
   }
 }
 

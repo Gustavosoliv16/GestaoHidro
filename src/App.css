@@ -9,6 +9,12 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
+
+  /* ── HydroFit brand tokens ── */
+  --brand-teal:       #5BC8D4;
+  --brand-teal-dark:  #3AAFBB;
+  --brand-teal-light: #a8e8ee;
+  --brand-teal-bg:    #eaf9fb;
 }
 
 html, body {
@@ -38,20 +44,20 @@ main {
 }
 
 .custom-calendar .p-datepicker-header {
-  background: var(--blue-50) !important;
-  border-bottom: 1px solid var(--blue-100) !important;
+  background: var(--brand-teal-bg) !important;
+  border-bottom: 1px solid var(--brand-teal-light) !important;
   border-radius: 12px 12px 0 0 !important;
   padding: 0.75rem 1rem !important;
 }
 
 .custom-calendar .p-datepicker-title,
 .custom-calendar .p-datepicker-header .p-link {
-  color: var(--blue-900) !important;
+  color: var(--brand-teal-dark) !important;
   font-weight: 700;
 }
 
 .custom-calendar .p-datepicker table th {
-  color: var(--blue-700);
+  color: var(--brand-teal-dark);
   font-weight: 600;
   font-size: 0.85rem;
 }
@@ -67,20 +73,20 @@ main {
 }
 
 .custom-calendar .p-datepicker table td > span.p-highlight {
-  background: var(--blue-600) !important;
+  background: var(--brand-teal) !important;
   color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(29, 78, 216, 0.3);
+  box-shadow: 0 2px 6px rgba(91, 200, 212, 0.4);
 }
 
 .custom-calendar .p-datepicker table td > span:not(.p-highlight):hover {
-  background: var(--blue-50) !important;
-  color: var(--blue-900) !important;
+  background: var(--brand-teal-bg) !important;
+  color: var(--brand-teal-dark) !important;
 }
 
 .custom-calendar .p-datepicker table td.p-datepicker-today > span {
-  border: 2px solid var(--blue-500) !important;
+  border: 2px solid var(--brand-teal) !important;
   background: transparent;
-  color: var(--blue-900);
+  color: var(--brand-teal-dark);
   font-weight: bold;
 }
 

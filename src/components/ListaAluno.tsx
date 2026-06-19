@@ -15,13 +15,11 @@ import {
 interface ListaAlunosProps {
   onEditarAluno: (aluno: any) => void;
   refreshTrigger: number;
-  mode?: "consultar" | "editar" | "status";
 }
 
 export default function ListaAlunos({
   onEditarAluno,
   refreshTrigger,
-  mode = "consultar",
 }: ListaAlunosProps) {
   const [alunos, setAlunos] = useState<any[]>([]);
   const [carregando, setCarregando] = useState(false);
@@ -31,10 +29,9 @@ export default function ListaAlunos({
   const alunosFiltrados = busca.trim() === ""
     ? alunos
     : alunos.filter(a => {
-        const termo = busca.toLowerCase().replace(/\D/g, "") || busca.toLowerCase();
-        const nomeBate  = a.nome?.toLowerCase().includes(busca.toLowerCase());
-        const cpfLimpo  = String(a.documento ?? "").replace(/\D/g, "");
-        const cpfBate   = cpfLimpo.includes(busca.replace(/\D/g, ""));
+        const nomeBate = a.nome?.toLowerCase().includes(busca.toLowerCase());
+        const cpfLimpo = String(a.documento ?? "").replace(/\D/g, "");
+        const cpfBate  = cpfLimpo.includes(busca.replace(/\D/g, ""));
         return nomeBate || cpfBate;
       });
 
@@ -53,15 +50,6 @@ export default function ListaAlunos({
   useEffect(() => {
     carregarDadosDoBanco();
   }, [refreshTrigger]);
-
-  const lidarComMudancaStatus = async (aluno: any) => {
-    try {
-      await alternarStatusAluno(aluno.id_aluno, aluno.ativo ?? 1);
-      carregarDadosDoBanco();
-    } catch (erro) {
-      console.error("Erro ao mudar status:", erro);
-    }
-  };
 
   const matriculaTemplate = (rowData: any) => {
     return <span className="font-mono text-gray-600">#{rowData.id_aluno}</span>;

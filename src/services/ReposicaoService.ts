@@ -144,20 +144,12 @@ export async function marcarReposicaoRealizada(
       [idReposicao]
     );
 
-    // Insere presença — upsert via try/catch
-    try {
-      await db.execute(
-        `INSERT INTO AGENDA_CALENDARIO (id_turma, id_aluno, data_aula, status)
-         VALUES ($1, $2, $3, 'PRESENTE')`,
-        [id_turma_reposicao, id_aluno, data_reposicao]
-      );
-    } catch {
-      await db.execute(
-        `UPDATE AGENDA_CALENDARIO SET status = 'PRESENTE'
-         WHERE id_turma = $1 AND id_aluno = $2 AND data_aula = $3`,
-        [id_turma_reposicao, id_aluno, data_reposicao]
-      );
-    }
+    // Upsert atômico via INSERT OR REPLACE (AGENDA_CALENDARIO tem UNIQUE(id_aluno, data_aula, id_turma))
+    await db.execute(
+      `INSERT OR REPLACE INTO AGENDA_CALENDARIO (id_turma, id_aluno, data_aula, status)
+       VALUES ($1, $2, $3, 'PRESENTE')`,
+      [id_turma_reposicao, id_aluno, data_reposicao]
+    );
 
     await db.execute("COMMIT;");
     return { sucesso: true, mensagem: "Reposição marcada como realizada." };

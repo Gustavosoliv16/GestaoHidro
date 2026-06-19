@@ -23,7 +23,8 @@ gestao_hidro.db
 matriculas_consolidadas_perfeito.csv
 matriculas_consolidadas_perfeito.xlsx
 horario_aulas.csv
-
+.kiro
+.reposicao-de-aula
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

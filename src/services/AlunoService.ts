@@ -91,6 +91,8 @@ export async function salvarAlunoCompleto(dadosForm: any) {
     );
     const idAlunoGerado = resultadoAluno.lastInsertId;
 
+    // Turmas criadas aqui fazem parte da mesma transação — se houver falha,
+    // o ROLLBACK desfaz tanto o aluno quanto as turmas criadas neste bloco.
     if (dadosForm.horariosFixos && dadosForm.horariosFixos.length > 0) {
       for (const h of dadosForm.horariosFixos) {
         const diaSem = Number.isFinite(h.diaSemana) ? Math.trunc(h.diaSemana) : h.diaSemana;

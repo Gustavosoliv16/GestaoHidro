@@ -5,7 +5,6 @@ async function getDb() {
 }
 
 const STATUS_PRESENTE = "PRESENTE";
-const STATUS_FALTOU = "FALTOU";
 
 // Garante que a tabela CHAMADA_REGISTRO existe (migration inline)
 async function garantirTabelaChamadaRegistro(db: any) {
@@ -24,31 +23,6 @@ async function garantirTabelaChamadaRegistro(db: any) {
   `);
 }
 
-export async function registrarPresenca(
-  turmaId: number,
-  alunoId: number,
-  date: string,
-  present: boolean
-) {
-  const db = await getDb();
-  const status = present ? STATUS_PRESENTE : STATUS_FALTOU;
-
-  try {
-    await db.execute(
-      `INSERT INTO AGENDA_CALENDARIO (id_turma, id_aluno, data_aula, status)
-       VALUES ($1, $2, $3, $4)`,
-      [turmaId, alunoId, date, status]
-    );
-  } catch {
-    await db.execute(
-      `UPDATE AGENDA_CALENDARIO SET status = $1
-       WHERE id_turma = $2 AND id_aluno = $3 AND data_aula = $4`,
-      [status, turmaId, alunoId, date]
-    );
-  }
-  return { sucesso: true };
-}
-
 export async function buscarPresencasDoDia(
   turmaId: number,
   date: string
@@ -65,16 +39,6 @@ export async function buscarPresencasDoDia(
     map[r.id_aluno] = r.status === STATUS_PRESENTE;
   }
   return map;
-}
-
-export async function buscarTotalFaltasPorTurma(turmaId: number): Promise<number> {
-  const db = await getDb();
-  const res: any[] = await db.select(
-    `SELECT COUNT(*) as total FROM AGENDA_CALENDARIO
-     WHERE id_turma = $1 AND status = $2`,
-    [turmaId, STATUS_FALTOU]
-  );
-  return res[0]?.total ?? 0;
 }
 
 /** Salva/consolida a chamada de uma turma em uma data. Retorna se já existia. */
