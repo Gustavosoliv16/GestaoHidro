@@ -102,7 +102,6 @@ export default function Presenca() {
   // Data efetiva conforme seleção
   const dataEfetiva     = diaAtivo === "hoje" ? hoje : ontem;
   const dateStr         = toDateStr(dataEfetiva);
-  const diaIdx          = diaSemanaIdx(dataEfetiva);
   const dataFormatada   = dataEfetiva.toLocaleDateString("pt-BR", {
     weekday: "long", day: "2-digit", month: "long", year: "numeric",
   });
@@ -376,12 +375,8 @@ export default function Presenca() {
                     setTotalFaltas(0);
                     setChamadaSalva(false);
                   }}
-                  className="border-round font-semibold text-sm px-3 py-2 cursor-pointer transition-all"
+                  className={`btn-selector ${ativo ? 'active' : ''} border-round font-semibold text-sm px-3 py-2 cursor-pointer transition-all`}
                   style={{
-                    border: ativo ? "2px solid #3b82f6" : "2px solid #e5e7eb",
-                    background: ativo ? "#eff6ff" : "#fafafa",
-                    color: ativo ? "#1d4ed8" : "#374151",
-                    outline: "none",
                     position: "relative",
                   }}
                 >
@@ -395,7 +390,7 @@ export default function Presenca() {
                         width: 10, height: 10,
                         borderRadius: "50%",
                         background: ehHoje ? "#22c55e" : "#f59e0b",
-                        border: "2px solid #fff",
+                        border: "2px solid var(--color-surface)",
                       }}
                     />
                   )}
@@ -426,17 +421,17 @@ export default function Presenca() {
             </span>
             {turmaSelecionada && (
               <div className="flex gap-2">
-                <div className="text-center px-3 py-1 border-round" style={{ background: "#f0fdf4", border: "1px solid #22c55e" }}>
-                  <span className="text-sm font-bold text-green-700">{presentes}</span>
-                  <span className="text-xs text-green-600 ml-1">Pres.</span>
+                <div className="text-center px-3 py-1 border-round present-summary-badge">
+                  <span className="text-sm font-bold">{presentes}</span>
+                  <span className="text-xs ml-1">Pres.</span>
                 </div>
-                <div className="text-center px-3 py-1 border-round" style={{ background: "#fef2f2", border: "1px solid #ef4444" }}>
-                  <span className="text-sm font-bold text-red-700">{faltantes}</span>
-                  <span className="text-xs text-red-600 ml-1">Falt.</span>
+                <div className="text-center px-3 py-1 border-round absent-summary-badge">
+                  <span className="text-sm font-bold">{faltantes}</span>
+                  <span className="text-xs ml-1">Falt.</span>
                 </div>
-                <div className="text-center px-3 py-1 border-round" style={{ background: "#fafafa", border: "1px solid #d1d5db" }}>
-                  <span className="text-sm font-bold text-gray-700">{naoMarcados}</span>
-                  <span className="text-xs text-gray-500 ml-1">N/M</span>
+                <div className="text-center px-3 py-1 border-round neutral-summary-badge">
+                  <span className="text-sm font-bold">{naoMarcados}</span>
+                  <span className="text-xs ml-1">N/M</span>
                 </div>
               </div>
             )}
@@ -459,12 +454,8 @@ export default function Presenca() {
                   <button
                     key={turma.id_turma}
                     onClick={() => setTurmaSelecionada(ativo ? null : turma)}
-                    className="border-round text-sm cursor-pointer transition-all flex flex-column align-items-center"
+                    className={`btn-selector ${ativo ? 'active' : ''} border-round text-sm cursor-pointer transition-all flex flex-column align-items-center`}
                     style={{
-                      border: ativo ? "2px solid #3b82f6" : "2px solid #e5e7eb",
-                      background: ativo ? "#eff6ff" : "#fafafa",
-                      color: ativo ? "#1d4ed8" : "#374151",
-                      outline: "none",
                       padding: "0.5rem 1rem",
                       minWidth: 90,
                     }}
@@ -531,20 +522,18 @@ export default function Presenca() {
                 return (
                   <div
                     key={aluno.id_aluno}
-                    className="flex align-items-center justify-content-between p-3 border-round border-1 transition-colors transition-duration-200"
-                    style={{
-                      background: isPresente ? "#f0fdf4" : isFaltante ? "#fef2f2" : "#fafafa",
-                      borderColor: isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#e5e7eb",
-                    }}
+                    className={`flex align-items-center justify-content-between p-3 border-round border-1 transition-colors transition-duration-200 ${
+                      isPresente ? "attendance-row-present" : isFaltante ? "attendance-row-absent" : "attendance-row-neutral"
+                    }`}
                   >
                     <div className="flex align-items-center gap-3">
                       <div
-                        className="flex align-items-center justify-content-center border-circle font-bold text-white text-sm"
+                        className={`flex align-items-center justify-content-center border-circle font-bold text-white text-sm flex-shrink-0 attendance-avatar ${
+                          isPresente ? "bg-present" : isFaltante ? "bg-absent" : "bg-neutral"
+                        }`}
                         style={{
                           width: 36,
                           height: 36,
-                          background: isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#9ca3af",
-                          flexShrink: 0,
                         }}
                       >
                         {aluno.nome?.charAt(0).toUpperCase()}
@@ -571,7 +560,7 @@ export default function Presenca() {
                               checked={isPresente}
                               onChange={() => alterarPresenca(aluno.id_aluno, "PRESENTE")}
                             />
-                            <label htmlFor={`present-${aluno.id_aluno}`} className="text-xs text-green-700 font-semibold cursor-pointer">
+                            <label htmlFor={`present-${aluno.id_aluno}`} className="text-xs font-semibold cursor-pointer label-present">
                               Presente
                             </label>
                           </div>
@@ -581,7 +570,7 @@ export default function Presenca() {
                               checked={isFaltante}
                               onChange={() => alterarPresenca(aluno.id_aluno, "FALTOU")}
                             />
-                            <label htmlFor={`absent-${aluno.id_aluno}`} className="text-xs text-red-700 font-semibold cursor-pointer">
+                            <label htmlFor={`absent-${aluno.id_aluno}`} className="text-xs font-semibold cursor-pointer label-absent">
                               Faltou
                             </label>
                           </div>
@@ -610,16 +599,15 @@ export default function Presenca() {
                   return (
                     <div
                       key={rep.id_reposicao}
-                      className="flex align-items-center justify-content-between p-3 border-round border-1"
-                      style={{
-                        background:   isPresente ? "#f0fdf4" : isFaltante ? "#fef2f2" : "#eff6ff",
-                        borderColor:  isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#93c5fd",
-                        borderLeft: `4px solid ${isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#3b82f6"}`,
-                      }}
+                      className={`flex align-items-center justify-content-between p-3 border-round border-1 reposicao-card ${
+                        isPresente ? "reposicao-card-present" : isFaltante ? "reposicao-card-absent" : "reposicao-card-neutral"
+                      }`}
                     >
                       <div className="flex align-items-center gap-3">
-                        <div className="flex align-items-center justify-content-center border-circle font-bold text-white text-sm"
-                          style={{ width: 36, height: 36, background: isPresente ? "#22c55e" : isFaltante ? "#ef4444" : "#3b82f6", flexShrink: 0 }}>
+                        <div className={`flex align-items-center justify-content-center border-circle font-bold text-white text-sm flex-shrink-0 attendance-avatar ${
+                          isPresente ? "bg-present" : isFaltante ? "bg-absent" : "bg-reposicao"
+                        }`}
+                          style={{ width: 36, height: 36 }}>
                           {rep.nome?.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -635,12 +623,12 @@ export default function Presenca() {
                             <div className="flex align-items-center gap-1">
                               <Checkbox inputId={`rep-pres-${rep.id_aluno}`} checked={isPresente}
                                 onChange={() => alterarPresencaReposicao(rep, "PRESENTE")} />
-                              <label htmlFor={`rep-pres-${rep.id_aluno}`} className="text-xs text-green-700 font-semibold cursor-pointer">Presente</label>
+                              <label htmlFor={`rep-pres-${rep.id_aluno}`} className="text-xs font-semibold cursor-pointer label-present">Presente</label>
                             </div>
                             <div className="flex align-items-center gap-1">
                               <Checkbox inputId={`rep-falt-${rep.id_aluno}`} checked={isFaltante}
                                 onChange={() => alterarPresencaReposicao(rep, "FALTOU")} />
-                              <label htmlFor={`rep-falt-${rep.id_aluno}`} className="text-xs text-red-700 font-semibold cursor-pointer">Faltou</label>
+                              <label htmlFor={`rep-falt-${rep.id_aluno}`} className="text-xs font-semibold cursor-pointer label-absent">Faltou</label>
                             </div>
                           </>
                         )}
@@ -662,8 +650,7 @@ export default function Presenca() {
               <div className="flex align-items-center justify-content-between gap-3 pt-1">
                 {somenteLeitura ? (
                   <div
-                    className="flex align-items-center gap-2 w-full p-3 border-round"
-                    style={{ background: "#fef9ec", border: "1px solid #f59e0b" }}
+                    className="flex align-items-center gap-2 w-full p-3 border-round locked-attendance-warning"
                   >
                     <i className="pi pi-lock text-orange-500 text-lg" />
                     <div>

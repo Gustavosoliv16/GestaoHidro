@@ -154,19 +154,16 @@ export default function Reposicoes() {
 
       {/* Cards de resumo */}
       <div className="flex gap-3 mb-4 flex-wrap">
-        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 flex-1"
-          style={{ borderColor: "#3b82f6", minWidth: 120 }}>
-          <div className="text-2xl font-bold text-blue-600">{totalAgendadas}</div>
+        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 flex-1 kpi-border-info" style={{ minWidth: 120 }}>
+          <div className="text-2xl font-bold kpi-val-info">{totalAgendadas}</div>
           <div className="text-xs text-500 mt-1 uppercase font-semibold">Agendadas</div>
         </div>
-        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 flex-1"
-          style={{ borderColor: "#22c55e", minWidth: 120 }}>
-          <div className="text-2xl font-bold text-green-600">{totalRealizadas}</div>
+        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 flex-1 kpi-border-success" style={{ minWidth: 120 }}>
+          <div className="text-2xl font-bold kpi-val-success">{totalRealizadas}</div>
           <div className="text-xs text-500 mt-1 uppercase font-semibold">Realizadas</div>
         </div>
-        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 flex-1"
-          style={{ borderColor: "#94a3b8", minWidth: 120 }}>
-          <div className="text-2xl font-bold text-500">{totalCanceladas}</div>
+        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 flex-1 kpi-border-neutral" style={{ minWidth: 120 }}>
+          <div className="text-2xl font-bold kpi-val-neutral">{totalCanceladas}</div>
           <div className="text-xs text-500 mt-1 uppercase font-semibold">Canceladas</div>
         </div>
       </div>

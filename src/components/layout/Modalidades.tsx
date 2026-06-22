@@ -7,21 +7,27 @@ import { Tag } from "primereact/tag";
 import Database from "@tauri-apps/plugin-sql";
 
 // Mapeamento de cor por modalidade (mesmo padrão do Horarios.tsx)
-const COR_BADGE: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-  hidroginastica:   { bg: "#fdf2f8", border: "#ec4899", text: "#9d174d", icon: "pi pi-heart" },
-  "natacao bebe":   { bg: "#eff6ff", border: "#3b82f6", text: "#1e40af", icon: "pi pi-star" },
-  "natacao infantil":{ bg: "#f0fdf4", border: "#22c55e", text: "#15803d", icon: "pi pi-users" },
-  "natacao adulto": { bg: "#fff7ed", border: "#f97316", text: "#c2410c", icon: "pi pi-user" },
-  fisioterapia:     { bg: "#fef2f2", border: "#ef4444", text: "#b91c1c", icon: "pi pi-plus" },
+const COR_BADGE: Record<string, { bg: string; bgDark: string; border: string; text: string; textDark: string; icon: string }> = {
+  hidroginastica:   { bg: "#fdf2f8", bgDark: "#3a2535", border: "#ec4899", text: "#9d174d", textDark: "#f9a8d4", icon: "pi pi-heart" },
+  "natacao bebe":   { bg: "#eff6ff", bgDark: "#1e3a5f", border: "#3b82f6", text: "#1e40af", textDark: "#93c5fd", icon: "pi pi-star" },
+  "natacao infantil":{ bg: "#f0fdf4", bgDark: "#14362b", border: "#22c55e", text: "#15803d", textDark: "#86efac", icon: "pi pi-users" },
+  "natacao adulto": { bg: "#fff7ed", bgDark: "#3a2010", border: "#f97316", text: "#c2410c", textDark: "#fdba74", icon: "pi pi-user" },
+  fisioterapia:     { bg: "#fef2f2", bgDark: "#3a1515", border: "#ef4444", text: "#b91c1c", textDark: "#fca5a5", icon: "pi pi-plus" },
 };
-const COR_PADRAO = { bg: "#f8fafc", border: "#94a3b8", text: "#475569", icon: "pi pi-tag" };
+const COR_PADRAO = { bg: "#f8fafc", bgDark: "#2d3748", border: "#94a3b8", text: "#475569", textDark: "#cbd5e1", icon: "pi pi-tag" };
 
 function normalizarChave(s: string): string {
   return s.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function obterCor(nome: string) {
-  return COR_BADGE[normalizarChave(nome)] ?? COR_PADRAO;
+function obterCor(nome: string, isDark: boolean) {
+  const cor = COR_BADGE[normalizarChave(nome)] ?? COR_PADRAO;
+  return {
+    bg:     isDark ? cor.bgDark : cor.bg,
+    border: cor.border,
+    text:   isDark ? cor.textDark : cor.text,
+    icon:   cor.icon,
+  };
 }
 
 interface Modalidade {
@@ -34,6 +40,15 @@ export default function Modalidades() {
   const [modalidades, setModalidades] = useState<Modalidade[]>([]);
   const [nomeModalidade, setNomeModalidade] = useState("");
   const [salvando, setSalvando] = useState(false);
+  const [isDark, setIsDark] = useState(() => document.documentElement.getAttribute("data-theme") === "dark");
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   const carregarModalidades = async () => {
     try {
@@ -166,7 +181,7 @@ export default function Modalidades() {
           ) : (
             <div className="flex flex-column gap-2">
               {modalidades.map((mod) => {
-                const cor = obterCor(mod.modalidade);
+                const cor = obterCor(mod.modalidade, isDark);
                 return (
                   <div
                     key={mod.id_modalidade}

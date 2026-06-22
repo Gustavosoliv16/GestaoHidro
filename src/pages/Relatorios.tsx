@@ -249,13 +249,7 @@ export default function Relatorios({ aoVoltar }: { aoVoltar?: () => void } = {})
                     setDiaSelecionado(ativo ? null : diaId);
                     setHorarioSelecionado(null);
                   }}
-                  className="border-round font-semibold text-sm px-3 py-2 cursor-pointer transition-all"
-                  style={{
-                    border: ativo ? "2px solid #3b82f6" : "2px solid #e5e7eb",
-                    background: ativo ? "#eff6ff" : "#fafafa",
-                    color: ativo ? "#1d4ed8" : "#374151",
-                    outline: "none",
-                  }}
+                  className={`btn-selector ${ativo ? 'active' : ''} border-round font-semibold text-sm px-3 py-2 cursor-pointer transition-all`}
                 >
                   {DIAS_CURTOS[diaId]}
                   <span className="ml-2 text-xs" style={{ opacity: 0.6 }}>
@@ -296,12 +290,8 @@ export default function Relatorios({ aoVoltar }: { aoVoltar?: () => void } = {})
                   <button
                     key={turma.id_turma}
                     onClick={() => setHorarioSelecionado(ativo ? null : turma.id_turma)}
-                    className="border-round text-sm cursor-pointer transition-all flex flex-column align-items-center"
+                    className={`btn-selector ${ativo ? 'active' : ''} border-round text-sm cursor-pointer transition-all flex flex-column align-items-center`}
                     style={{
-                      border: ativo ? "2px solid #3b82f6" : "2px solid #e5e7eb",
-                      background: ativo ? "#eff6ff" : "#fafafa",
-                      color: ativo ? "#1d4ed8" : "#374151",
-                      outline: "none",
                       padding: "0.5rem 1rem",
                       minWidth: 90,
                     }}
@@ -358,20 +348,20 @@ export default function Relatorios({ aoVoltar }: { aoVoltar?: () => void } = {})
 
       {/* Cards de resumo */}
       <div className="grid mb-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem" }}>
-        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 border-blue-500">
-          <div className="text-3xl font-bold text-blue-600">{totalChamadas}</div>
+        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 kpi-border-info">
+          <div className="text-3xl font-bold kpi-val-info">{totalChamadas}</div>
           <div className="text-xs text-500 mt-1 uppercase font-semibold">Chamadas salvas</div>
         </div>
-        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 border-green-500">
-          <div className="text-3xl font-bold text-green-600">{totalPresentes}</div>
+        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 kpi-border-success">
+          <div className="text-3xl font-bold kpi-val-success">{totalPresentes}</div>
           <div className="text-xs text-500 mt-1 uppercase font-semibold">Total de presenças</div>
         </div>
-        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 border-red-500">
-          <div className="text-3xl font-bold text-red-500">{totalFaltas}</div>
+        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 kpi-border-danger">
+          <div className="text-3xl font-bold kpi-val-danger">{totalFaltas}</div>
           <div className="text-xs text-500 mt-1 uppercase font-semibold">Total de faltas</div>
         </div>
-        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 border-orange-400">
-          <div className="text-3xl font-bold text-orange-500">{mediaPresenca}%</div>
+        <div className="surface-card border-round shadow-1 p-3 text-center border-top-3 kpi-border-warning">
+          <div className="text-3xl font-bold kpi-val-warning">{mediaPresenca}%</div>
           <div className="text-xs text-500 mt-1 uppercase font-semibold">Média de presença</div>
         </div>
       </div>
@@ -414,17 +404,17 @@ export default function Relatorios({ aoVoltar }: { aoVoltar?: () => void } = {})
           <div className="flex flex-column gap-3">
             {/* Resumo da chamada */}
             <div className="flex gap-3">
-              <div className="flex-1 bg-green-50 border-round p-3 text-center">
-                <div className="text-2xl font-bold text-green-600">{chamadaSelecionada.total_presentes}</div>
-                <div className="text-xs text-green-500 font-semibold uppercase">Presentes</div>
+              <div className="flex-1 present-summary-badge border-round p-3 text-center">
+                <div className="text-2xl font-bold kpi-val-success">{chamadaSelecionada.total_presentes}</div>
+                <div className="text-xs font-semibold uppercase">Presentes</div>
               </div>
-              <div className="flex-1 bg-red-50 border-round p-3 text-center">
-                <div className="text-2xl font-bold text-red-500">{chamadaSelecionada.total_faltas}</div>
-                <div className="text-xs text-red-400 font-semibold uppercase">Faltas</div>
+              <div className="flex-1 absent-summary-badge border-round p-3 text-center">
+                <div className="text-2xl font-bold kpi-val-danger">{chamadaSelecionada.total_faltas}</div>
+                <div className="text-xs font-semibold uppercase">Faltas</div>
               </div>
-              <div className="flex-1 bg-blue-50 border-round p-3 text-center">
-                <div className="text-2xl font-bold text-blue-600">{chamadaSelecionada.total_alunos}</div>
-                <div className="text-xs text-blue-400 font-semibold uppercase">Total</div>
+              <div className="flex-1 neutral-summary-badge border-round p-3 text-center">
+                <div className="text-2xl font-bold kpi-val-info">{chamadaSelecionada.total_alunos}</div>
+                <div className="text-xs font-semibold uppercase">Total</div>
               </div>
             </div>
 

@@ -10,8 +10,6 @@ import { buscarProfessorPorModalidade } from "../services/ProfessorService";
 import { buscarReposicoesParaChamada } from "../services/ReposicaoService";
 import logoPretoPng from "../assets/HIDROFIT GOTA PRETA.png";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -173,27 +171,12 @@ export default function Impressao() {
                 <button
                   key={diaId}
                   onClick={() => { setDiaSelecionado(diaId); setTurmaSelecionada(null); }}
-                  style={{
-                    border:      ativo ? "2px solid #3AAFBB" : "2px solid #e5e7eb",
-                    background:  ativo ? "#eaf9fb"           : "#fafafa",
-                    color:       ativo ? "#3AAFBB"           : "#374151",
-                    outline:     "none",
-                    cursor:      "pointer",
-                    borderRadius: 6,
-                    fontWeight:  600,
-                    fontSize:    "0.875rem",
-                    padding:     "0.4rem 0.75rem",
-                    position:    "relative",
-                  }}
+                  className={`btn-selector${ativo ? " btn-selector--active" : ""}`}
+                  style={{ position: "relative" }}
                 >
                   {DIAS_CURTOS[diaId]}
                   {ehDiaAtual && (
-                    <span style={{
-                      position:    "absolute", top: -5, right: -5,
-                      width:       9, height: 9, borderRadius: "50%",
-                      background:  diaAtivo === "hoje" ? "#22c55e" : "#f59e0b",
-                      border:      "2px solid #fff",
-                    }} />
+                    <span className={`btn-day-dot btn-day-dot--${diaAtivo === "hoje" ? "today" : "yesterday"}`} />
                   )}
                 </button>
               );
@@ -221,24 +204,12 @@ export default function Impressao() {
                   <button
                     key={turma.id_turma}
                     onClick={() => setTurmaSelecionada(ativo ? null : turma)}
-                    style={{
-                      border:       ativo ? "2px solid #3AAFBB" : "2px solid #e5e7eb",
-                      background:   ativo ? "#eaf9fb"           : "#fafafa",
-                      color:        ativo ? "#3AAFBB"           : "#374151",
-                      outline:      "none",
-                      cursor:       "pointer",
-                      borderRadius: 6,
-                      padding:      "0.5rem 1.2rem",
-                      minWidth:     100,
-                      display:      "flex",
-                      flexDirection: "column",
-                      alignItems:   "center",
-                    }}
+                    className={`btn-selector btn-selector--turma${ativo ? " btn-selector--active" : ""}`}
                   >
-                    <span style={{ fontWeight: 700, fontSize: "1rem" }}>
+                    <span className="btn-selector__hora">
                       {String(Math.round(Number(turma.horarioInicio))).padStart(2, "0")}h
                     </span>
-                    <span style={{ fontSize: "0.75rem", opacity: 0.75, marginTop: 2 }}>
+                    <span className="btn-selector__modalidade">
                       {turma.modalidade}
                     </span>
                     <Tag
@@ -255,10 +226,7 @@ export default function Impressao() {
       )}
 
       {turmaSelecionada && (
-        <div
-          className="surface-card border-1 surface-border border-round shadow-1 p-4 flex align-items-center justify-content-between"
-          style={{ borderLeft: "4px solid #3AAFBB" }}
-        >
+        <div className="selected-turma-panel surface-card border-1 surface-border border-round shadow-1 p-4 flex align-items-center justify-content-between">
           <div>
             <div className="font-bold text-900 text-lg">
               {turmaSelecionada.modalidade} —{" "}
@@ -271,8 +239,7 @@ export default function Impressao() {
           <Button
             label="Imprimir Lista"
             icon={carregando ? "pi pi-spin pi-spinner" : "pi pi-print"}
-            className="p-button-lg font-bold"
-            style={{ background: "#3AAFBB", border: "none" }}
+            className="p-button-lg font-bold btn-primary-brand"
             disabled={carregando}
             onClick={handleImprimir}
           />
@@ -384,9 +351,6 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           /* Force no browser-added headers/footers */
           html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
-
-        /* Note: to remove URL and page number from printout,
-           uncheck "Headers and footers" in the browser print dialog */
       `}</style>
 
       <div id="print-root">

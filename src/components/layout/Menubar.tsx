@@ -3,13 +3,9 @@ import { Toolbar } from "primereact/toolbar";
 import { Tooltip } from "primereact/tooltip";
 import { Menu } from "primereact/menu";
 import { useNavigate } from "react-router-dom";
-import "primeicons/primeicons.css";
-import "primeflex/primeflex.css";
 import {
   logoBranco,
   gotaBranca,
-  BRAND_TEAL,
-  BRAND_TEAL_DARK,
 } from "../../assets/brand";
 
 function NavBtn({
@@ -44,13 +40,14 @@ export default function Menutopbar() {
   const [itemGirando, setItemGirando] = useState(false);
   const navigate = useNavigate();
 
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("darkMode") === "true");
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
   const toggleDarkMode = () => {
     const newVal = !darkMode;
     setDarkMode(newVal);
-    localStorage.setItem("darkMode", String(newVal));
-    document.body.classList.toggle("dark-theme", newVal);
+    const theme = newVal ? "dark" : "light";
+    localStorage.setItem("theme", theme);
+    document.documentElement.setAttribute("data-theme", theme);
   };
 
   const itensDoMenu = [
@@ -141,13 +138,7 @@ export default function Menutopbar() {
       start={startContent}
       center={centerContent}
       end={endContent}
-      style={{
-        borderRadius: "1rem",
-        background: `linear-gradient(135deg, ${BRAND_TEAL_DARK} 0%, ${BRAND_TEAL} 60%, #7dd8e0 100%)`,
-        boxShadow: `0 4px 20px rgba(91, 200, 212, 0.35)`,
-        border: "none",
-        padding: "0.4rem 1rem",
-      }}
+      style={{ padding: "0.4rem 1rem" }}
     />
   );
 }

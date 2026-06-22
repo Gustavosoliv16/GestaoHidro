@@ -1,574 +1,899 @@
-:root {
-  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 24px;
-  font-weight: 400;
+/* ═══════════════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — Gestão Hidro
+   Fonte da verdade: design.md
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-  font-synthesis: none;
+/* ── 1. TOKENS DE MARCA ────────────────────────────────────────────────────── */
+:root {
+  /* Cores de marca (fixas, independente do tema) */
+  --color-navy-900: #0A1620;
+  --color-navy-800: #0F3550;
+  --color-navy-700: #16415F;
+  --color-navy-600: #3D5A6C;
+  --color-cyan-600: #0E7C8C;
+  --color-cyan-500: #15A0B3;
+  --color-cyan-400: #5FD4E8;
+
+  /* Cores semânticas (mesmas em ambos os temas) */
+  --color-success: #1B9E6B;
+  --color-warning: #D9A441;
+  --color-danger:  #D14B4B;
+  --color-info:    var(--color-cyan-600);
+
+  /* Tipografia */
+  --font-display: 'Manrope', 'Segoe UI', sans-serif;
+  --font-body:    'Inter', 'Segoe UI', sans-serif;
+
+  /* Escala tipográfica */
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.375rem;
+  --text-2xl:  1.75rem;
+  --text-3xl:  2.25rem;
+  --text-4xl:  3rem;
+
+  /* Espaçamento (base 4px) */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Border-radius */
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   16px;
+  --radius-full: 999px;
+}
+
+/* ── 2. TEMA CLARO (padrão) ─────────────────────────────────────────────────── */
+:root,
+[data-theme="light"] {
+  --color-bg:              #F7FAFC;
+  --color-surface:         #FFFFFF;
+  --color-border:          #DCE6EB;
+  --color-text:            #0A1F2E;
+  --color-text-secondary:  #0A1F2E;
+  --color-primary:         var(--color-navy-800);
+  --color-primary-hover:   var(--color-navy-700);
+  --color-accent:          var(--color-cyan-600);
+  --color-accent-hover:    var(--color-cyan-500);
+
+  --shadow-sm: 0 1px 2px rgba(10, 31, 46, 0.06);
+  --shadow-md: 0 4px 12px rgba(10, 31, 46, 0.08);
+  --shadow-lg: 0 8px 24px rgba(10, 31, 46, 0.12);
+}
+
+/* ── 3. TEMA ESCURO ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --color-bg:              #0A1620;
+  --color-surface:         #102536;
+  --color-border:          #1E3A4F;
+  --color-text:            #E8F1F5;
+  --color-text-secondary:  #9FB8C4;
+  /* Em dark mode, ciano assume o papel primário — navy não tem contraste */
+  --color-primary:         var(--color-cyan-600);
+  --color-primary-hover:   var(--color-cyan-500);
+  --color-accent:          var(--color-cyan-400);
+  --color-accent-hover:    var(--color-cyan-500);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ── 4. RESET E BASE ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  font-size: 16px;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
-
-  /* ── HydroFit brand tokens ── */
-  --brand-teal:       #5BC8D4;
-  --brand-teal-dark:  #3AAFBB;
-  --brand-teal-light: #a8e8ee;
-  --brand-teal-bg:    #eaf9fb;
+  scroll-behavior: smooth;
 }
 
 html, body {
-  scrollbar-gutter: stable;
-  height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #f5f7fa;
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.6;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-#root {
+#root { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* Shell da aplicação */
+.app-shell {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background-color: var(--color-bg);
 }
 
-main {
-  flex-grow: 1;
+.app-main {
+  flex: 1;
+  padding: var(--space-6);
+  background-color: var(--color-bg);
 }
 
-.custom-calendar.p-calendar-inline .p-datepicker {
-  width: 100%;
-  border: none;
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+/* Scrollbar */
+html { scrollbar-gutter: stable; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-secondary); }
+
+/* ── 5. TIPOGRAFIA SEMÂNTICA ────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.2;
+}
+h1 { font-size: var(--text-2xl); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: var(--text-xl);  font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: var(--text-lg);  font-weight: 600; }
+h4 { font-size: var(--text-base); font-weight: 600; }
+
+p, li, span { font-family: var(--font-body); color: var(--color-text); }
+
+.eyebrow {
+  font: 600 var(--text-xs)/1 var(--font-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
 }
 
-.custom-calendar .p-datepicker-header {
-  background: var(--brand-teal-bg) !important;
-  border-bottom: 1px solid var(--brand-teal-light) !important;
-  border-radius: 12px 12px 0 0 !important;
-  padding: 0.75rem 1rem !important;
+.kpi-number {
+  font: 700 var(--text-3xl)/1.1 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--color-text);
 }
 
-.custom-calendar .p-datepicker-title,
-.custom-calendar .p-datepicker-header .p-link {
-  color: var(--brand-teal-dark) !important;
-  font-weight: 700;
+/* ── 6. LAYOUT E CARDS ──────────────────────────────────────────────────────── */
+.card, .surface-card {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+  color: var(--color-text) !important;
 }
 
-.custom-calendar .p-datepicker table th {
-  color: var(--brand-teal-dark);
-  font-weight: 600;
-  font-size: 0.85rem;
+/* PrimeReact surface overrides */
+.surface-ground  { background-color: var(--color-bg) !important; }
+.surface-section { background-color: var(--color-bg) !important; }
+.surface-overlay { background-color: var(--color-surface) !important; }
+.surface-border  { border-color: var(--color-border) !important; }
+
+/* ── 7. TEXTO (PrimeFlex overrides) ────────────────────────────────────────── */
+.text-900, .text-800 { color: var(--color-text) !important; }
+.text-700, .text-600 { color: var(--color-text-secondary) !important; }
+.text-500, .text-400 { color: var(--color-text-secondary) !important; opacity: 0.7; }
+label { color: var(--color-text-secondary); font-family: var(--font-body); }
+
+/* ── 8. BOTÕES ──────────────────────────────────────────────────────────────── */
+.p-button {
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.01em !important;
+  border-radius: var(--radius-md) !important;
+  transition: background-color 0.15s ease, transform 0.05s ease !important;
+}
+.p-button:focus-visible {
+  outline: 3px solid var(--color-accent) !important;
+  outline-offset: 2px !important;
+}
+/* Botão primário */
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success) {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: #fff !important;
+}
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success):hover {
+  background: var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+/* Reset imediato para botões dentro de p-buttonset (SelectButton) —
+   o seletor específico abaixo desfaz o estilo primário acima */
+.p-buttonset .p-button {
+  background:   var(--color-surface)        !important;
+  border-color: var(--color-border)         !important;
+  color:        var(--color-text-secondary) !important;
+}
+/* Botão outlined */
+.p-button.p-button-outlined {
+  color: var(--color-primary) !important;
+  border-color: var(--color-border) !important;
+  background: transparent !important;
+}
+.p-button.p-button-outlined:hover {
+  background: rgba(14, 124, 140, 0.06) !important;
+}
+/* Botão ghost/text */
+.p-button.p-button-text {
+  color: var(--color-text-secondary) !important;
+  background: transparent !important;
+}
+.p-button.p-button-text:hover {
+  background: rgba(14, 124, 140, 0.06) !important;
+  color: var(--color-text) !important;
 }
 
-.custom-calendar .p-datepicker table td > span {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s ease;
+/* ── 9. INPUTS E FORMULÁRIOS ────────────────────────────────────────────────── */
+.p-inputtext,
+.p-inputnumber-input,
+.p-password input,
+textarea,
+input[type="date"],
+input[type="text"] {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  padding: var(--space-3) var(--space-4) !important;
+  font: 400 var(--text-base)/1.4 var(--font-body) !important;
+  color: white!important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
-
-.custom-calendar .p-datepicker table td > span.p-highlight {
-  background: var(--brand-teal) !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 6px rgba(91, 200, 212, 0.4);
-}
-
-.custom-calendar .p-datepicker table td > span:not(.p-highlight):hover {
-  background: var(--brand-teal-bg) !important;
-  color: var(--brand-teal-dark) !important;
-}
-
-.custom-calendar .p-datepicker table td.p-datepicker-today > span {
-  border: 2px solid var(--brand-teal) !important;
-  background: transparent;
-  color: var(--brand-teal-dark);
-  font-weight: bold;
-}
-
-@keyframes full-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin {
-  animation: full-spin 0.6s ease-in-out;
-}
-
-.fixed-status-switch.p-inputswitch {
-  width: 44px !important;
-  height: 24px !important;
-  min-width: 44px !important;
-  flex: 0 0 44px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  box-sizing: border-box !important;
-}
-.fixed-status-switch .p-inputswitch-slider {
-  width: 100% !important;
-  height: 100% !important;
-  border-radius: 12px !important;
-  background-color: #d0d0d0 !important;
-  transition: background-color 0.15s ease, box-shadow 0.15s ease;
-  box-sizing: border-box !important;
-  transform: none !important;
-}
-.fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider {
-  background-color: #22c55e !important;
-}
-.fixed-status-switch .p-inputswitch-slider:before {
-  width: 18px !important;
-  height: 18px !important;
-  top: 3px !important;
-  left: 3px !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
-  transition: left 0.15s ease;
-}
-.fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider:before {
-  left: calc(100% - 3px - 18px) !important;
-}
-
-body.dark-theme,
-body.dark-theme #root,
-body.dark-theme main,
-body.dark-theme .surface-ground,
-body.dark-theme .flex-column,
-body.dark-theme .min-h-screen {
-  background-color: #0d0d0d !important;
-  color: #f0f0f0 !important;
-}
-
-/* ── Toolbar (top menubar) – keep its own gradient, just ensure text is white ── */
-body.dark-theme .p-toolbar {
-  background: linear-gradient(to right, #1e3a5f, #102a43) !important;
-  border-color: #1a1a2e !important;
-}
-
-/* ── PrimeReact Cards ── */
-body.dark-theme .p-card,
-body.dark-theme .p-card-body,
-body.dark-theme .p-card-content {
-  background-color: #1a1a1a !important;
-  border-color: #2e2e2e !important;
-  color: #f0f0f0 !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.6) !important;
-}
-
-/* ── Headings ── */
-body.dark-theme h1,
-body.dark-theme h2,
-body.dark-theme h3,
-body.dark-theme h4,
-body.dark-theme h5,
-body.dark-theme h6 {
-  color: #ffffff !important;
-}
-
-/* ── All generic text nodes ── */
-body.dark-theme p,
-body.dark-theme li,
-body.dark-theme small,
-body.dark-theme blockquote {
-  color: #d4d4d4 !important;
-}
-
-/* ── PrimeFlex utility text classes ── */
-body.dark-theme .text-900,
-body.dark-theme .text-800 {
-  color: #ffffff !important;
-}
-body.dark-theme .text-700,
-body.dark-theme .text-600 {
-  color: #e0e0e0 !important;
-}
-body.dark-theme .text-500,
-body.dark-theme .text-400 {
-  color: #a8a8a8 !important;
-}
-body.dark-theme .text-300,
-body.dark-theme .text-200,
-body.dark-theme .text-100 {
-  color: #888888 !important;
-}
-
-/* ── Labels & spans (scoped, not overriding Tags or Toasts) ── */
-body.dark-theme label {
-  color: #d4d4d4 !important;
-}
-body.dark-theme .p-card span:not(.p-tag):not(.p-badge):not(.p-button-label),
-body.dark-theme .p-dialog span:not(.p-tag):not(.p-badge):not(.p-button-label),
-body.dark-theme main span:not(.p-tag):not(.p-badge):not(.p-button-label):not(.p-checkbox-icon):not(.p-radiobutton-icon) {
-  color: #e0e0e0 !important;
-}
-
-/* ── Dividers ── */
-body.dark-theme .p-divider-horizontal::before {
-  border-top-color: #3a3a3a !important;
-}
-body.dark-theme .p-divider-vertical::before {
-  border-left-color: #3a3a3a !important;
-}
-
-/* ── Dialogs / Overlays ── */
-body.dark-theme .p-dialog {
-  background-color: #1a1a1a !important;
-  border: 1px solid #333333 !important;
-}
-body.dark-theme .p-dialog-header {
-  background-color: #222222 !important;
-  color: #ffffff !important;
-  border-bottom-color: #333333 !important;
-}
-body.dark-theme .p-dialog-header .p-dialog-title {
-  color: #ffffff !important;
-}
-body.dark-theme .p-dialog-header-icon,
-body.dark-theme .p-dialog-header-icon:hover {
-  color: #cccccc !important;
-}
-body.dark-theme .p-dialog-content {
-  background-color: #1a1a1a !important;
-  color: #e0e0e0 !important;
-}
-body.dark-theme .p-dialog-footer {
-  background-color: #1e1e1e !important;
-  border-top-color: #333333 !important;
-}
-
-/* ── Sidebar / Drawer ── */
-body.dark-theme .p-sidebar,
-body.dark-theme .p-sidebar-content {
-  background-color: #1a1a1a !important;
-  color: #f0f0f0 !important;
-  border-color: #333333 !important;
-}
-body.dark-theme .p-sidebar-header {
-  background-color: #222222 !important;
-  border-bottom-color: #333333 !important;
-}
-body.dark-theme .p-sidebar-close-icon {
-  color: #cccccc !important;
-}
-
-/* ── PanelMenu (side navigation) ── */
-body.dark-theme .p-panelmenu-header > a,
-body.dark-theme .p-panelmenu-header > a:hover {
-  background-color: #222222 !important;
-  color: #f0f0f0 !important;
-  border-color: #333333 !important;
-}
-body.dark-theme .p-panelmenu-content {
-  background-color: #1a1a1a !important;
-  border-color: #2e2e2e !important;
-}
-body.dark-theme .p-menuitem-link {
-  color: #d4d4d4 !important;
-  background-color: transparent !important;
-}
-body.dark-theme .p-menuitem-link:hover {
-  background-color: #2e2e2e !important;
-  color: #ffffff !important;
-}
-body.dark-theme .p-menuitem-link:focus,
-body.dark-theme .p-menuitem-link:focus-visible {
-  background-color: transparent !important;
-  box-shadow: none !important;
+.p-inputtext::placeholder,
+input::placeholder,
+textarea::placeholder { color: var(--color-text-secondary) !important; opacity: 0.6; }
+.p-inputtext:focus,
+.p-inputnumber-input:focus,
+input[type="date"]:focus {
   outline: none !important;
-}
-body.dark-theme .p-panelmenu .p-menuitem.p-focus > .p-menuitem-content,
-body.dark-theme .p-panelmenu .p-menuitem.p-focus > .p-menuitem-content .p-menuitem-link {
-  background-color: transparent !important;
-  color: #d4d4d4 !important;
-}
-body.dark-theme .p-menuitem-link.p-menuitem-link-active {
-  background-color: #1e3a5f !important;
-  color: #ffffff !important;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important;
 }
 
-body.dark-theme .p-panelmenu .p-panelmenu-header-content {
-  border: 1px solid #3a3a3a !important;
-  background: #1e1e1e !important;
-  border-radius: 3px;
-  transition: box-shadow 0.2s;
+/* Ajuste explícito para IconField (Ícones de busca dentro dos inputs) */
+.p-icon-field {
+  position: relative;
+  display: inline-flex;
+  width: 100%;
+}
+.p-icon-field-left > .p-inputtext,
+.p-icon-field-left > input {
+  padding-left: 2.75rem !important;
+}
+.p-icon-field-right > .p-inputtext,
+.p-icon-field-right > input {
+  padding-right: 2.75rem !important;
+}
+.p-icon-field > .p-input-icon {
+  position: absolute;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--color-text-secondary) !important;
+  opacity: 0.7;
+  pointer-events: none;
+  margin-top: 0 !important;
+}
+.p-icon-field-left > .p-input-icon {
+  left: 1rem !important;
+}
+.p-icon-field-right > .p-input-icon {
+  right: 1rem !important;
 }
 
-body.dark-theme .p-menuitem-icon,
-body.dark-theme .p-menuitem-text {
+
+/* Dropdown */
+.p-dropdown {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+}
+.p-dropdown .p-dropdown-label { color: var(--color-text) !important; font-family: var(--font-body) !important; }
+.p-dropdown .p-dropdown-trigger { color: var(--color-text-secondary) !important; background: transparent !important; }
+.p-dropdown:focus, .p-dropdown.p-focus {
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important;
+}
+.p-dropdown-panel {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.p-dropdown-item { color: var(--color-text) !important; font-family: var(--font-body) !important; }
+.p-dropdown-item:hover,
+.p-dropdown-item.p-highlight { background: rgba(14, 124, 140, 0.08) !important; color: var(--color-text) !important; }
+.p-dropdown-filter { background: var(--color-surface) !important; color: var(--color-text) !important; border-color: var(--color-border) !important; }
+
+/* SelectButton — prefixado com `html` para superar especificidade do tema PrimeReact */
+html .p-selectbutton { border-radius: var(--radius-md) !important; overflow: hidden; }
+html .p-selectbutton .p-button {
+  background:   var(--color-surface)         !important;
+  border-color: var(--color-border)          !important;
+  color:        var(--color-text-secondary)  !important;
+}
+html .p-selectbutton .p-button:hover:not(.p-highlight) {
+  background:   rgba(14, 124, 140, 0.08) !important;
+  border-color: var(--color-accent)      !important;
+  color:        var(--color-text)        !important;
+}
+html .p-selectbutton .p-button.p-highlight {
+  background:   var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color:        #fff                 !important;
+}
+html .p-selectbutton .p-button.p-highlight:hover {
+  background:   var(--color-primary-hover) !important;
+  border-color: var(--color-primary-hover) !important;
+}
+/* Ícones e labels herdam a cor do estado */
+html .p-selectbutton .p-button .p-button-icon,
+html .p-selectbutton .p-button .p-button-label {
   color: inherit !important;
 }
 
-/* ── Popup Menu (config gear) ── */
-body.dark-theme .p-menu,
-body.dark-theme .p-menu-list {
-  background-color: #1e1e1e !important;
-  border: 1px solid #333333 !important;
+/* Remove a borda/sombra de foco azul que aparece quando o botão é clicado (estado focado) */
+html .p-selectbutton .p-button:focus,
+html .p-selectbutton .p-button:focus-visible,
+html .p-selectbutton .p-button.p-focus {
+  box-shadow: none !important;
+  outline: none !important;
+  border-color: var(--color-border) !important;
 }
-body.dark-theme .p-menu .p-submenu-header {
-  background-color: #262626 !important;
-  color: #a0a0a0 !important;
-}
-body.dark-theme .p-menu .p-menuitem-link {
-  color: #a0a0a0 !important;
-  background-color: #262626;
-}
-body.dark-theme .p-menu .p-menuitem-link:hover {
-  background-color: #333333 !important;
-  color: #ffffff !important;
-}
-body.dark-theme .p-menu .p-menuitem-separator {
-  border-color: #333333 !important;
+html .p-selectbutton .p-button.p-highlight:focus,
+html .p-selectbutton .p-button.p-highlight:focus-visible {
+  border-color: var(--color-primary) !important;
 }
 
-/* ── Inputs ── */
-body.dark-theme .p-inputtext,
-body.dark-theme .p-inputnumber-input,
-body.dark-theme .p-password input,
-body.dark-theme textarea {
-  background-color: #262626 !important;
-  color: #f0f0f0 !important;
-  border-color: #444444 !important;
-}
-body.dark-theme .p-inputtext:focus,
-body.dark-theme .p-inputnumber-input:focus {
-  border-color: #4d94ff !important;
-  box-shadow: 0 0 0 2px rgba(77,148,255,0.25) !important;
-}
-body.dark-theme .p-inputtext::placeholder {
-  color: #777777 !important;
-}
-body.dark-theme .p-inputgroup-addon {
-  background-color: #2e2e2e !important;
-  border-color: #444444 !important;
-  color: #cccccc !important;
+
+
+/* ── 10. TABELAS ────────────────────────────────────────────────────────────── */
+.p-datatable .p-datatable-wrapper { background: var(--color-surface) !important; }
+
+.p-datatable .p-datatable-thead > tr > th {
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+  font: 600 var(--text-xs)/1 var(--font-body) !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+  padding: var(--space-3) var(--space-4) !important;
 }
 
-/* ── Dropdown ── */
-body.dark-theme .p-dropdown {
-  background-color: #262626 !important;
-  border-color: #444444 !important;
+.p-datatable .p-datatable-tbody > tr {
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  transition: background 0.1s ease !important;
 }
-body.dark-theme .p-dropdown-label {
-  color: #f0f0f0 !important;
+.p-datatable .p-datatable-tbody > tr:hover > td {
+  background: rgba(14, 124, 140, 0.04) !important;
 }
-body.dark-theme .p-dropdown-trigger {
-  background-color: transparent !important;
-  color: #cccccc !important;
+.p-datatable.p-datatable-striped .p-datatable-tbody > tr:nth-child(even) {
+  background: rgba(14, 124, 140, 0.03) !important;
 }
-body.dark-theme .p-dropdown-panel {
-  background-color: #1e1e1e !important;
-  border: 1px solid #444444 !important;
-}
-body.dark-theme .p-dropdown-items-wrapper {
-  background-color: #1e1e1e !important;
-}
-body.dark-theme .p-dropdown-item {
-  background-color: transparent !important;
-  color: #e0e0e0 !important;
-}
-body.dark-theme .p-dropdown-item:hover,
-body.dark-theme .p-dropdown-item.p-highlight {
-  background-color: #2e2e2e !important;
-  color: #ffffff !important;
-}
-body.dark-theme .p-dropdown-filter {
-  background-color: #262626 !important;
-  color: #f0f0f0 !important;
-  border-color: #444444 !important;
+.p-datatable .p-datatable-tbody > tr > td {
+  color: var(--color-text) !important;
+  font: 400 var(--text-sm)/1.4 var(--font-body) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  padding: var(--space-3) var(--space-4) !important;
 }
 
-/* ── DataTable ── */
-body.dark-theme .p-datatable-wrapper,
-body.dark-theme .p-datatable-scrollable-wrapper {
-  background-color: #1a1a1a !important;
+/* Paginação */
+.p-paginator {
+  background: var(--color-surface) !important;
+  border-top: 1px solid var(--color-border) !important;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+  color: var(--color-text-secondary) !important;
 }
-body.dark-theme .p-datatable .p-datatable-thead > tr > th {
-  background-color: #222222 !important;
-  color: #c0c0c0 !important;
-  border-color: #333333 !important;
+.p-paginator .p-paginator-page,
+.p-paginator .p-paginator-next,
+.p-paginator .p-paginator-prev,
+.p-paginator .p-paginator-first,
+.p-paginator .p-paginator-last {
+  color: var(--color-text-secondary) !important;
+  border-radius: var(--radius-sm) !important;
 }
-body.dark-theme .p-datatable .p-datatable-tbody > tr {
-  background-color: #1a1a1a !important;
-  color: #e0e0e0 !important;
-  border-bottom: 1px solid #2e2e2e !important;
-}
-body.dark-theme .p-datatable .p-datatable-tbody > tr:nth-child(even) {
-  background-color: #1f1f1f !important;
-}
-body.dark-theme .p-datatable .p-datatable-tbody > tr:hover {
-  background-color: #2a2a2a !important;
-}
-body.dark-theme .p-datatable .p-datatable-tbody > tr > td {
-  color: #e0e0e0 !important;
-  border-color: #2e2e2e !important;
-}
-body.dark-theme .p-datatable .p-sortable-column-icon {
-  color: #888888 !important;
-}
-body.dark-theme .p-paginator {
-  background-color: #1e1e1e !important;
-  border-color: #333333 !important;
-  color: #d0d0d0 !important;
-}
-body.dark-theme .p-paginator .p-paginator-page,
-body.dark-theme .p-paginator .p-paginator-next,
-body.dark-theme .p-paginator .p-paginator-prev,
-body.dark-theme .p-paginator .p-paginator-first,
-body.dark-theme .p-paginator .p-paginator-last {
-  color: #d0d0d0 !important;
-}
-body.dark-theme .p-paginator .p-paginator-page.p-highlight {
-  background-color: #1e3a5f !important;
-  color: #ffffff !important;
+.p-paginator .p-paginator-page.p-highlight {
+  background: var(--color-primary) !important;
+  color: #fff !important;
 }
 
-/* ── InputSwitch ── */
-body.dark-theme .p-inputswitch .p-inputswitch-slider {
-  background-color: #444444 !important;
+/* ── 11. BADGES / TAGS ──────────────────────────────────────────────────────── */
+.p-tag {
+  border-radius: var(--radius-full) !important;
+  font: 600 var(--text-xs)/1 var(--font-body) !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
 }
-body.dark-theme .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider {
-  background-color: #22c55e !important;
+.p-tag.p-tag-success  { background: rgba(27, 158, 107, 0.12) !important; color: var(--color-success) !important; }
+.p-tag.p-tag-warning  { background: rgba(217, 164, 65, 0.14) !important; color: var(--color-warning) !important; }
+.p-tag.p-tag-danger   { background: rgba(209, 75, 75, 0.12)  !important; color: var(--color-danger)  !important; }
+.p-tag.p-tag-info     { background: rgba(14, 124, 140, 0.12) !important; color: var(--color-info)    !important; }
+.p-tag.p-tag-secondary { background: rgba(61, 90, 108, 0.12) !important; color: var(--color-text-secondary) !important; }
+
+/* ── 12. DIÁLOGOS / MODAIS ──────────────────────────────────────────────────── */
+.p-dialog {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  max-width: 95vw !important; /* Evita que modais com largura fixa estourem telas pequenas */
+}
+/* Garante comportamento correto de inputs em grid e flexbox no modal */
+.p-dialog .w-full,
+.p-dialog .p-inputnumber,
+.p-dialog .p-dropdown {
+  max-width: 100% !important;
+}
+.p-dialog .p-inputnumber-input {
+  width: 100% !important;
 }
 
-/* ── Checkbox ── */
-body.dark-theme .p-checkbox .p-checkbox-box {
-  background-color: #262626 !important;
-  border-color: #555555 !important;
+.p-dialog .p-dialog-header {
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+  padding: var(--space-5) !important;
 }
-body.dark-theme .p-checkbox .p-checkbox-box.p-highlight {
-  background-color: #3b82f6 !important;
-  border-color: #3b82f6 !important;
+.p-dialog .p-dialog-title {
+  font: 700 var(--text-lg)/1.2 var(--font-display) !important;
+  color: var(--color-text) !important;
 }
-body.dark-theme .p-checkbox .p-checkbox-box .p-checkbox-icon {
-  color: #ffffff !important;
+.p-dialog .p-dialog-header-icon { color: var(--color-text-secondary) !important; }
+.p-dialog .p-dialog-content {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  padding: var(--space-5) !important;
 }
-
-/* ── Radio Button ── */
-body.dark-theme .p-radiobutton .p-radiobutton-box {
-  background-color: #262626 !important;
-  border-color: #555555 !important;
-}
-body.dark-theme .p-radiobutton .p-radiobutton-box.p-highlight {
-  border-color: #3b82f6 !important;
-}
-body.dark-theme .p-radiobutton .p-radiobutton-box .p-radiobutton-icon {
-  background-color: #3b82f6 !important;
+.p-dialog .p-dialog-footer {
+  background: var(--color-surface) !important;
+  border-top: 1px solid var(--color-border) !important;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg) !important;
+  padding: var(--space-4) var(--space-5) !important;
 }
 
-/* ── Buttons (text/outlined variants only — filled keep their color) ── */
-body.dark-theme .p-button.p-button-text,
-body.dark-theme .p-button.p-button-outlined {
-  color: #a0c4ff !important;
-  border-color: #444444 !important;
+/* Sidebar / Drawer */
+.p-sidebar {
+  background: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
 }
-body.dark-theme .p-button.p-button-text:hover,
-body.dark-theme .p-button.p-button-outlined:hover {
-  background-color: rgba(255,255,255,0.06) !important;
-  color: #ffffff !important;
+.p-sidebar .p-sidebar-header {
+  background: var(--color-surface) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+}
+.p-sidebar .p-sidebar-content { background: var(--color-surface) !important; }
+
+/* ConfirmDialog */
+.p-confirm-dialog .p-dialog-message { color: var(--color-text) !important; }
+
+/* ── 13. MENU LATERAL (PanelMenu) ───────────────────────────────────────────── */
+/* Estrutura base do PanelMenu */
+.p-panelmenu .p-panelmenu-header > .p-panelmenu-header-content {
+  background: transparent !important;
+  border: none !important;
+}
+.p-panelmenu .p-panelmenu-header .p-panelmenu-header-content .p-panelmenu-header-link {
+  color: var(--color-text) !important;
+  font-family: var(--font-body) !important;
+  font-weight: 600 !important;
+}
+.p-panelmenu .p-panelmenu-header:not(.p-disabled) .p-panelmenu-header-content:hover {
+  background: rgba(14, 124, 140, 0.08) !important;
+}
+.p-panelmenu .p-panelmenu-header:not(.p-disabled) .p-panelmenu-header-content:hover .p-panelmenu-header-link {
+  color: var(--color-primary) !important;
 }
 
-/* ── ProgressBar ── */
-body.dark-theme .p-progressbar {
-  background-color: #2e2e2e !important;
+.p-panelmenu .p-panelmenu-content {
+  background: transparent !important;
+  border: none !important;
 }
-body.dark-theme .p-progressbar .p-progressbar-value {
-  background-color: #3b82f6 !important;
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link {
+  border-radius: var(--radius-sm) !important;
+}
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
+  color: white !important;
+}
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon,
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-submenu-icon {
+  color: white !important;
 }
 
-/* ── Calendar / DatePicker ── */
-body.dark-theme .p-datepicker {
-  background-color: #1a1a1a !important;
-  border: 1px solid #333333 !important;
-  color: #e0e0e0 !important;
+/* Hover nos sub-itens */
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover {
+  background: rgba(14, 124, 140, 0.08) !important;
 }
-body.dark-theme .p-datepicker-header {
-  background-color: #222222 !important;
-  border-bottom: 1px solid #333333 !important;
-  color: #e0e0e0 !important;
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon,
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-submenu-icon {
+  color: var(--color-text) !important;
 }
-body.dark-theme .p-datepicker-header .p-link,
-body.dark-theme .p-datepicker-header .p-datepicker-title {
-  color: #e0e0e0 !important;
+
+/* Item Ativo */
+.p-panelmenu .p-panelmenu-content .p-menuitem.p-highlight > .p-menuitem-content {
+  background: rgba(14, 124, 140, 0.12) !important;
+  border-left: 3px solid var(--color-accent) !important;
 }
-body.dark-theme .p-datepicker table th {
-  color: #a0a0a0 !important;
+.p-panelmenu .p-panelmenu-content .p-menuitem.p-highlight > .p-menuitem-content .p-menuitem-link .p-menuitem-text,
+.p-panelmenu .p-panelmenu-content .p-menuitem.p-highlight > .p-menuitem-content .p-menuitem-link .p-menuitem-icon,
+.p-panelmenu .p-panelmenu-content .p-menuitem.p-highlight > .p-menuitem-content .p-menuitem-link .p-submenu-icon {
+  color: var(--color-primary) !important;
 }
-body.dark-theme .p-datepicker table td > span {
-  color: #e0e0e0 !important;
-}
-body.dark-theme .p-datepicker table td.p-datepicker-today > span {
-  border-color: #3b82f6 !important;
-  color: #a0c4ff !important;
-}
-body.dark-theme .p-datepicker table td > span:not(.p-highlight):hover {
-  background-color: #2e2e2e !important;
-}
-body.dark-theme .p-datepicker table td > span.p-highlight {
-  background-color: #1e3a5f !important;
+
+/* Overrides específicos para quando o PanelMenu e botões estão dentro da barra lateral escura (.sidebar-nav)
+   Força ABSOLUTAMENTE TODOS os textos, links, botões e ícones internos a ficarem brancos */
+.sidebar-nav,
+.sidebar-nav *,
+.sidebar-nav .p-button,
+.sidebar-nav .p-button *,
+.sidebar-nav .p-panelmenu *,
+.sidebar-nav .p-panelmenu-header-link,
+.sidebar-nav .p-panelmenu-header-link *,
+.sidebar-nav .p-menuitem-text,
+.sidebar-nav .p-menuitem-icon,
+.sidebar-nav .p-submenu-icon {
   color: #ffffff !important;
 }
 
-/* ── Tooltip ── */
-body.dark-theme .p-tooltip .p-tooltip-text {
-  background-color: #333333 !important;
-  color: #f0f0f0 !important;
-}
-body.dark-theme .p-tooltip-arrow {
-  border-top-color: #333333 !important;
-  border-bottom-color: #333333 !important;
-}
-
-/* ── Scroll Panel ── */
-body.dark-theme .p-scrollpanel-bar {
-  background-color: #444444 !important;
+/* Hover e foco nos itens do menu na barra lateral */
+.sidebar-nav .p-panelmenu-header-content:hover,
+.sidebar-nav .p-panelmenu-header-content:hover *,
+.sidebar-nav .p-menuitem-content:hover,
+.sidebar-nav .p-menuitem-content:hover *,
+.sidebar-nav .p-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
 }
 
-/* ── Overlay Panel ── */
-body.dark-theme .p-overlaypanel {
-  background-color: #1e1e1e !important;
-  border: 1px solid #333333 !important;
-  color: #e0e0e0 !important;
+/* Item de menu ativo na barra lateral */
+.sidebar-nav .p-menuitem.p-highlight > .p-menuitem-content,
+.sidebar-nav .p-menuitem.p-highlight > .p-menuitem-content * {
+  background: rgba(95, 212, 232, 0.2) !important;
+  color: #ffffff !important;
 }
 
-/* ── Inline row cards on Horarios and Presenca pages ── */
-body.dark-theme [style*="background: #f0fdf4"],
-body.dark-theme [style*="background: #fef2f2"],
-body.dark-theme [style*="background: #fafafa"],
-body.dark-theme [style*="background-color: #f0fdf4"],
-body.dark-theme [style*="background-color: #fef2f2"],
-body.dark-theme [style*="background-color: #fafafa"] {
-  background-color: #1f2b1f !important;
-  border-color: #3a3a3a !important;
+
+
+
+
+/* Menu popup (engrenagem) */
+.p-menu {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.p-menu .p-submenu-header { background: var(--color-bg) !important; color: var(--color-text-secondary) !important; font: 600 var(--text-xs)/1 var(--font-body) !important; letter-spacing: 0.06em !important; }
+.p-menu .p-menuitem-link  { color: var(--color-text) !important; }
+.p-menu .p-menuitem-link:hover { background: rgba(14, 124, 140, 0.08) !important; }
+.p-menu .p-menuitem-separator { border-color: var(--color-border) !important; }
+
+/* ── 14. CHECKBOX / INPUTSWITCH / RADIO ─────────────────────────────────────── */
+.p-checkbox .p-checkbox-box {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.p-checkbox .p-checkbox-box.p-highlight {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+.p-checkbox .p-checkbox-box .p-checkbox-icon { color: #fff !important; }
+.p-checkbox:focus .p-checkbox-box { box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important; }
+
+.p-inputswitch .p-inputswitch-slider { background: var(--color-border) !important; }
+.p-inputswitch.p-inputswitch-checked .p-inputswitch-slider { background: var(--color-success) !important; }
+
+/* ── 15. TOAST (notificações) ───────────────────────────────────────────────── */
+.p-toast .p-toast-message {
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.p-toast .p-toast-message.p-toast-message-success { background: rgba(27, 158, 107, 0.1) !important; border-left: 4px solid var(--color-success) !important; }
+.p-toast .p-toast-message.p-toast-message-warn    { background: rgba(217, 164, 65, 0.1) !important; border-left: 4px solid var(--color-warning) !important; }
+.p-toast .p-toast-message.p-toast-message-error   { background: rgba(209, 75, 75, 0.1) !important; border-left: 4px solid var(--color-danger) !important; }
+.p-toast .p-toast-message.p-toast-message-info    { background: rgba(14, 124, 140, 0.1) !important; border-left: 4px solid var(--color-info) !important; }
+.p-toast .p-toast-message-text { color: var(--color-text) !important; }
+.p-toast .p-toast-summary { font: 600 var(--text-sm)/1.2 var(--font-display) !important; color: var(--color-text) !important; }
+.p-toast .p-toast-detail  { font: 400 var(--text-sm)/1.4 var(--font-body) !important; color: var(--color-text-secondary) !important; }
+
+/* ── 16. DIVIDER ────────────────────────────────────────────────────────────── */
+.p-divider::before { border-color: var(--color-border) !important; }
+
+/* ── 17. PROGRESSBAR ────────────────────────────────────────────────────────── */
+.p-progressbar { background: var(--color-border) !important; border-radius: var(--radius-full) !important; }
+.p-progressbar .p-progressbar-value { background: var(--color-primary) !important; border-radius: var(--radius-full) !important; }
+
+/* ── 18. TOOLTIP ────────────────────────────────────────────────────────────── */
+.p-tooltip .p-tooltip-text {
+  background: var(--color-navy-800) !important;
+  color: #fff !important;
+  border-radius: var(--radius-sm) !important;
+  font: 400 var(--text-xs)/1.4 var(--font-body) !important;
+  padding: var(--space-2) var(--space-3) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+.p-tooltip-arrow { border-top-color: var(--color-navy-800) !important; border-bottom-color: var(--color-navy-800) !important; }
+
+/* ── 19. CALENDÁRIO CUSTOMIZADO ─────────────────────────────────────────────── */
+.custom-calendar.p-calendar-inline .p-datepicker {
+  width: 100%;
+  border: none;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.custom-calendar .p-datepicker-header {
+  background: var(--color-bg) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+  padding: var(--space-3) var(--space-4) !important;
+}
+.custom-calendar .p-datepicker-title,
+.custom-calendar .p-datepicker-header .p-link { color: var(--color-text) !important; font-weight: 700 !important; }
+.custom-calendar .p-datepicker table th { color: var(--color-text-secondary) !important; font-weight: 600 !important; font-size: var(--text-xs) !important; }
+.custom-calendar .p-datepicker table td > span {
+  width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+  color: var(--color-text);
+}
+.custom-calendar .p-datepicker table td > span.p-highlight {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 6px rgba(15, 53, 80, 0.3);
+}
+.custom-calendar .p-datepicker table td > span:not(.p-highlight):hover {
+  background: rgba(14, 124, 140, 0.08) !important;
+  color: var(--color-text) !important;
+}
+.custom-calendar .p-datepicker table td.p-datepicker-today > span {
+  border: 2px solid var(--color-accent) !important;
+  background: transparent !important;
+  color: var(--color-accent) !important;
+  font-weight: 700 !important;
 }
 
-/* ── Present/absent row overrides ── */
-body.dark-theme [style*="background: #f0fdf4"] {
-  background-color: #0d2b1a !important;
-  border-color: #22c55e !important;
-}
-body.dark-theme [style*="background: #fef2f2"] {
-  background-color: #2b0d0d !important;
-  border-color: #ef4444 !important;
+/* ── 20. INPUTSWITCH FIXO (compatibilidade) ─────────────────────────────────── */
+.fixed-status-switch.p-inputswitch { width: 44px !important; height: 24px !important; min-width: 44px !important; }
+.fixed-status-switch .p-inputswitch-slider { background: var(--color-border) !important; border-radius: 12px !important; }
+.fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider { background: var(--color-success) !important; }
+
+/* ── 21. ANIMAÇÕES (respeita prefers-reduced-motion) ───────────────────────── */
+@keyframes full-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.animate-spin { animation: full-spin 0.6s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 
-/* Ensure inline color text on present/absent rows remain legible */
-body.dark-theme .text-green-700 { color: #ffffff !important; }
-body.dark-theme .text-red-700   { color: #f87171 !important; }
-body.dark-theme .text-gray-700  { color: #d1d5db !important; }
-body.dark-theme .text-green-600 { color: #86efac !important; }
-body.dark-theme .text-red-600   { color: #fca5a5 !important; }
-body.dark-theme .text-gray-500  { color: #9ca3af !important; }
-
-/* ── Input Number spinner buttons ── */
-body.dark-theme .p-inputnumber-button {
-  background-color: #2e2e2e !important;
-  border-color: #444444 !important;
-  color: #cccccc !important;
+/* ── 22. SIDEBAR DE NAVEGAÇÃO LATERAL ──────────────────────────────────────── */
+/* O card do menu lateral usa navy-800 fixo em ambos os temas (âncora de marca) */
+.sidebar-nav {
+  background: var(--color-navy-800) !important;
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
 }
-body.dark-theme .p-inputnumber-button:hover {
-  background-color: #3a3a3a !important;
+
+/* Garante que o card de menu (Cadastros.tsx) use o navy */
+.card.sidebar-nav .p-button { color: rgba(255, 255, 255, 0.8) !important; }
+.card.sidebar-nav .p-button:hover { background: rgba(95, 212, 232, 0.1) !important; color: #fff !important; }
+
+/* ── 23. OVERRIDES DE ELEMENTOS INLINE (dark mode) ─────────────────────────── */
+/* Elementos com style={{ background: "#fafafa" }} ou cores hardcoded precisam
+   ser sobrescritos em dark mode via seletor de tema */
+
+[data-theme="dark"] .p-card,
+[data-theme="dark"] .p-card-body,
+[data-theme="dark"] .p-card-content {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Linhas de presença (verde/vermelho/cinza) — preserva a semântica de cor */
+[data-theme="dark"] [style*="background: #f0fdf4"],
+[data-theme="dark"] [style*="background-color: #f0fdf4"] {
+  background-color: rgba(27, 158, 107, 0.12) !important;
+  border-color: var(--color-success) !important;
+}
+[data-theme="dark"] [style*="background: #fef2f2"],
+[data-theme="dark"] [style*="background-color: #fef2f2"] {
+  background-color: rgba(209, 75, 75, 0.12) !important;
+  border-color: var(--color-danger) !important;
+}
+[data-theme="dark"] [style*="background: #fafafa"],
+[data-theme="dark"] [style*="background-color: #fafafa"] {
+  background-color: var(--color-surface) !important;
+}
+[data-theme="dark"] [style*="background: #eff6ff"],
+[data-theme="dark"] [style*="background-color: #eff6ff"] {
+  background-color: rgba(14, 124, 140, 0.12) !important;
+}
+[data-theme="dark"] [style*="background: #fef9ec"],
+[data-theme="dark"] [style*="background-color: #fef9ec"] {
+  background-color: rgba(217, 164, 65, 0.12) !important;
+}
+
+/* Textos coloridos em linhas de presença */
+[data-theme="dark"] .text-green-700,
+[data-theme="dark"] .text-green-600 { color: var(--color-success) !important; }
+[data-theme="dark"] .text-red-700,
+[data-theme="dark"] .text-red-600   { color: var(--color-danger) !important; }
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-gray-500  { color: var(--color-text-secondary) !important; }
+[data-theme="dark"] .text-orange-700,
+[data-theme="dark"] .text-orange-600 { color: var(--color-warning) !important; }
+[data-theme="dark"] .text-blue-600,
+[data-theme="dark"] .text-blue-700  { color: var(--color-cyan-400) !important; }
+
+/* Cards de stat (bordas coloridas nos relatórios) */
+[data-theme="dark"] .border-top-3 { border-color: inherit !important; }
+
+/* InputNumber spinner */
+[data-theme="dark"] .p-inputnumber-button {
+  background: var(--color-border) !important;
+  border-color: var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+/* ── 24. TOOLBAR (Menubar) ──────────────────────────────────────────────────── */
+/* Gradiente de marca — navy-800 → navy-700, independente do tema */
+.p-toolbar {
+  background: linear-gradient(135deg, var(--color-navy-800) 0%, var(--color-navy-700) 100%) !important;
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* ── 25. CARD P PRIMEREACT INTERNO ──────────────────────────────────────────── */
+.p-card { background: var(--color-surface) !important; color: var(--color-text) !important; border: 1px solid var(--color-border) !important; border-radius: var(--radius-lg) !important; box-shadow: var(--shadow-sm) !important; }
+.p-card .p-card-title { font: 700 var(--text-lg)/1.2 var(--font-display) !important; color: var(--color-text) !important; }
+.p-card .p-card-subtitle { color: var(--color-text-secondary) !important; }
+.p-card .p-card-content { color: var(--color-text) !important; }
+
+/* ── 26. MESSAGE / INLINE ALERT ─────────────────────────────────────────────── */
+.p-message { border-radius: var(--radius-md) !important; }
+.p-message.p-message-info    { background: rgba(14, 124, 140, 0.08) !important; border-left: 4px solid var(--color-info) !important; color: var(--color-text) !important; }
+.p-message.p-message-success { background: rgba(27, 158, 107, 0.08) !important; border-left: 4px solid var(--color-success) !important; color: var(--color-text) !important; }
+.p-message.p-message-warn    { background: rgba(217, 164, 65, 0.08) !important; border-left: 4px solid var(--color-warning) !important; color: var(--color-text) !important; }
+.p-message.p-message-error   { background: rgba(209, 75, 75, 0.08)  !important; border-left: 4px solid var(--color-danger) !important; color: var(--color-text) !important; }
+.p-message .p-message-text { font: 400 var(--text-sm)/1.4 var(--font-body) !important; color: var(--color-text) !important; }
+
+/* ── 27. CLASSES UTILITÁRIAS SEMÂNTICAS ──────────────────────────────────────── */
+
+/* ── KPI border accent ── */
+.kpi-border-info    { border-color: var(--color-cyan-600)  !important; }
+.kpi-border-success { border-color: var(--color-success)   !important; }
+.kpi-border-warning { border-color: var(--color-warning)   !important; }
+.kpi-border-danger  { border-color: var(--color-danger)    !important; }
+.kpi-border-neutral { border-color: var(--color-border)    !important; }
+
+/* ── KPI value colors ── */
+.kpi-val-info    { color: var(--color-cyan-500)      !important; }
+.kpi-val-success { color: var(--color-success)        !important; }
+.kpi-val-warning { color: var(--color-warning)        !important; }
+.kpi-val-danger  { color: var(--color-danger)         !important; }
+.kpi-val-neutral { color: var(--color-text-secondary) !important; }
+
+/* ── btn-selector: botões de seleção de dia/horário ── */
+.btn-selector {
+  display:       inline-flex;
+  flex-direction: column;
+  align-items:   center;
+  justify-content: center;
+  border:        2px solid var(--color-border);
+  background:    var(--color-surface);
+  color:         var(--color-text-secondary);
+  outline:       none;
+  cursor:        pointer;
+  border-radius: var(--radius-sm);
+  font-weight:   600;
+  font-size:     var(--text-sm);
+  font-family:   var(--font-body);
+  padding:       0.4rem 0.75rem;
+  transition:    border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.btn-selector:hover {
+  border-color: var(--color-accent);
+  color:        var(--color-text);
+}
+.btn-selector--active {
+  border-color: var(--color-accent)        !important;
+  background:   rgba(14, 124, 140, 0.1)   !important;
+  color:        var(--color-accent)        !important;
+}
+.btn-selector--turma {
+  padding:   0.5rem 1.2rem;
+  min-width: 100px;
+}
+.btn-selector__hora {
+  font-weight: 700;
+  font-size:   1rem;
+  color:       inherit;
+}
+.btn-selector__modalidade {
+  font-size: var(--text-xs);
+  opacity:   0.75;
+  margin-top: 0.125rem;
+  color:     inherit;
+}
+
+/* ── Dot indicador do dia atual no btn-selector ── */
+.btn-day-dot {
+  position:      absolute;
+  top:           -5px;
+  right:         -5px;
+  width:         9px;
+  height:        9px;
+  border-radius: 50%;
+  border:        2px solid var(--color-surface);
+}
+.btn-day-dot--today     { background: var(--color-success); }
+.btn-day-dot--yesterday { background: var(--color-warning); }
+
+/* ── Presença: linhas temáticas ── */
+.attendance-row-present {
+  background-color: rgba(27, 158, 107, 0.08)  !important;
+  border-color:     rgba(27, 158, 107, 0.25)  !important;
+}
+.attendance-row-absent {
+  background-color: rgba(209, 75, 75, 0.07)   !important;
+  border-color:     rgba(209, 75, 75, 0.2)    !important;
+}
+.attendance-row-late {
+  background-color: rgba(217, 164, 65, 0.08)  !important;
+  border-color:     rgba(217, 164, 65, 0.25)  !important;
+}
+.attendance-row-default {
+  background-color: var(--color-surface) !important;
+  border-color:     var(--color-border)  !important;
+}
+
+/* ── Presença: mini-badge de status ── */
+.bg-present { background: rgba(27, 158, 107, 0.12)  !important; color: var(--color-success) !important; }
+.bg-absent  { background: rgba(209, 75, 75, 0.12)   !important; color: var(--color-danger)  !important; }
+.bg-late    { background: rgba(217, 164, 65, 0.12)  !important; color: var(--color-warning) !important; }
+
+/* ── Professor: card de item e avatar ── */
+.professor-card {
+  background: var(--color-surface) !important;
+  transition: background 0.15s ease;
+}
+.professor-card:hover { background: rgba(14, 124, 140, 0.04) !important; }
+
+.professor-avatar {
+  background: linear-gradient(135deg, var(--color-cyan-600), var(--color-cyan-400)) !important;
+}
+
+/* ── Panel da turma selecionada (Impressão) ── */
+.selected-turma-panel {
+  border-left: 4px solid var(--color-accent) !important;
+}
+
+/* ── Botão primário de marca (cyan) ── */
+.btn-primary-brand {
+  background: var(--color-accent)       !important;
+  border-color: var(--color-accent)     !important;
+  color: #fff                           !important;
+}
+.btn-primary-brand:hover {
+  background: var(--color-accent-hover) !important;
+  border-color: var(--color-accent-hover) !important;
+}
+
+.btn-primary-brand .p-button-label,
+.btn-primary-brand .p-button-icon {
+  color: #fff !important;
 }

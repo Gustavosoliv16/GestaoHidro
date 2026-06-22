@@ -5,7 +5,6 @@ import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { Tag } from "primereact/tag";
-import { Divider } from "primereact/divider";
 import Database from "@tauri-apps/plugin-sql";
 import {
   buscarTodosProfessores,
@@ -187,8 +186,7 @@ export default function Professores() {
               {professores.map(p => (
                 <div
                   key={p.id_professor}
-                  className="p-3 border-round border-1 surface-border"
-                  style={{ background: "#fafafa" }}
+                  className="professor-card p-3 border-round border-1 surface-border"
                 >
                   {editandoId === p.id_professor ? (
                     /* Modo edição inline */
@@ -225,11 +223,8 @@ export default function Professores() {
                     <div className="flex align-items-center justify-content-between">
                       <div className="flex align-items-center gap-3">
                         <div
-                          className="flex align-items-center justify-content-center border-circle text-white font-bold text-sm"
-                          style={{
-                            width: 36, height: 36, flexShrink: 0,
-                            background: "linear-gradient(135deg, #3AAFBB, #5BC8D4)",
-                          }}
+                          className="professor-avatar flex align-items-center justify-content-center border-circle text-white font-bold text-sm"
+                          style={{ width: 36, height: 36, flexShrink: 0 }}
                         >
                           {p.nome.charAt(0).toUpperCase()}
                         </div>

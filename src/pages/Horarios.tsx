@@ -93,13 +93,13 @@ export default function GradeHoraria() {
     capacidadeMaxima: 6
   });
 
-  const [isDark, setIsDark] = useState(() => document.body.classList.contains("dark-theme"));
+  const [isDark, setIsDark] = useState(() => document.documentElement.getAttribute("data-theme") === "dark");
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
-      setIsDark(document.body.classList.contains("dark-theme"));
+      setIsDark(document.documentElement.getAttribute("data-theme") === "dark");
     });
-    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
     return () => observer.disconnect();
   }, []);
 
@@ -145,7 +145,7 @@ export default function GradeHoraria() {
 
     const nomesDias = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado", "Domingo"];
     const cores = ["border-blue-500", "border-purple-500", "border-indigo-500", "border-teal-500", "border-pink-500", "border-orange-500", "border-gray-400"];
-    const estilosVisuais = ["bg-gray-50", "bg-gray-50", "bg-gray-50", "bg-gray-50", "bg-gray-50", "bg-gray-50", "bg-gray-200 opacity-70"];
+    const estilosVisuais = ["col-working-day", "col-working-day", "col-working-day", "col-working-day", "col-working-day", "col-working-day", "col-weekend"];
 
     return Array.from({ length: 7 }).map((_, idx) => {
       const diaCorrente = new Date(segundaFeira);
@@ -253,7 +253,7 @@ export default function GradeHoraria() {
               {diasDaSemanaComDatas.map((dia) => (
                 <th key={dia.id} className={`p-2 border-bottom-1 surface-border text-center border-top-3 ${dia.cor} ${dia.classeVisual}`} style={{ minWidth: '160px', width: '14%' }}>
                   <div className="font-bold text-sm text-800">{dia.nome}</div>
-                  <div className="text-xs text-primary font-bold mt-1 bg-blue-50 inline-block px-2 py-0 border-round">{dia.dataGrid}</div>
+                  <div className="text-xs font-bold mt-1 badge-date-container inline-block px-2 py-0 border-round">{dia.dataGrid}</div>
                 </th>
               ))}
             </tr>
@@ -275,7 +275,7 @@ export default function GradeHoraria() {
                   return (
                     <td 
                       key={dia.id} 
-                      className={`p-1 border-bottom-1 border-right-1 surface-border relative transition-colors duration-150 ${dia.classeVisual} ${ehO_MomentoAtual ? "bg-yellow-50" : "hover:bg-blue-50-alpha-10"}`}
+                      className={`p-1 border-bottom-1 border-right-1 surface-border relative transition-colors duration-150 ${dia.classeVisual} ${ehO_MomentoAtual ? "current-time-cell" : "cell-hover"}`}
                       style={{ verticalAlign: 'top', cursor: 'pointer' }}
                       onClick={() => handleCelulaClick(dia.id, hora)}
                     >
@@ -340,7 +340,7 @@ export default function GradeHoraria() {
           </div>
           <div>
             <label className="block font-bold text-sm text-700 mb-1">Capacidade Máxima</label>
-            <InputNumber value={novaTurma.capacidadeMaxima} min={1} max={30} showButtons onChange={(e) => setNovaTurma({...novaTurma, capacidadeMaxima: e.value || 6})} className="w-full" />
+            <InputNumber value={novaTurma.capacidadeMaxima} min={1} max={30} onChange={(e) => setNovaTurma({...novaTurma, capacidadeMaxima: e.value || 6})} className="w-full" />
           </div>
         </div>
       </Dialog>
@@ -348,7 +348,7 @@ export default function GradeHoraria() {
       <Dialog header={turmaSelecionada ? `Gerenciar Turma: ${turmaSelecionada.modalidade}` : "Detalhes"} visible={modalDetalhesVisible} style={{ width: '450px' }} onHide={() => setModalDetalhesVisible(false)}>
         {turmaSelecionada && (
           <div className="flex flex-column gap-3">
-            <div className="bg-blue-50 border-round p-3 flex justify-content-between align-items-center">
+            <div className="info-highlight-box border-round p-3 flex justify-content-between align-items-center">
               <div>
                 <span className="block text-xs font-semibold text-600 uppercase">Horário</span>
                 <span className="font-bold text-primary">{formatarHora(turmaSelecionada.horarioInicio)}:00 às {formatarHora(turmaSelecionada.horarioFim)}:00</span>
@@ -368,7 +368,7 @@ export default function GradeHoraria() {
               </div>
 
               {mostrarSeletorAluno && (
-                <div className="flex gap-2 align-items-center mb-3 p-2 bg-gray-50 border-round border-1 surface-border">
+                <div className="flex gap-2 align-items-center mb-3 p-2 selector-wrapper border-round border-1 surface-border">
                   <Dropdown appendTo="self" value={alunoSelecionadoId} options={listaCompletaAlunos} optionLabel="nome" optionValue="id_aluno" filter onChange={(e) => setAlunoSelecionadoId(e.value)} placeholder="Selecione o aluno..." className="flex-1 p-inputtext-sm" />
                   <Button icon="pi pi-check" severity="success" onClick={gerenciarVinculoAluno} className="p-button-sm" tooltip="Confirmar Vínculo" />
                   <Button icon="pi pi-times" severity="secondary" onClick={() => setMostrarSeletorAluno(false)} className="p-button-sm p-button-text" />
@@ -378,7 +378,7 @@ export default function GradeHoraria() {
               <div className="flex flex-column gap-2 max-h-12rem overflow-y-auto pr-1">
                 {alunosDaTurma.length > 0 ? (
                   alunosDaTurma.map((aluno) => (
-                    <div key={aluno.id_aluno} className="flex align-items-center justify-content-between p-2 surface-100 border-round hover:bg-gray-200 transition-colors">
+                    <div key={aluno.id_aluno} className="flex align-items-center justify-content-between p-2 student-list-item border-round transition-colors">
                       <div className="flex flex-column">
                         <span className="text-sm font-semibold text-800">{aluno.nome}</span>
                         {aluno.telefone && <span className="text-xs text-500">{aluno.telefone}</span>}

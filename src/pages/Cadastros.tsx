@@ -106,7 +106,7 @@ export default function Alunos() {
   return (
     <div className="flex gap-4 surface-ground">
       <div className="flex-shrink-0" style={{ width: "240px" }}>
-        <div className="card flex flex-column align-items-center gap-3 surface-card p-4 border-round shadow-1">
+        <div className="card sidebar-nav flex flex-column align-items-center gap-3 p-4 border-round shadow-1">
           <Button
             type="button"
             label="Mostrar Todos"
