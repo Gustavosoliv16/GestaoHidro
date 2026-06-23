@@ -1,9 +1,20 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    DESIGN SYSTEM — Gestão Hidro
    Fonte da verdade: design.md
+
+   ORGANIZAÇÃO (camadas de cima ↓ para baixo):
+     0. TOKENS DE MARCA      → variáveis fixas (cores, fontes, escala, raio…)
+     1. TEMAS                → light (padrão) e dark — só variáveis
+     2. RESET + BASE         → html, body, scrollbar, shell, tipografia
+     3. PADRÃO PrimeReact    → componentes via tokens (funcionam em ambos os temas)
+     4. COMPONENTES CUSTOM   → classes do projeto (.sidebar-nav, .btn-selector…)
+     5. OVERRIDES POR TEMA   → apenas o que exige seletor [data-theme="dark"]
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── 1. TOKENS DE MARCA ────────────────────────────────────────────────────── */
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║ 0. TOKENS DE MARCA — independentes do tema                               ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
 :root {
   /* Cores de marca (fixas, independente do tema) */
   --color-navy-900: #0A1620;
@@ -53,7 +64,12 @@
   --radius-full: 999px;
 }
 
-/* ── 2. TEMA CLARO (padrão) ─────────────────────────────────────────────────── */
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║ 1. TEMAS — apenas variáveis. NUNCA colocar regras visuais aqui.          ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+
+/* ── 1.1 Tema claro (padrão) ─────────────────────────────────────────────── */
 :root,
 [data-theme="light"] {
   --color-bg:              #F7FAFC;
@@ -71,7 +87,7 @@
   --shadow-lg: 0 8px 24px rgba(10, 31, 46, 0.12);
 }
 
-/* ── 3. TEMA ESCURO ─────────────────────────────────────────────────────────── */
+/* ── 1.2 Tema escuro ─────────────────────────────────────────────────────── */
 [data-theme="dark"] {
   --color-bg:              #0A1620;
   --color-surface:         #102536;
@@ -89,9 +105,14 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
-/* ── 4. RESET E BASE ────────────────────────────────────────────────────────── */
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║ 2. RESET + BASE                                                          ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+/* ── 2.1 Reset universal ─────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; }
 
+/* ── 2.2 html / body ─────────────────────────────────────────────────────── */
 html {
   font-size: 16px;
   text-rendering: optimizeLegibility;
@@ -99,6 +120,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 html, body {
@@ -113,9 +135,9 @@ html, body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+/* ── 2.3 App shell ───────────────────────────────────────────────────────── */
 #root { display: flex; flex-direction: column; min-height: 100vh; }
 
-/* Shell da aplicação */
 .app-shell {
   display: flex;
   flex-direction: column;
@@ -129,9 +151,8 @@ html, body {
   background-color: var(--color-bg);
 }
 
-/* Scrollbar */
-html { scrollbar-gutter: stable; }
-::-webkit-scrollbar { width: 6px; height: 6px; }
+/* ── 2.4 Scrollbar ───────────────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--color-border);
@@ -139,16 +160,16 @@ html { scrollbar-gutter: stable; }
 }
 ::-webkit-scrollbar-thumb:hover { background: var(--color-text-secondary); }
 
-/* ── 5. TIPOGRAFIA SEMÂNTICA ────────────────────────────────────────────────── */
+/* ── 2.5 Tipografia semântica ────────────────────────────────────────────── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   color: var(--color-text);
   margin: 0;
   line-height: 1.2;
 }
-h1 { font-size: var(--text-2xl); font-weight: 700; letter-spacing: -0.01em; }
-h2 { font-size: var(--text-xl);  font-weight: 700; letter-spacing: -0.01em; }
-h3 { font-size: var(--text-lg);  font-weight: 600; }
+h1 { font-size: var(--text-2xl);  font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: var(--text-xl);   font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: var(--text-lg);   font-weight: 600; }
 h4 { font-size: var(--text-base); font-weight: 600; }
 
 p, li, span { font-family: var(--font-body); color: var(--color-text); }
@@ -166,8 +187,13 @@ p, li, span { font-family: var(--font-body); color: var(--color-text); }
   color: var(--color-text);
 }
 
-/* ── 6. LAYOUT E CARDS ──────────────────────────────────────────────────────── */
-.card, .surface-card {
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║ 3. PADRÃO PrimeReact — regras via tokens (light + dark automaticamente)  ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+/* ── 3.1 Surfaces / Cards / PrimeFlex text utilities ─────────────────────── */
+.card,
+.surface-card {
   background: var(--color-surface) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-lg) !important;
@@ -181,13 +207,24 @@ p, li, span { font-family: var(--font-body); color: var(--color-text); }
 .surface-overlay { background-color: var(--color-surface) !important; }
 .surface-border  { border-color: var(--color-border) !important; }
 
-/* ── 7. TEXTO (PrimeFlex overrides) ────────────────────────────────────────── */
+/* PrimeReact card */
+.p-card {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+.p-card .p-card-title    { font: 700 var(--text-lg)/1.2 var(--font-display) !important; color: var(--color-text) !important; }
+.p-card .p-card-subtitle { color: var(--color-text-secondary) !important; }
+.p-card .p-card-content  { color: var(--color-text) !important; }
+
+/* PrimeFlex text utilities */
 .text-900, .text-800 { color: var(--color-text) !important; }
 .text-700, .text-600 { color: var(--color-text-secondary) !important; }
 .text-500, .text-400 { color: var(--color-text-secondary) !important; opacity: 0.7; }
-label { color: var(--color-text-secondary); font-family: var(--font-body); }
-
-/* ── 8. BOTÕES ──────────────────────────────────────────────────────────────── */
+label                 { color: var(--color-text-secondary); font-family: var(--font-body); }
+/* ── 3.2 Botões ──────────────────────────────────────────────────────────── */
 .p-button {
   font-family: var(--font-body) !important;
   font-weight: 600 !important;
@@ -200,44 +237,34 @@ label { color: var(--color-text-secondary); font-family: var(--font-body); }
   outline-offset: 2px !important;
 }
 
-/* Botão primário padrão (Salvar) - Força fundo correto e TEXTO BRANCO */
+/* Primário (Salvar) — força fundo correto e TEXTO BRANCO */
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success) {
   background: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
-  color: #ffffff !important; /* Correção: Garante o texto branco no botão escuro */
+  color: #ffffff !important;
 }
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success) * {
-  color: #ffffff !important; /* Correção: Garante o ícone branco também */
+  color: #ffffff !important;
 }
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success):hover {
   background: var(--color-primary-hover) !important;
   border-color: var(--color-primary-hover) !important;
 }
 
-/* Botão secundário (Cancelar) - Fundo claro com texto escuro legível */
+/* Secundário (Cancelar) — fundo claro com texto escuro */
 .p-button.p-button-secondary {
   background: var(--color-surface) !important;
   border: 1px solid var(--color-border) !important;
   color: var(--color-text-secondary) !important;
 }
-.p-button.p-button-secondary * {
-  color: var(--color-text-secondary) !important; /* Ícone herda a cor do texto */
-}
+.p-button.p-button-secondary * { color: var(--color-text-secondary) !important; }
 .p-button.p-button-secondary:hover {
   background: var(--color-border) !important;
   color: var(--color-text) !important;
 }
-.p-button.p-button-secondary:hover * {
-  color: var(--color-text) !important;
-}
+.p-button.p-button-secondary:hover * { color: var(--color-text) !important; }
 
-/* Reset imediato para botões dentro de p-buttonset (SelectButton) */
-.p-buttonset .p-button {
-  background:   var(--color-surface)        !important;
-  border-color: var(--color-border)         !important;
-  color:        var(--color-text-secondary) !important;
-}
-/* Botão outlined */
+/* Outlined */
 .p-button.p-button-outlined {
   color: var(--color-primary) !important;
   border-color: var(--color-border) !important;
@@ -246,7 +273,8 @@ label { color: var(--color-text-secondary); font-family: var(--font-body); }
 .p-button.p-button-outlined:hover {
   background: rgba(14, 124, 140, 0.06) !important;
 }
-/* Botão ghost/text */
+
+/* Ghost / text */
 .p-button.p-button-text {
   color: var(--color-text-secondary) !important;
   background: transparent !important;
@@ -256,7 +284,13 @@ label { color: var(--color-text-secondary); font-family: var(--font-body); }
   color: var(--color-text) !important;
 }
 
-/* ── 9. INPUTS E FORMULÁRIOS ────────────────────────────────────────────────── */
+/* ButtonSet — reset imediato (SelectButton herda dessas regras) */
+.p-buttonset .p-button {
+  background:   var(--color-surface)        !important;
+  border-color: var(--color-border)         !important;
+  color:        var(--color-text-secondary) !important;
+}
+/* ── 3.3 Inputs e formulários ────────────────────────────────────────────── */
 .p-inputtext,
 .p-inputnumber-input,
 .p-password input,
@@ -268,12 +302,13 @@ input[type="text"] {
   border-radius: var(--radius-md) !important;
   padding: var(--space-3) var(--space-4) !important;
   font: 400 var(--text-base)/1.4 var(--font-body) !important;
-  color: var(--color-text)!important;
+  color: var(--color-text) !important;
   transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 .p-inputtext::placeholder,
 input::placeholder,
 textarea::placeholder { color: var(--color-text-secondary) !important; opacity: 0.6; }
+
 .p-inputtext:focus,
 .p-inputnumber-input:focus,
 input[type="date"]:focus {
@@ -282,20 +317,17 @@ input[type="date"]:focus {
   box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important;
 }
 
-/* Ajuste explícito para IconField (Ícones de busca dentro dos inputs) */
+/* IconField — ícones de busca dentro dos inputs */
 .p-icon-field {
   position: relative;
   display: inline-flex;
   width: 100%;
 }
-.p-icon-field-left > .p-inputtext,
-.p-icon-field-left > input {
-  padding-left: 2.75rem !important;
-}
+.p-icon-field-left  > .p-inputtext,
+.p-icon-field-left  > input { padding-left:  2.75rem !important; }
 .p-icon-field-right > .p-inputtext,
-.p-icon-field-right > input {
-  padding-right: 2.75rem !important;
-}
+.p-icon-field-right > input { padding-right: 2.75rem !important; }
+
 .p-icon-field > .p-input-icon {
   position: absolute;
   top: 50% !important;
@@ -305,13 +337,9 @@ input[type="date"]:focus {
   pointer-events: none;
   margin-top: 0 !important;
 }
-.p-icon-field-left > .p-input-icon {
-  left: 1rem !important;
-}
-.p-icon-field-right > .p-input-icon {
-  right: 1rem !important;
-}
-
+.p-icon-field-left  > .p-input-icon { left:  1rem !important; }
+.p-icon-field-right > .p-input-icon { right: 1rem !important; }
+/* ── 3.4 Dropdown / SelectButton ─────────────────────────────────────────── */
 
 /* Dropdown */
 .p-dropdown {
@@ -319,9 +347,10 @@ input[type="date"]:focus {
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-md) !important;
 }
-.p-dropdown .p-dropdown-label { color: var(--color-text) !important; font-family: var(--font-body) !important; }
+.p-dropdown .p-dropdown-label   { color: var(--color-text) !important; font-family: var(--font-body) !important; }
 .p-dropdown .p-dropdown-trigger { color: var(--color-text-secondary) !important; background: transparent !important; }
-.p-dropdown:focus, .p-dropdown.p-focus {
+.p-dropdown:focus,
+.p-dropdown.p-focus {
   border-color: var(--color-accent) !important;
   box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important;
 }
@@ -331,17 +360,17 @@ input[type="date"]:focus {
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-md) !important;
 }
-.p-dropdown-item { color: var(--color-text) !important; font-family: var(--font-body) !important; }
+.p-dropdown-item               { color: var(--color-text) !important; font-family: var(--font-body) !important; }
 .p-dropdown-item:hover,
-.p-dropdown-item.p-highlight { background: rgba(14, 124, 140, 0.08) !important; color: var(--color-text) !important; }
-.p-dropdown-filter { background: var(--color-surface) !important; color: var(--color-text) !important; border-color: var(--color-border) !important; }
+.p-dropdown-item.p-highlight   { background: rgba(14, 124, 140, 0.08) !important; color: var(--color-text) !important; }
+.p-dropdown-filter             { background: var(--color-surface) !important; color: var(--color-text) !important; border-color: var(--color-border) !important; }
 
 /* SelectButton — prefixado com `html` para superar especificidade do tema PrimeReact */
-html .p-selectbutton { border-radius: var(--radius-md) !important; overflow: hidden; }
+html .p-selectbutton            { border-radius: var(--radius-md) !important; overflow: hidden; }
 html .p-selectbutton .p-button {
-  background:   var(--color-surface)         !important;
-  border-color: var(--color-border)          !important;
-  color:        var(--color-text-secondary)  !important;
+  background:   var(--color-surface)        !important;
+  border-color: var(--color-border)         !important;
+  color:        var(--color-text-secondary) !important;
 }
 html .p-selectbutton .p-button:hover:not(.p-highlight) {
   background:   rgba(14, 124, 140, 0.08) !important;
@@ -359,11 +388,9 @@ html .p-selectbutton .p-button.p-highlight:hover {
 }
 /* Ícones e labels herdam a cor do estado */
 html .p-selectbutton .p-button .p-button-icon,
-html .p-selectbutton .p-button .p-button-label {
-  color: inherit !important;
-}
+html .p-selectbutton .p-button .p-button-label { color: inherit !important; }
 
-/* Remove a borda/sombra de foco azul que aparece quando o botão é clicado (estado focado) */
+/* Remove borda/sombra de foco azul ao clicar */
 html .p-selectbutton .p-button:focus,
 html .p-selectbutton .p-button:focus-visible,
 html .p-selectbutton .p-button.p-focus {
@@ -375,10 +402,7 @@ html .p-selectbutton .p-button.p-highlight:focus,
 html .p-selectbutton .p-button.p-highlight:focus-visible {
   border-color: var(--color-primary) !important;
 }
-
-
-
-/* ── 10. TABELAS ────────────────────────────────────────────────────────────── */
+/* ── 3.5 Tabelas e paginação ─────────────────────────────────────────────── */
 .p-datatable .p-datatable-wrapper { background: var(--color-surface) !important; }
 
 .p-datatable .p-datatable-thead > tr > th {
@@ -428,37 +452,31 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   background: var(--color-primary) !important;
   color: #fff !important;
 }
-
-/* ── 11. BADGES / TAGS ──────────────────────────────────────────────────────── */
+/* ── 3.6 Tags / Badges ───────────────────────────────────────────────────── */
 .p-tag {
   border-radius: var(--radius-full) !important;
   font: 600 var(--text-xs)/1 var(--font-body) !important;
   letter-spacing: 0.04em !important;
   text-transform: uppercase !important;
 }
-.p-tag.p-tag-success  { background:#08A27C!important; color: var(--color-success) !important; }
-.p-tag.p-tag-warning  { background: rgba(217, 164, 65, 0.14) !important; color: var(--color-warning) !important; }
-.p-tag.p-tag-danger   { background:#AA2432 !important; color: var(--color-danger)  !important; }
-.p-tag.p-tag-info     { background: rgba(14, 124, 140, 0.12) !important; color: var(--color-info)    !important; }
-.p-tag.p-tag-secondary { background: rgba(61, 90, 108, 0.12) !important; color: var(--color-text-secondary) !important; }
-
-/* ── 12. DIÁLOGOS / MODAIS ──────────────────────────────────────────────────── */
+.p-tag.p-tag-success   { background: #08A27C                        !important; color: var(--color-success)        !important; }
+.p-tag.p-tag-warning   { background: rgba(217, 164, 65, 0.14)       !important; color: var(--color-warning)        !important; }
+.p-tag.p-tag-danger    { background: #AA2432                        !important; color: var(--color-danger)         !important; }
+.p-tag.p-tag-info      { background: rgba(14, 124, 140, 0.12)       !important; color: var(--color-info)           !important; }
+.p-tag.p-tag-secondary { background: rgba(61, 90, 108, 0.12)        !important; color: var(--color-text-secondary) !important; }
+/* ── 3.7 Diálogos / Modais / Sidebar drawer ──────────────────────────────── */
 .p-dialog {
   background: var(--color-surface) !important;
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: var(--shadow-lg) !important;
-  max-width: 95vw !important; /* Evita que modais com largura fixa estourem telas pequenas */
+  max-width: 95vw !important; /* evita modais largos estourando telas pequenas */
 }
-/* Garante comportamento correto de inputs em grid e flexbox no modal */
+/* Inputs em grid/flex dentro do modal */
 .p-dialog .w-full,
 .p-dialog .p-inputnumber,
-.p-dialog .p-dropdown {
-  max-width: 100% !important;
-}
-.p-dialog .p-inputnumber-input {
-  width: 100% !important;
-}
+.p-dialog .p-dropdown            { max-width: 100% !important; }
+.p-dialog .p-inputnumber-input   { width: 100% !important; }
 
 .p-dialog .p-dialog-header {
   background: var(--color-surface) !important;
@@ -496,9 +514,11 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 
 /* ConfirmDialog */
 .p-confirm-dialog .p-dialog-message { color: var(--color-text) !important; }
+/* ── 3.8 Menu (PanelMenu base + Menu popup) ──────────────────────────────── */
+/* OBS: o tratamento específico do PanelMenu dentro de .sidebar-nav
+   (texto branco, hover etc.) está na seção 4.1 — esta seção é o
+   comportamento padrão fora da sidebar. */
 
-/* ── 13. MENU LATERAL (PanelMenu) ───────────────────────────────────────────── */
-/* Estrutura base do PanelMenu */
 .p-panelmenu .p-panelmenu-header > .p-panelmenu-header-content {
   background: transparent !important;
   border: none !important;
@@ -529,7 +549,7 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   color: var(--color-text-secondary) !important;
 }
 
-/* Hover nos sub-itens */
+/* Hover em sub-itens */
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover {
   background: rgba(255, 255, 255, 0.08) !important;
 }
@@ -539,7 +559,7 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   color: #ffffff !important;
 }
 
-/* Item Ativo */
+/* Item ativo */
 .p-panelmenu .p-panelmenu-content .p-menuitem.p-highlight > .p-menuitem-content {
   background: rgba(14, 124, 140, 0.12) !important;
   border-left: 3px solid var(--color-accent) !important;
@@ -550,42 +570,6 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   color: var(--color-primary) !important;
 }
 
-/* Overrides específicos para quando o PanelMenu e botões estão dentro da barra lateral escura (.sidebar-nav)
-   Força ABSOLUTAMENTE TODOS os textos, links, botões e ícones internos a ficarem brancos */
-.sidebar-nav,
-.sidebar-nav *,
-.sidebar-nav .p-button,
-.sidebar-nav .p-button *,
-.sidebar-nav .p-panelmenu *,
-.sidebar-nav .p-panelmenu-header-link,
-.sidebar-nav .p-panelmenu-header-link *,
-.sidebar-nav .p-menuitem-text,
-.sidebar-nav .p-menuitem-icon,
-.sidebar-nav .p-submenu-icon {
-  color: #ffffff !important;
-}
-
-/* Hover e foco nos itens do menu na barra lateral */
-.sidebar-nav .p-panelmenu-header-content:hover,
-.sidebar-nav .p-panelmenu-header-content:hover *,
-.sidebar-nav .p-menuitem-content:hover,
-.sidebar-nav .p-menuitem-content:hover *,
-.sidebar-nav .p-button:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
-}
-
-/* Item de menu ativo na barra lateral */
-.sidebar-nav .p-menuitem.p-highlight > .p-menuitem-content,
-.sidebar-nav .p-menuitem.p-highlight > .p-menuitem-content * {
-  background: rgba(95, 212, 232, 0.2) !important;
-  color: #ffffff !important;
-}
-
-
-
-
-
 /* Menu popup (engrenagem) */
 .p-menu {
   background: var(--color-surface) !important;
@@ -593,12 +577,11 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-md) !important;
 }
-.p-menu .p-submenu-header { background: var(--color-bg) !important; color: var(--color-text-secondary) !important; font: 600 var(--text-xs)/1 var(--font-body) !important; letter-spacing: 0.06em !important; }
-.p-menu .p-menuitem-link  { color: var(--color-text) !important; }
+.p-menu .p-submenu-header     { background: var(--color-bg) !important; color: var(--color-text-secondary) !important; font: 600 var(--text-xs)/1 var(--font-body) !important; letter-spacing: 0.06em !important; }
+.p-menu .p-menuitem-link      { color: var(--color-text) !important; }
 .p-menu .p-menuitem-link:hover { background: rgba(14, 124, 140, 0.08) !important; }
 .p-menu .p-menuitem-separator { border-color: var(--color-border) !important; }
-
-/* ── 14. CHECKBOX / INPUTSWITCH / RADIO ─────────────────────────────────────── */
+/* ── 3.9 Checkbox / InputSwitch / Radio ──────────────────────────────────── */
 .p-checkbox .p-checkbox-box {
   background: var(--color-surface) !important;
   border: 1px solid var(--color-border) !important;
@@ -609,32 +592,65 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   border-color: var(--color-primary) !important;
 }
 .p-checkbox .p-checkbox-box .p-checkbox-icon { color: #fff !important; }
-.p-checkbox:focus .p-checkbox-box { box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important; }
+.p-checkbox:focus .p-checkbox-box            { box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important; }
 
-.p-inputswitch .p-inputswitch-slider { background: var(--color-border) !important; }
+.p-inputswitch .p-inputswitch-slider                       { background: var(--color-border)  !important; }
 .p-inputswitch.p-inputswitch-checked .p-inputswitch-slider { background: var(--color-success) !important; }
-
-/* ── 15. TOAST (notificações) ───────────────────────────────────────────────── */
+/* ── 3.10 Toast (notificações) ───────────────────────────────────────────── */
 .p-toast .p-toast-message {
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-md) !important;
 }
 .p-toast .p-toast-message.p-toast-message-success { background: rgba(27, 158, 107, 0.1) !important; border-left: 4px solid var(--color-success) !important; }
 .p-toast .p-toast-message.p-toast-message-warn    { background: rgba(217, 164, 65, 0.1) !important; border-left: 4px solid var(--color-warning) !important; }
-.p-toast .p-toast-message.p-toast-message-error   { background: rgba(209, 75, 75, 0.1) !important; border-left: 4px solid var(--color-danger) !important; }
-.p-toast .p-toast-message.p-toast-message-info    { background: rgba(14, 124, 140, 0.1) !important; border-left: 4px solid var(--color-info) !important; }
+.p-toast .p-toast-message.p-toast-message-error   { background: rgba(209, 75, 75, 0.1)  !important; border-left: 4px solid var(--color-danger)  !important; }
+.p-toast .p-toast-message.p-toast-message-info    { background: rgba(14, 124, 140, 0.1) !important; border-left: 4px solid var(--color-info)    !important; }
 .p-toast .p-toast-message-text { color: var(--color-text) !important; }
-.p-toast .p-toast-summary { font: 600 var(--text-sm)/1.2 var(--font-display) !important; color: var(--color-text) !important; }
-.p-toast .p-toast-detail  { font: 400 var(--text-sm)/1.4 var(--font-body) !important; color: var(--color-text-secondary) !important; }
+.p-toast .p-toast-summary      { font: 600 var(--text-sm)/1.2 var(--font-display) !important; color: var(--color-text) !important; }
+.p-toast .p-toast-detail       { font: 400 var(--text-sm)/1.4 var(--font-body)    !important; color: var(--color-text-secondary) !important; }
+/* ── 3.11 Message / Inline alert ─────────────────────────────────────────── */
+/* PrimeReact <Message> renderiza como .p-inline-message, não .p-message. */
+.p-inline-message {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid transparent !important;
+}
 
-/* ── 16. DIVIDER ────────────────────────────────────────────────────────────── */
+.p-inline-message .p-inline-message-text,
+.p-inline-message .p-inline-message-icon,
+.p-inline-message .p-inline-message-close {
+  font: 400 var(--text-sm)/1.4 var(--font-body) !important;
+  color: #0A1F2E !important; /* força azul escuro p/ leitura no tema claro */
+}
+
+/* Regras padrão (tema claro) — variantes semânticas */
+.p-inline-message.p-inline-message-info {
+  background: rgba(14, 124, 140, 0.08) !important;
+  border-left: 4px solid var(--color-info) !important;
+}
+.p-inline-message.p-inline-message-success {
+  background: rgba(27, 158, 107, 0.08) !important;
+  border-left: 4px solid var(--color-success) !important;
+}
+.p-inline-message.p-inline-message-warn {
+  background: rgba(217, 164, 65, 0.12) !important;
+  border-left: 4px solid var(--color-warning) !important;
+}
+.p-inline-message.p-inline-message-error {
+  background: rgba(209, 75, 75, 0.08) !important;
+  border-left: 4px solid var(--color-danger) !important;
+}
+
+/* Ícone semântico no tema claro */
+.p-inline-message.p-inline-message-info    .p-inline-message-icon { color: var(--color-info)    !important; }
+.p-inline-message.p-inline-message-success .p-inline-message-icon { color: var(--color-success) !important; }
+.p-inline-message.p-inline-message-warn    .p-inline-message-icon { color: var(--color-warning) !important; }
+.p-inline-message.p-inline-message-error   .p-inline-message-icon { color: var(--color-danger)  !important; }
+/* ── 3.12 Divider / ProgressBar / Tooltip ────────────────────────────────── */
 .p-divider::before { border-color: var(--color-border) !important; }
 
-/* ── 17. PROGRESSBAR ────────────────────────────────────────────────────────── */
-.p-progressbar { background: var(--color-border) !important; border-radius: var(--radius-full) !important; }
-.p-progressbar .p-progressbar-value { background: var(--color-primary) !important; border-radius: var(--radius-full) !important; }
+.p-progressbar                       { background: var(--color-border)  !important; border-radius: var(--radius-full) !important; }
+.p-progressbar .p-progressbar-value  { background: var(--color-primary) !important; border-radius: var(--radius-full) !important; }
 
-/* ── 18. TOOLTIP ────────────────────────────────────────────────────────────── */
 .p-tooltip .p-tooltip-text {
   background: var(--color-navy-800) !important;
   color: #fff !important;
@@ -643,9 +659,19 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   padding: var(--space-2) var(--space-3) !important;
   box-shadow: var(--shadow-md) !important;
 }
-.p-tooltip-arrow { border-top-color: var(--color-navy-800) !important; border-bottom-color: var(--color-navy-800) !important; }
-
-/* ── 19. CALENDÁRIO CUSTOMIZADO ─────────────────────────────────────────────── */
+.p-tooltip-arrow {
+  border-top-color:    var(--color-navy-800) !important;
+  border-bottom-color: var(--color-navy-800) !important;
+}
+/* ── 3.13 Toolbar (Menubar) ──────────────────────────────────────────────── */
+/* Gradiente de marca — navy-800 → navy-700, fixo nos dois temas */
+.p-toolbar {
+  background: linear-gradient(135deg, var(--color-navy-800) 0%, var(--color-navy-700) 100%) !important;
+  border: none !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+}
+/* ── 3.14 Calendário customizado ─────────────────────────────────────────── */
 .custom-calendar.p-calendar-inline .p-datepicker {
   width: 100%;
   border: none;
@@ -661,7 +687,8 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 }
 .custom-calendar .p-datepicker-title,
 .custom-calendar .p-datepicker-header .p-link { color: var(--color-text) !important; font-weight: 700 !important; }
-.custom-calendar .p-datepicker table th { color: var(--color-text-secondary) !important; font-weight: 600 !important; font-size: var(--text-xs) !important; }
+.custom-calendar .p-datepicker table th       { color: var(--color-text-secondary) !important; font-weight: 600 !important; font-size: var(--text-xs) !important; }
+
 .custom-calendar .p-datepicker table td > span {
   width: 2.25rem; height: 2.25rem; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
@@ -684,21 +711,13 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   font-weight: 700 !important;
 }
 
-/* ── 20. INPUTSWITCH FIXO (compatibilidade) ─────────────────────────────────── */
-.fixed-status-switch.p-inputswitch { width: 44px !important; height: 24px !important; min-width: 44px !important; }
-.fixed-status-switch .p-inputswitch-slider { background: var(--color-border) !important; border-radius: 12px !important; }
-.fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider { background: var(--color-success) !important; }
 
-/* ── 21. ANIMAÇÕES (respeita prefers-reduced-motion) ───────────────────────── */
-@keyframes full-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-.animate-spin { animation: full-spin 0.6s ease-in-out; }
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║ 4. COMPONENTES CUSTOMIZADOS DO PROJETO                                   ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+/* ── 4.1 Sidebar de navegação lateral (.sidebar-nav) ─────────────────────── */
+/* O card do menu lateral usa navy-800 fixo em ambos os temas (âncora de marca). */
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
-}
-
-/* ── 22. SIDEBAR DE NAVEGAÇÃO LATERAL ──────────────────────────────────────── */
-/* O card do menu lateral usa navy-800 fixo em ambos os temas (âncora de marca) */
 .sidebar-nav {
   background: var(--color-navy-800) !important;
   border: none !important;
@@ -706,14 +725,170 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   box-shadow: var(--shadow-md) !important;
 }
 
-/* Garante que o card de menu (Cadastros.tsx) use o navy */
-.card.sidebar-nav .p-button { color: rgba(255, 255, 255, 0.8) !important; }
+/* Força TODOS os textos/links/botões/ícones internos a ficarem brancos */
+.sidebar-nav,
+.sidebar-nav *,
+.sidebar-nav .p-button,
+.sidebar-nav .p-button *,
+.sidebar-nav .p-panelmenu *,
+.sidebar-nav .p-panelmenu-header-link,
+.sidebar-nav .p-panelmenu-header-link *,
+.sidebar-nav .p-menuitem-text,
+.sidebar-nav .p-menuitem-icon,
+.sidebar-nav .p-submenu-icon {
+  color: #ffffff !important;
+}
+
+/* Hover e foco dos itens dentro da sidebar */
+.sidebar-nav .p-panelmenu-header-content:hover,
+.sidebar-nav .p-panelmenu-header-content:hover *,
+.sidebar-nav .p-menuitem-content:hover,
+.sidebar-nav .p-menuitem-content:hover *,
+.sidebar-nav .p-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+/* Item ativo dentro da sidebar */
+.sidebar-nav .p-menuitem.p-highlight > .p-menuitem-content,
+.sidebar-nav .p-menuitem.p-highlight > .p-menuitem-content * {
+  background: rgba(95, 212, 232, 0.2) !important;
+  color: #ffffff !important;
+}
+
+/* Botões soltos dentro do card (usado em Cadastros.tsx) */
+.card.sidebar-nav .p-button       { color: rgba(255, 255, 255, 0.8) !important; }
 .card.sidebar-nav .p-button:hover { background: rgba(95, 212, 232, 0.1) !important; color: #fff !important; }
+/* ── 4.2 KPI utilities (bordas e valores coloridos) ──────────────────────── */
+.kpi-border-info    { border-color: var(--color-cyan-600)  !important; }
+.kpi-border-success { border-color: var(--color-success)   !important; }
+.kpi-border-warning { border-color: var(--color-warning)   !important; }
+.kpi-border-danger  { border-color: var(--color-danger)    !important; }
+.kpi-border-neutral { border-color: var(--color-border)    !important; }
 
-/* ── 23. OVERRIDES DE ELEMENTOS INLINE (dark mode) ─────────────────────────── */
-/* Elementos com style={{ background: "#fafafa" }} ou cores hardcoded precisam
-   ser sobrescritos em dark mode via seletor de tema */
+.kpi-val-info    { color: var(--color-cyan-500)       !important; }
+.kpi-val-success { color: var(--color-success)        !important; }
+.kpi-val-warning { color: var(--color-warning)        !important; }
+.kpi-val-danger  { color: var(--color-danger)         !important; }
+.kpi-val-neutral { color: var(--color-text-secondary) !important; }
+/* ── 4.3 btn-selector (seleção de dia/horário/turma) ─────────────────────── */
+.btn-selector {
+  display:         inline-flex;
+  flex-direction:  column;
+  align-items:     center;
+  justify-content: center;
+  border:          2px solid var(--color-border);
+  background:      var(--color-surface);
+  color:           var(--color-text-secondary);
+  outline:         none;
+  cursor:          pointer;
+  border-radius:   var(--radius-sm);
+  font-weight:     600;
+  font-size:       var(--text-sm);
+  font-family:     var(--font-body);
+  padding:         0.4rem 0.75rem;
+  transition:      border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.btn-selector:hover {
+  border-color: var(--color-accent);
+  color:        var(--color-text);
+}
+.btn-selector--active {
+  border-color: var(--color-accent)     !important;
+  background:   rgba(14, 124, 140, 0.1) !important;
+  color:        var(--color-accent)     !important;
+}
+.btn-selector--turma         { padding: 0.5rem 1.2rem; min-width: 100px; }
+.btn-selector__hora          { font-weight: 700; font-size: 1rem; color: inherit; }
+.btn-selector__modalidade    { font-size: var(--text-xs); opacity: 0.75; margin-top: 0.125rem; color: inherit; }
 
+/* Dot indicador do dia atual no btn-selector */
+.btn-day-dot {
+  position:      absolute;
+  top:           -5px;
+  right:         -5px;
+  width:         9px;
+  height:        9px;
+  border-radius: 50%;
+  border:        2px solid var(--color-surface);
+}
+.btn-day-dot--today     { background: var(--color-success); }
+.btn-day-dot--yesterday { background: var(--color-warning); }
+/* ── 4.4 Presença — linhas e mini-badges ─────────────────────────────────── */
+.attendance-row-present {
+  background-color: rgba(8, 162, 124, 0.1) !important;
+  border-color:     rgba(8, 162, 124, 0.3) !important;
+}
+.attendance-row-absent {
+  background-color: rgba(170, 36, 50, 0.1)  !important;
+  border-color:     rgba(170, 36, 50, 0.28) !important;
+}
+.attendance-row-late {
+  background-color: rgba(217, 164, 65, 0.08) !important;
+  border-color:     rgba(217, 164, 65, 0.25) !important;
+}
+.attendance-row-default {
+  background-color: var(--color-surface) !important;
+  border-color:     var(--color-border)  !important;
+}
+
+/* Mini-badges de status */
+.bg-present { background: rgba(8, 162, 124, 0.12)  !important; color: #08A27C              !important; }
+.bg-absent  { background: rgba(170, 36, 50, 0.12)  !important; color: #AA2432              !important; }
+.bg-late    { background: rgba(217, 164, 65, 0.12) !important; color: var(--color-warning) !important; }
+/* ── 4.5 Professor — card e avatar ───────────────────────────────────────── */
+.professor-card {
+  background: var(--color-surface) !important;
+  transition: background 0.15s ease;
+}
+.professor-card:hover { background: rgba(14, 124, 140, 0.04) !important; }
+
+.professor-avatar {
+  background: linear-gradient(135deg, var(--color-cyan-600), var(--color-cyan-400)) !important;
+}
+
+.selected-turma-panel {
+  border-left: 4px solid var(--color-accent) !important;
+}
+/* ── 4.6 Botão de marca (.btn-primary-brand) ─────────────────────────────── */
+.btn-primary-brand {
+  background:   var(--color-accent) !important;
+  border-color: var(--color-accent) !important;
+  color:        #fff                !important;
+}
+.btn-primary-brand:hover {
+  background:   var(--color-accent-hover) !important;
+  border-color: var(--color-accent-hover) !important;
+}
+.btn-primary-brand .p-button-label,
+.btn-primary-brand .p-button-icon { color: #fff !important; }
+/* ── 4.7 InputSwitch fixo (.fixed-status-switch) ─────────────────────────── */
+.fixed-status-switch.p-inputswitch {
+  width: 44px !important;
+  height: 24px !important;
+  min-width: 44px !important;
+}
+.fixed-status-switch .p-inputswitch-slider                       { background: var(--color-border)  !important; border-radius: 12px !important; }
+.fixed-status-switch.p-inputswitch-checked .p-inputswitch-slider { background: var(--color-success) !important; }
+/* ── 4.8 Animações + prefers-reduced-motion ──────────────────────────────── */
+@keyframes full-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+.animate-spin { animation: full-spin 0.6s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration:  0.01ms !important;
+  }
+}
+
+
+/* ╔══════════════════════════════════════════════════════════════════════════╗
+   ║ 5. OVERRIDES POR TEMA — só o que não conseguimos resolver com variáveis  ║
+   ╚══════════════════════════════════════════════════════════════════════════╝ */
+/* ── 5.1 Dark: PrimeReact card ───────────────────────────────────────────── */
 [data-theme="dark"] .p-card,
 [data-theme="dark"] .p-card-body,
 [data-theme="dark"] .p-card-content {
@@ -721,8 +896,22 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   color: var(--color-text) !important;
   border-color: var(--color-border) !important;
 }
+/* ── 5.2 Dark: classes Tailwind coloridas usadas inline ──────────────────── */
+[data-theme="dark"] .text-green-700,
+[data-theme="dark"] .text-green-600  { color: var(--color-success)        !important; }
+[data-theme="dark"] .text-red-700,
+[data-theme="dark"] .text-red-600    { color: var(--color-danger)         !important; }
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-gray-500   { color: var(--color-text-secondary) !important; }
+[data-theme="dark"] .text-orange-700,
+[data-theme="dark"] .text-orange-600 { color: var(--color-warning)        !important; }
+[data-theme="dark"] .text-blue-600,
+[data-theme="dark"] .text-blue-700   { color: var(--color-cyan-400)       !important; }
 
-/* Linhas de presença (verde/vermelho/cinza) — preserva a semântica de cor */
+/* Cards de stat (mantém a cor de borda definida no inline style) */
+[data-theme="dark"] .border-top-3 { border-color: inherit !important; }
+/* ── 5.3 Dark: backgrounds hardcoded em style={{}} dos componentes ───────── */
+/* Preserva semântica das cores de presença (verde/vermelho/cinza/azul/amarelo) */
 [data-theme="dark"] [style*="background: #f0fdf4"],
 [data-theme="dark"] [style*="background-color: #f0fdf4"] {
   background-color: rgba(27, 158, 107, 0.12) !important;
@@ -745,201 +934,44 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 [data-theme="dark"] [style*="background-color: #fef9ec"] {
   background-color: rgba(217, 164, 65, 0.12) !important;
 }
-
-/* Textos coloridos em linhas de presença */
-[data-theme="dark"] .text-green-700,
-[data-theme="dark"] .text-green-600 { color: var(--color-success) !important; }
-[data-theme="dark"] .text-red-700,
-[data-theme="dark"] .text-red-600   { color: var(--color-danger) !important; }
-[data-theme="dark"] .text-gray-700,
-[data-theme="dark"] .text-gray-500  { color: var(--color-text-secondary) !important; }
-[data-theme="dark"] .text-orange-700,
-[data-theme="dark"] .text-orange-600 { color: var(--color-warning) !important; }
-[data-theme="dark"] .text-blue-600,
-[data-theme="dark"] .text-blue-700  { color: var(--color-cyan-400) !important; }
-
-/* Cards de stat (bordas coloridas nos relatórios) */
-[data-theme="dark"] .border-top-3 { border-color: inherit !important; }
-
-/* InputNumber spinner */
+/* ── 5.4 Dark: InputNumber spinner + Message inline ──────────────────────── */
 [data-theme="dark"] .p-inputnumber-button {
-  background: var(--color-border) !important;
-  border-color: var(--color-border) !important;
-  color: var(--color-text-secondary) !important;
+  background:   var(--color-border)         !important;
+  border-color: var(--color-border)         !important;
+  color:        var(--color-text-secondary) !important;
 }
 
-/* ── 24. TOOLBAR (Menubar) ──────────────────────────────────────────────────── */
-/* Gradiente de marca — navy-800 → navy-700, independente do tema */
-.p-toolbar {
-  background: linear-gradient(135deg, var(--color-navy-800) 0%, var(--color-navy-700) 100%) !important;
-  border: none !important;
-  border-radius: var(--radius-lg) !important;
-  box-shadow: var(--shadow-md) !important;
-}
-
-/* ── 25. CARD P PRIMEREACT INTERNO ──────────────────────────────────────────── */
-.p-card { background: var(--color-surface) !important; color: var(--color-text) !important; border: 1px solid var(--color-border) !important; border-radius: var(--radius-lg) !important; box-shadow: var(--shadow-sm) !important; }
-.p-card .p-card-title { font: 700 var(--text-lg)/1.2 var(--font-display) !important; color: var(--color-text) !important; }
-.p-card .p-card-subtitle { color: var(--color-text-secondary) !important; }
-.p-card .p-card-content { color: var(--color-text) !important; }
-
-/* ── 26. MESSAGE / INLINE ALERT ─────────────────────────────────────────────── */
-.p-message { 
-  border-radius: var(--radius-md) !important; 
-}
-
-/* Estilos para o Tema Claro (Padrão) */
-.p-message.p-message-info    { background: rgba(14, 124, 140, 0.08) !important; border-left: 4px solid var(--color-info) !important; }
-.p-message.p-message-success { background: rgba(27, 158, 107, 0.08) !important; border-left: 4px solid var(--color-success) !important; }
-.p-message.p-message-warn    { background: rgba(217, 164, 65, 0.12) !important; border-left: 4px solid var(--color-warning) !important; }
-.p-message.p-message-error   { background: rgba(209, 75, 75, 0.08)  !important; border-left: 4px solid var(--color-danger) !important; }
-
-/* Cor padrão do texto para o Tema Claro */
-.p-message .p-message-text,
-.p-message .p-message-icon,
-.p-message .p-message-close { 
-  font: 400 var(--text-sm)/1.4 var(--font-body) !important; 
-  color: #0A1F2E !important; /* Força azul escuro no tema claro para dar leitura */
-}
-
-/* MODO ESCURO (Garante o fundo escuro e leitura) */
-[data-theme="dark"] .p-message {
-  background: #102536 !important;
+/* Message inline: PrimeReact <Message> usa .p-inline-message.
+   Especificidade reforçada para vencer o tema PrimeReact e a regra padrão
+   `.p-inline-message.p-inline-message-warn` da camada 3.11. */
+[data-theme="dark"] .p-inline-message {
+  background: var(--color-surface) !important;   /* #102536 */
   border: 1px solid var(--color-border) !important;
 }
 
-[data-theme="dark"] .p-message.p-message-warn {
-  border-left: 4px solid var(--color-warning) !important;
-}
-
-[data-theme="dark"] .p-message .p-message-text {
-  color: #E8F1F5 !important;
-}
-
-[data-theme="dark"] .p-message .p-message-icon {
-  color: var(--color-warning) !important; 
-}
-/* ── 27. CLASSES UTILITÁRIAS SEMÂNTICAS ──────────────────────────────────────── */
-
-/* ── KPI border accent ── */
-.kpi-border-info    { border-color: var(--color-cyan-600)  !important; }
-.kpi-border-success { border-color: var(--color-success)   !important; }
-.kpi-border-warning { border-color: var(--color-warning)   !important; }
-.kpi-border-danger  { border-color: var(--color-danger)    !important; }
-.kpi-border-neutral { border-color: var(--color-border)    !important; }
-
-/* ── KPI value colors ── */
-.kpi-val-info    { color: var(--color-cyan-500)      !important; }
-.kpi-val-success { color: var(--color-success)        !important; }
-.kpi-val-warning { color: var(--color-warning)        !important; }
-.kpi-val-danger  { color: var(--color-danger)         !important; }
-.kpi-val-neutral { color: var(--color-text-secondary) !important; }
-
-/* ── btn-selector: botões de seleção de dia/horário ── */
-.btn-selector {
-  display:       inline-flex;
-  flex-direction: column;
-  align-items:   center;
-  justify-content: center;
-  border:        2px solid var(--color-border);
-  background:    var(--color-surface);
-  color:         var(--color-text-secondary);
-  outline:       none;
-  cursor:        pointer;
-  border-radius: var(--radius-sm);
-  font-weight:   600;
-  font-size:     var(--text-sm);
-  font-family:   var(--font-body);
-  padding:       0.4rem 0.75rem;
-  transition:    border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
-}
-.btn-selector:hover {
-  border-color: var(--color-accent);
-  color:        var(--color-text);
-}
-.btn-selector--active {
-  border-color: var(--color-accent)        !important;
-  background:   rgba(14, 124, 140, 0.1)   !important;
-  color:        var(--color-accent)        !important;
-}
-.btn-selector--turma {
-  padding:   0.5rem 1.2rem;
-  min-width: 100px;
-}
-.btn-selector__hora {
-  font-weight: 700;
-  font-size:   1rem;
-  color:       inherit;
-}
-.btn-selector__modalidade {
-  font-size: var(--text-xs);
-  opacity:   0.75;
-  margin-top: 0.125rem;
-  color:     inherit;
-}
-
-/* ── Dot indicador do dia atual no btn-selector ── */
-.btn-day-dot {
-  position:      absolute;
-  top:           -5px;
-  right:         -5px;
-  width:         9px;
-  height:        9px;
-  border-radius: 50%;
-  border:        2px solid var(--color-surface);
-}
-.btn-day-dot--today     { background: var(--color-success); }
-.btn-day-dot--yesterday { background: var(--color-warning); }
-
-/* ── Presença: linhas temáticas ── */
-.attendance-row-present {
-  background-color: rgba(8, 162, 124, 0.1)  !important;
-  border-color:     rgba(8, 162, 124, 0.3)  !important;
-}
-.attendance-row-absent {
-  background-color: rgba(170, 36, 50, 0.1)   !important;
-  border-color:     rgba(170, 36, 50, 0.28)    !important;
-}
-.attendance-row-late {
-  background-color: rgba(217, 164, 65, 0.08)  !important;
-  border-color:     rgba(217, 164, 65, 0.25)  !important;
-}
-.attendance-row-default {
-  background-color: var(--color-surface) !important;
-  border-color:     var(--color-border)  !important;
-}
-
-/* ── Presença: mini-badge de status ── */
-.bg-present { background: rgba(8, 162, 124, 0.12)  !important; color: #08A27C !important; }
-.bg-absent  { background: rgba(170, 36, 50, 0.12)  !important; color: #AA2432 !important; }
-.bg-late    { background: rgba(217, 164, 65, 0.12)  !important; color: var(--color-warning) !important; }
-
-/* ── Professor: card de item e avatar ── */
-.professor-card {
+/* Variantes — fundo escuro fixo, borda colorida = sinal semântico */
+[data-theme="dark"] .p-inline-message.p-inline-message-info,
+[data-theme="dark"] .p-inline-message.p-inline-message-success,
+[data-theme="dark"] .p-inline-message.p-inline-message-warn,
+[data-theme="dark"] .p-inline-message.p-inline-message-error {
   background: var(--color-surface) !important;
-  transition: background 0.15s ease;
-}
-.professor-card:hover { background: rgba(14, 124, 140, 0.04) !important; }
-
-.professor-avatar {
-  background: linear-gradient(135deg, var(--color-cyan-600), var(--color-cyan-400)) !important;
 }
 
-.selected-turma-panel {
-  border-left: 4px solid var(--color-accent) !important;
+[data-theme="dark"] .p-inline-message.p-inline-message-info    { border-left: 4px solid var(--color-info)    !important; }
+[data-theme="dark"] .p-inline-message.p-inline-message-success { border-left: 4px solid var(--color-success) !important; }
+[data-theme="dark"] .p-inline-message.p-inline-message-warn    { border-left: 4px solid var(--color-warning) !important; }
+[data-theme="dark"] .p-inline-message.p-inline-message-error   { border-left: 4px solid var(--color-danger)  !important; }
+
+/* Texto: sempre near-white — alto contraste */
+[data-theme="dark"] .p-inline-message .p-inline-message-text,
+[data-theme="dark"] .p-inline-message .p-inline-message-summary,
+[data-theme="dark"] .p-inline-message .p-inline-message-detail,
+[data-theme="dark"] .p-inline-message .p-inline-message-close {
+  color: var(--color-text) !important;
 }
 
-.btn-primary-brand {
-  background: var(--color-accent)       !important;
-  border-color: var(--color-accent)     !important;
-  color: #fff                           !important;
-}
-.btn-primary-brand:hover {
-  background: var(--color-accent-hover) !important;
-  border-color: var(--color-accent-hover) !important;
-}
-
-.btn-primary-brand .p-button-label,
-.btn-primary-brand .p-button-icon {
-  color: #fff !important;
-}
+/* Ícone: herda a cor semântica da variante */
+[data-theme="dark"] .p-inline-message.p-inline-message-info    .p-inline-message-icon { color: var(--color-info)    !important; }
+[data-theme="dark"] .p-inline-message.p-inline-message-success .p-inline-message-icon { color: var(--color-success) !important; }
+[data-theme="dark"] .p-inline-message.p-inline-message-warn    .p-inline-message-icon { color: var(--color-warning) !important; }
+[data-theme="dark"] .p-inline-message.p-inline-message-error   .p-inline-message-icon { color: var(--color-danger)  !important; }
