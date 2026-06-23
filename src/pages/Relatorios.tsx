@@ -373,7 +373,6 @@ export default function Relatorios({ aoVoltar }: { aoVoltar?: () => void } = {})
           loading={carregando}
           rows={10}
           paginator={chamadas.length > 10}
-          responsiveLayout="scroll"
           emptyMessage="Nenhuma chamada salva encontrada para os filtros selecionados."
           className="p-datatable-sm"
           sortField="data_aula"

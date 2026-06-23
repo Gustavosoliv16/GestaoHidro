@@ -62,7 +62,6 @@ export default function CalendarioLateral({
     const horaFormatada = hora.toString().padStart(2, "0");
     return { label: `${horaFormatada} h`, value: hora };
   });
- 
 
   const horaDoEstado = dataSelecionada ? dataSelecionada.getHours() : 6;
   const horaAtual = horaDoEstado < 6 ? 6 : horaDoEstado;
@@ -101,6 +100,7 @@ export default function CalendarioLateral({
           <i className="pi pi-clock text-primary"></i> Selecione o Horário
         </label>
         <Dropdown
+          appendTo="self"
           value={horaAtual}
           options={opcoesHoras}
           onChange={(e) => aoMudarHora(e.value)}

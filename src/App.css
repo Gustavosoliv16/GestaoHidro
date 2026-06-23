@@ -15,9 +15,9 @@
   --color-cyan-400: #5FD4E8;
 
   /* Cores semânticas (mesmas em ambos os temas) */
-  --color-success: #1B9E6B;
+  --color-success: #08A27C;
   --color-warning: #D9A441;
-  --color-danger:  #D14B4B;
+  --color-danger:  #AA2432;
   --color-info:    var(--color-cyan-600);
 
   /* Tipografia */
@@ -60,7 +60,7 @@
   --color-surface:         #FFFFFF;
   --color-border:          #DCE6EB;
   --color-text:            #0A1F2E;
-  --color-text-secondary:  #0A1F2E;
+  --color-text-secondary:  #4A6274;
   --color-primary:         var(--color-navy-800);
   --color-primary-hover:   var(--color-navy-700);
   --color-accent:          var(--color-cyan-600);
@@ -199,18 +199,39 @@ label { color: var(--color-text-secondary); font-family: var(--font-body); }
   outline: 3px solid var(--color-accent) !important;
   outline-offset: 2px !important;
 }
-/* Botão primário */
+
+/* Botão primário padrão (Salvar) - Força fundo correto e TEXTO BRANCO */
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success) {
   background: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
-  color: #fff !important;
+  color: #ffffff !important; /* Correção: Garante o texto branco no botão escuro */
+}
+.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success) * {
+  color: #ffffff !important; /* Correção: Garante o ícone branco também */
 }
 .p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-secondary):not(.p-button-danger):not(.p-button-warning):not(.p-button-info):not(.p-button-success):hover {
   background: var(--color-primary-hover) !important;
   border-color: var(--color-primary-hover) !important;
 }
-/* Reset imediato para botões dentro de p-buttonset (SelectButton) —
-   o seletor específico abaixo desfaz o estilo primário acima */
+
+/* Botão secundário (Cancelar) - Fundo claro com texto escuro legível */
+.p-button.p-button-secondary {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-secondary) !important;
+}
+.p-button.p-button-secondary * {
+  color: var(--color-text-secondary) !important; /* Ícone herda a cor do texto */
+}
+.p-button.p-button-secondary:hover {
+  background: var(--color-border) !important;
+  color: var(--color-text) !important;
+}
+.p-button.p-button-secondary:hover * {
+  color: var(--color-text) !important;
+}
+
+/* Reset imediato para botões dentro de p-buttonset (SelectButton) */
 .p-buttonset .p-button {
   background:   var(--color-surface)        !important;
   border-color: var(--color-border)         !important;
@@ -247,7 +268,7 @@ input[type="text"] {
   border-radius: var(--radius-md) !important;
   padding: var(--space-3) var(--space-4) !important;
   font: 400 var(--text-base)/1.4 var(--font-body) !important;
-  color: white!important;
+  color: var(--color-text)!important;
   transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
 }
 .p-inputtext::placeholder,
@@ -415,9 +436,9 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   letter-spacing: 0.04em !important;
   text-transform: uppercase !important;
 }
-.p-tag.p-tag-success  { background: rgba(27, 158, 107, 0.12) !important; color: var(--color-success) !important; }
+.p-tag.p-tag-success  { background:#08A27C!important; color: var(--color-success) !important; }
 .p-tag.p-tag-warning  { background: rgba(217, 164, 65, 0.14) !important; color: var(--color-warning) !important; }
-.p-tag.p-tag-danger   { background: rgba(209, 75, 75, 0.12)  !important; color: var(--color-danger)  !important; }
+.p-tag.p-tag-danger   { background:#AA2432 !important; color: var(--color-danger)  !important; }
 .p-tag.p-tag-info     { background: rgba(14, 124, 140, 0.12) !important; color: var(--color-info)    !important; }
 .p-tag.p-tag-secondary { background: rgba(61, 90, 108, 0.12) !important; color: var(--color-text-secondary) !important; }
 
@@ -488,12 +509,11 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   font-weight: 600 !important;
 }
 .p-panelmenu .p-panelmenu-header:not(.p-disabled) .p-panelmenu-header-content:hover {
-  background: rgba(14, 124, 140, 0.08) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 .p-panelmenu .p-panelmenu-header:not(.p-disabled) .p-panelmenu-header-content:hover .p-panelmenu-header-link {
-  color: var(--color-primary) !important;
+  color: #ffffff !important;
 }
-
 .p-panelmenu .p-panelmenu-content {
   background: transparent !important;
   border: none !important;
@@ -502,21 +522,21 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   border-radius: var(--radius-sm) !important;
 }
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
-  color: white !important;
+  color: var(--color-text) !important;
 }
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon,
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-submenu-icon {
-  color: white !important;
+  color: var(--color-text-secondary) !important;
 }
 
 /* Hover nos sub-itens */
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover {
-  background: rgba(14, 124, 140, 0.08) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
 }
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-text,
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-menuitem-icon,
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content:hover .p-menuitem-link .p-submenu-icon {
-  color: var(--color-text) !important;
+  color: #ffffff !important;
 }
 
 /* Item Ativo */
@@ -764,13 +784,41 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 .p-card .p-card-content { color: var(--color-text) !important; }
 
 /* ── 26. MESSAGE / INLINE ALERT ─────────────────────────────────────────────── */
-.p-message { border-radius: var(--radius-md) !important; }
-.p-message.p-message-info    { background: rgba(14, 124, 140, 0.08) !important; border-left: 4px solid var(--color-info) !important; color: var(--color-text) !important; }
-.p-message.p-message-success { background: rgba(27, 158, 107, 0.08) !important; border-left: 4px solid var(--color-success) !important; color: var(--color-text) !important; }
-.p-message.p-message-warn    { background: rgba(217, 164, 65, 0.08) !important; border-left: 4px solid var(--color-warning) !important; color: var(--color-text) !important; }
-.p-message.p-message-error   { background: rgba(209, 75, 75, 0.08)  !important; border-left: 4px solid var(--color-danger) !important; color: var(--color-text) !important; }
-.p-message .p-message-text { font: 400 var(--text-sm)/1.4 var(--font-body) !important; color: var(--color-text) !important; }
+.p-message { 
+  border-radius: var(--radius-md) !important; 
+}
 
+/* Estilos para o Tema Claro (Padrão) */
+.p-message.p-message-info    { background: rgba(14, 124, 140, 0.08) !important; border-left: 4px solid var(--color-info) !important; }
+.p-message.p-message-success { background: rgba(27, 158, 107, 0.08) !important; border-left: 4px solid var(--color-success) !important; }
+.p-message.p-message-warn    { background: rgba(217, 164, 65, 0.12) !important; border-left: 4px solid var(--color-warning) !important; }
+.p-message.p-message-error   { background: rgba(209, 75, 75, 0.08)  !important; border-left: 4px solid var(--color-danger) !important; }
+
+/* Cor padrão do texto para o Tema Claro */
+.p-message .p-message-text,
+.p-message .p-message-icon,
+.p-message .p-message-close { 
+  font: 400 var(--text-sm)/1.4 var(--font-body) !important; 
+  color: #0A1F2E !important; /* Força azul escuro no tema claro para dar leitura */
+}
+
+/* MODO ESCURO (Garante o fundo escuro e leitura) */
+[data-theme="dark"] .p-message {
+  background: #102536 !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+[data-theme="dark"] .p-message.p-message-warn {
+  border-left: 4px solid var(--color-warning) !important;
+}
+
+[data-theme="dark"] .p-message .p-message-text {
+  color: #E8F1F5 !important;
+}
+
+[data-theme="dark"] .p-message .p-message-icon {
+  color: var(--color-warning) !important; 
+}
 /* ── 27. CLASSES UTILITÁRIAS SEMÂNTICAS ──────────────────────────────────────── */
 
 /* ── KPI border accent ── */
@@ -845,12 +893,12 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 
 /* ── Presença: linhas temáticas ── */
 .attendance-row-present {
-  background-color: rgba(27, 158, 107, 0.08)  !important;
-  border-color:     rgba(27, 158, 107, 0.25)  !important;
+  background-color: rgba(8, 162, 124, 0.1)  !important;
+  border-color:     rgba(8, 162, 124, 0.3)  !important;
 }
 .attendance-row-absent {
-  background-color: rgba(209, 75, 75, 0.07)   !important;
-  border-color:     rgba(209, 75, 75, 0.2)    !important;
+  background-color: rgba(170, 36, 50, 0.1)   !important;
+  border-color:     rgba(170, 36, 50, 0.28)    !important;
 }
 .attendance-row-late {
   background-color: rgba(217, 164, 65, 0.08)  !important;
@@ -862,8 +910,8 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 }
 
 /* ── Presença: mini-badge de status ── */
-.bg-present { background: rgba(27, 158, 107, 0.12)  !important; color: var(--color-success) !important; }
-.bg-absent  { background: rgba(209, 75, 75, 0.12)   !important; color: var(--color-danger)  !important; }
+.bg-present { background: rgba(8, 162, 124, 0.12)  !important; color: #08A27C !important; }
+.bg-absent  { background: rgba(170, 36, 50, 0.12)  !important; color: #AA2432 !important; }
 .bg-late    { background: rgba(217, 164, 65, 0.12)  !important; color: var(--color-warning) !important; }
 
 /* ── Professor: card de item e avatar ── */
@@ -877,12 +925,10 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   background: linear-gradient(135deg, var(--color-cyan-600), var(--color-cyan-400)) !important;
 }
 
-/* ── Panel da turma selecionada (Impressão) ── */
 .selected-turma-panel {
   border-left: 4px solid var(--color-accent) !important;
 }
 
-/* ── Botão primário de marca (cyan) ── */
 .btn-primary-brand {
   background: var(--color-accent)       !important;
   border-color: var(--color-accent)     !important;

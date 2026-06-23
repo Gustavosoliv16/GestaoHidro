@@ -58,12 +58,6 @@ export default function Alunos() {
               { key: "0_2_4", label: "Professores", icon: "pi pi-id-card",  command: () => trocarView("professores") },
             ],
           },
-          {
-            key: "0_3",
-            label: "Status",
-            icon: "pi pi-info-circle",
-            command: () => trocarView("status"),
-          },
         ],
       },
       {

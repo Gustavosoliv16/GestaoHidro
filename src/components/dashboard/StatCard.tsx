@@ -77,7 +77,7 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, delta, deltaType, ico
       
       {/* Background decoration */}
       {icon && (
-        <i className={`pi ${icon} kpi-val-${color}`} style={{ position: 'absolute', right: '-1rem', bottom: '-1rem', fontSize: '8rem', opacity: 0.04, zIndex: 1, transform: 'rotate(-15deg)' }}></i>
+        <i className={`pi ${icon} kpi-val-${color}`} style={{ position: 'absolute', right: '-1rem', bottom: '-2rem', fontSize: '8rem', opacity: 0.15, zIndex: 1, transform: 'rotate(-20deg)' }}></i>
       )}
     </div>
   );

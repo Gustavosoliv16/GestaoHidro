@@ -102,6 +102,10 @@ export default function Menutopbar() {
         <i className="pi pi-check-square text-2xl" />
       </NavBtn>
 
+      <NavBtn id="btn-reposicoes" tooltip="Reposições" onClick={() => navigate("/Reposicoes")}>
+        <i className="pi pi-history text-2xl" />
+      </NavBtn>
+
       {/* Ícone de gota da marca para relatórios — identidade visual */}
       <NavBtn id="btn-relatorios" tooltip="Relatórios"    onClick={() => navigate("/Relatorios")}>
         <img

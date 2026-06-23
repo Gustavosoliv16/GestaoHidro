@@ -41,7 +41,7 @@ export default function Professores() {
       (async () => {
         const db = await Database.load("sqlite:gestao_hidro.db");
         return await db.select<Modalidade[]>(
-          "SELECT id_modalidade, modalidade FROM MODALIDADE ORDER BY modalidade ASC"
+          "SELECT id_modalidade, modalidade FROM MODALIDADE ORDER BY modalidade ASC",
         );
       })(),
     ]);
@@ -49,18 +49,28 @@ export default function Professores() {
     setModalidades(mods);
   };
 
-  useEffect(() => { carregar(); }, []);
+  useEffect(() => {
+    carregar();
+  }, []);
 
   const handleCriar = async () => {
     if (!nome.trim()) {
-      toast.current?.show({ severity: "warn", summary: "Aviso", detail: "Digite o nome do professor." });
+      toast.current?.show({
+        severity: "warn",
+        summary: "Aviso",
+        detail: "Digite o nome do professor.",
+      });
       return;
     }
     setSalvando(true);
     try {
       const res = await criarProfessor(nome.trim(), idModalidade);
       if (res.sucesso) {
-        toast.current?.show({ severity: "success", summary: "Cadastrado", detail: res.mensagem });
+        toast.current?.show({
+          severity: "success",
+          summary: "Cadastrado",
+          detail: res.mensagem,
+        });
         setNome("");
         setIdModalidade(null);
         carregar();
@@ -79,11 +89,19 @@ export default function Professores() {
   const handleSalvarEdicao = async (id: number) => {
     const res = await atualizarProfessor(id, editNome, editModalidade);
     if (res.sucesso) {
-      toast.current?.show({ severity: "success", summary: "Atualizado", detail: res.mensagem });
+      toast.current?.show({
+        severity: "success",
+        summary: "Atualizado",
+        detail: res.mensagem,
+      });
       setEditandoId(null);
       carregar();
     } else {
-      toast.current?.show({ severity: "error", summary: "Erro", detail: res.mensagem });
+      toast.current?.show({
+        severity: "error",
+        summary: "Erro",
+        detail: res.mensagem,
+      });
     }
   };
 
@@ -97,7 +115,11 @@ export default function Professores() {
       rejectLabel: "Cancelar",
       accept: async () => {
         const res = await excluirProfessor(p.id_professor);
-        toast.current?.show({ severity: "info", summary: "Removido", detail: res.mensagem });
+        toast.current?.show({
+          severity: "info",
+          summary: "Removido",
+          detail: res.mensagem,
+        });
         carregar();
       },
     });
@@ -105,7 +127,10 @@ export default function Professores() {
 
   const opcoesModalidades = [
     { label: "Sem modalidade", value: null },
-    ...modalidades.map(m => ({ label: m.modalidade, value: m.id_modalidade })),
+    ...modalidades.map((m) => ({
+      label: m.modalidade,
+      value: m.id_modalidade,
+    })),
   ];
 
   return (
@@ -117,7 +142,9 @@ export default function Professores() {
       <div className="flex align-items-center justify-content-between mb-4">
         <div>
           <h2 className="text-2xl font-bold m-0 text-900">Professores</h2>
-          <p className="text-sm text-500 mt-1 m-0">Cadastre os professores e vincule às modalidades</p>
+          <p className="text-sm text-500 mt-1 m-0">
+            Cadastre os professores e vincule às modalidades
+          </p>
         </div>
         <Tag
           value={`${professores.length} professor${professores.length !== 1 ? "es" : ""}`}
@@ -127,7 +154,6 @@ export default function Professores() {
       </div>
 
       <div className="flex gap-4 align-items-start">
-
         {/* ── Formulário de cadastro ── */}
         <div
           className="surface-card border-1 surface-border border-round shadow-1 p-4 flex-shrink-0"
@@ -140,21 +166,26 @@ export default function Professores() {
 
           <div className="flex flex-column gap-3">
             <div>
-              <label className="text-xs font-bold text-600 uppercase block mb-1">Nome</label>
+              <label className="text-xs font-bold text-600 uppercase block mb-1">
+                Nome
+              </label>
               <InputText
                 value={nome}
-                onChange={e => setNome(e.target.value)}
+                onChange={(e) => setNome(e.target.value)}
                 placeholder="Nome do professor"
                 className="w-full"
-                onKeyDown={e => e.key === "Enter" && handleCriar()}
+                onKeyDown={(e) => e.key === "Enter" && handleCriar()}
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-600 uppercase block mb-1">Modalidade</label>
+              <label className="text-xs font-bold text-600 uppercase block mb-1">
+                Modalidade
+              </label>
               <Dropdown
+                appendTo="self"
                 value={idModalidade}
                 options={opcoesModalidades}
-                onChange={e => setIdModalidade(e.value)}
+                onChange={(e) => setIdModalidade(e.value)}
                 placeholder="Selecione..."
                 className="w-full"
               />
@@ -183,7 +214,7 @@ export default function Professores() {
             </div>
           ) : (
             <div className="flex flex-column gap-2">
-              {professores.map(p => (
+              {professores.map((p) => (
                 <div
                   key={p.id_professor}
                   className="professor-card p-3 border-round border-1 surface-border"
@@ -193,14 +224,15 @@ export default function Professores() {
                     <div className="flex flex-column gap-2">
                       <InputText
                         value={editNome}
-                        onChange={e => setEditNome(e.target.value)}
+                        onChange={(e) => setEditNome(e.target.value)}
                         className="w-full p-inputtext-sm"
                         autoFocus
                       />
                       <Dropdown
+                        appendTo="self"
                         value={editModalidade}
                         options={opcoesModalidades}
-                        onChange={e => setEditModalidade(e.value)}
+                        onChange={(e) => setEditModalidade(e.value)}
                         className="w-full p-inputtext-sm"
                       />
                       <div className="flex gap-2 justify-content-end">
@@ -231,9 +263,13 @@ export default function Professores() {
                         <div>
                           <div className="font-semibold text-800">{p.nome}</div>
                           {p.modalidade ? (
-                            <span className="text-xs text-500">{p.modalidade}</span>
+                            <span className="text-xs text-500">
+                              {p.modalidade}
+                            </span>
                           ) : (
-                            <span className="text-xs text-300">Sem modalidade</span>
+                            <span className="text-xs text-300">
+                              Sem modalidade
+                            </span>
                           )}
                         </div>
                       </div>
@@ -260,7 +296,6 @@ export default function Professores() {
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

@@ -122,7 +122,8 @@ const Dashboard: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
               <h3 style={{ margin: 0 }}>Lista de Alunos Ativos</h3>
             </div>
-            <DataTable value={alunosAtivos} responsiveLayout="scroll" emptyMessage="Nenhum aluno ativo encontrado." paginator rows={10}>
+            <DataTable value={alunosAtivos}
+            emptyMessage="Nenhum aluno ativo encontrado." paginator rows={10}>
               <Column field="nome" header="Nome"></Column>
               <Column field="modalidade" header="Modalidade"></Column>
               <Column field="telefone" header="Telefone"></Column>
@@ -136,7 +137,7 @@ const Dashboard: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
               <h3 style={{ margin: 0 }}>Aulas de Hoje</h3>
             </div>
-            <DataTable value={aulasHoje} responsiveLayout="scroll" emptyMessage="Nenhuma aula cadastrada para hoje.">
+            <DataTable value={aulasHoje} emptyMessage="Nenhuma aula cadastrada para hoje.">
               <Column field="horarioInicio" header="Horário" body={renderHoraAula} style={{ width: '120px' }}></Column>
               <Column field="modalidade" header="Modalidade"></Column>
             </DataTable>
@@ -148,7 +149,8 @@ const Dashboard: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
               <h3 style={{ margin: 0 }}>Últimos Pagamentos Recebidos</h3>
             </div>
-            <DataTable value={ultimosPagamentos} responsiveLayout="scroll" emptyMessage="Nenhum pagamento registrado recentemente.">
+            <DataTable value={ultimosPagamentos}
+            emptyMessage="Nenhum pagamento registrado recentemente.">
               <Column field="dataFormatada" header="Data"></Column>
               <Column field="nomeAluno" header="Aluno"></Column>
               <Column field="valorFormatado" header="Valor" body={(rowData) => <span style={{ color: 'var(--color-success)', fontWeight: 'bold' }}>{rowData.valorFormatado}</span>}></Column>
@@ -162,7 +164,8 @@ const Dashboard: React.FC = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
               <h3 style={{ margin: 0 }}>Atenção: Inadimplentes</h3>
             </div>
-            <DataTable value={inadimplentes} responsiveLayout="scroll" emptyMessage="Nenhum aluno inadimplente encontrado.">
+            <DataTable value={inadimplentes}
+            emptyMessage="Nenhum aluno inadimplente encontrado.">
               <Column field="nome" header="Aluno"></Column>
               <Column field="totalAtrasado" header="Mensalidades Atrasadas" body={(rowData) => <span style={{ color: 'var(--color-danger)', fontWeight: 'bold' }}>{rowData.totalAtrasado}</span>}></Column>
               <Column field="valorMensalidade" header="Valor da Mensalidade" body={(rowData) => `R$ ${rowData.valorMensalidade.toFixed(2)}`}></Column>

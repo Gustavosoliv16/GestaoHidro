@@ -8,6 +8,7 @@ import Footer      from "../src/components/layout/Footer";
 import Horarios    from "./pages/Horarios";
 import Prensenca   from "./pages/Presenca";
 import Relatorios  from "./pages/Relatorios";
+import Reposicoes  from "./pages/Reposicoes";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
@@ -35,7 +36,8 @@ export default function App() {
             <Route path="/alunos"    element={<Alunos />} />
             <Route path="/Horarios"  element={<Horarios />} />
             <Route path="/Presenca"  element={<Prensenca />} />
-            <Route path="/Relatorios" element={<Relatorios />} />
+            <Route path="/Relatorios"  element={<Relatorios />} />
+            <Route path="/Reposicoes" element={<Reposicoes />} />
           </Routes>
         </main>
 

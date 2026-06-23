@@ -306,7 +306,6 @@ export default function Financeiro() {
         loading={carregando}
         rows={10}
         paginator
-        responsiveLayout="scroll"
         emptyMessage="Nenhum aluno ativo encontrado."
         className="p-datatable-sm shadow-1 border-round overflow-hidden"
       >
