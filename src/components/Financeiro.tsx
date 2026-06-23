@@ -5,6 +5,8 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputNumber } from "primereact/inputnumber";
 import { InputText } from "primereact/inputtext";
+import { InputTextarea } from "primereact/inputtextarea";
+import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
 import {
@@ -14,6 +16,10 @@ import {
   estornarPagamentoMensalidade,
   ResumoFinanceiroAluno,
   Mensalidade,
+  DetalhePagamentoMensalidade,
+  FormaPagamento,
+  RecebedorPix,
+  TipoCartao,
 } from "../services/MensalidadeService";
 
 const formatarMoeda = (valor: number): string => {
@@ -47,6 +53,32 @@ const obterDataHojeLocal = (): string => {
   return `${ano}-${mes}-${dia}`;
 };
 
+interface FormaPagamentoUi {
+  id: number;
+  forma: FormaPagamento;
+  valor: number | null;
+  recebedor_pix: RecebedorPix | null;
+  tipo_cartao: TipoCartao | null;
+}
+
+const OPCOES_FORMA_PAGAMENTO: Array<{ label: string; value: FormaPagamento }> = [
+  { label: "Dinheiro", value: "DINHEIRO" },
+  { label: "Pix",      value: "PIX" },
+  { label: "Cartão",   value: "CARTAO" },
+];
+
+const OPCOES_RECEBEDOR_PIX: Array<{ label: string; value: RecebedorPix }> = [
+  { label: "Ana",      value: "ANA" },
+  { label: "Sávia",    value: "SAVIA" },
+  { label: "Alisson",  value: "ALISSON" },
+  { label: "Zacarias", value: "ZACARIAS" },
+];
+
+const OPCOES_TIPO_CARTAO: Array<{ label: string; value: TipoCartao }> = [
+  { label: "Crédito", value: "CREDITO" },
+  { label: "Débito",  value: "DEBITO" },
+];
+
 export default function Financeiro() {
   const toast = useRef<Toast>(null);
 
@@ -63,6 +95,14 @@ export default function Financeiro() {
   const [mensalidadeSelecionada, setMensalidadeSelecionada] = useState<Mensalidade | null>(null);
   const [valorPago, setValorPago] = useState<number | null>(null);
   const [dataPagamento, setDataPagamento] = useState("");
+  const [formasPagamento, setFormasPagamento] = useState<FormaPagamentoUi[]>([]);
+  const [observacaoPagamento, setObservacaoPagamento] = useState("");
+
+  const totalFormasPagamento = formasPagamento.reduce(
+    (total, item) => total + Number(item.valor || 0),
+    0
+  );
+  const diferencaFormasPagamento = Number(((valorPago ?? 0) - totalFormasPagamento).toFixed(2));
 
   const carregarAlunos = async () => {
     setCarregando(true);
@@ -105,10 +145,77 @@ export default function Financeiro() {
   };
 
   const abrirFormularioPagamento = (mensalidade: Mensalidade) => {
+    const valorInicial = Number(mensalidade.valor || 0);
     setMensalidadeSelecionada(mensalidade);
-    setValorPago(mensalidade.valor);
+    setValorPago(valorInicial);
     setDataPagamento(obterDataHojeLocal());
+    setFormasPagamento([{
+      id: Date.now(),
+      forma: "DINHEIRO",
+      valor: valorInicial,
+      recebedor_pix: null,
+      tipo_cartao: null,
+    }]);
+    setObservacaoPagamento("");
     setModalPagamentoVisible(true);
+  };
+
+  const atualizarValorPago = (novoValor: number | null) => {
+    setValorPago(novoValor);
+    setFormasPagamento((formas) =>
+      formas.length === 1 ? [{ ...formas[0], valor: novoValor }] : formas
+    );
+  };
+
+  const adicionarFormaPagamento = () => {
+    const restante = Math.max(Number(((valorPago ?? 0) - totalFormasPagamento).toFixed(2)), 0);
+    setFormasPagamento((formas) => [
+      ...formas,
+      {
+        id: Date.now() + formas.length,
+        forma: "DINHEIRO",
+        valor: restante > 0 ? restante : null,
+        recebedor_pix: null,
+        tipo_cartao: null,
+      },
+    ]);
+  };
+
+  const removerFormaPagamento = (id: number) => {
+    setFormasPagamento((formas) => formas.filter((forma) => forma.id !== id));
+  };
+
+  const atualizarFormaPagamento = (id: number, formaPagamento: FormaPagamento) => {
+    setFormasPagamento((formas) =>
+      formas.map((forma) =>
+        forma.id === id
+          ? {
+              ...forma,
+              forma: formaPagamento,
+              recebedor_pix: formaPagamento === "PIX" ? forma.recebedor_pix : null,
+              tipo_cartao: formaPagamento === "CARTAO" ? forma.tipo_cartao : null,
+            }
+          : forma
+      )
+    );
+  };
+
+  const atualizarValorFormaPagamento = (id: number, valor: number | null) => {
+    setFormasPagamento((formas) =>
+      formas.map((forma) => (forma.id === id ? { ...forma, valor } : forma))
+    );
+  };
+
+  const atualizarRecebedorPix = (id: number, recebedor_pix: RecebedorPix | null) => {
+    setFormasPagamento((formas) =>
+      formas.map((forma) => (forma.id === id ? { ...forma, recebedor_pix } : forma))
+    );
+  };
+
+  const atualizarTipoCartao = (id: number, tipo_cartao: TipoCartao | null) => {
+    setFormasPagamento((formas) =>
+      formas.map((forma) => (forma.id === id ? { ...forma, tipo_cartao } : forma))
+    );
   };
 
   const confirmarPagamento = async () => {
@@ -129,12 +236,74 @@ export default function Financeiro() {
       });
       return;
     }
+    if (formasPagamento.length === 0) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Aviso",
+        detail: "Informe ao menos uma forma de pagamento.",
+      });
+      return;
+    }
+
+    const formaSemValor = formasPagamento.some((forma) => !forma.valor || forma.valor <= 0);
+    if (formaSemValor) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Aviso",
+        detail: "Todas as formas de pagamento precisam ter valor maior que zero.",
+      });
+      return;
+    }
+
+    const pixSemRecebedor = formasPagamento.some(
+      (forma) => forma.forma === "PIX" && !forma.recebedor_pix
+    );
+    if (pixSemRecebedor) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Aviso",
+        detail: "Selecione quem recebeu em cada pagamento por Pix.",
+      });
+      return;
+    }
+
+    const cartaoSemTipo = formasPagamento.some(
+      (forma) => forma.forma === "CARTAO" && !forma.tipo_cartao
+    );
+    if (cartaoSemTipo) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Aviso",
+        detail: "Selecione crédito ou débito em cada pagamento por cartão.",
+      });
+      return;
+    }
+
+    if (Math.abs(diferencaFormasPagamento) > 0.01) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Aviso",
+        detail: `A soma das formas precisa fechar em ${formatarMoeda(valorPago)}.`,
+      });
+      return;
+    }
+
+    const detalhesPagamento: DetalhePagamentoMensalidade[] = formasPagamento.map((forma) => ({
+      forma_pagamento: forma.forma,
+      valor: Number(forma.valor),
+      recebedor_pix: forma.forma === "PIX" ? forma.recebedor_pix : null,
+      tipo_cartao: forma.forma === "CARTAO" ? forma.tipo_cartao : null,
+    }));
 
     try {
       await registrarPagamentoMensalidade(
         mensalidadeSelecionada.id_mensalidade,
         valorPago,
-        dataPagamento
+        dataPagamento,
+        {
+          detalhes: detalhesPagamento,
+          observacao: observacaoPagamento,
+        }
       );
       toast.current?.show({
         severity: "success",
@@ -253,6 +422,9 @@ export default function Financeiro() {
       <div className="flex flex-column">
         <span className="text-sm font-semibold">{formatarData(rowData.data_pagamento)}</span>
         <span className="text-xs text-500">{formatarMoeda(rowData.valor_pago ?? 0)}</span>
+        {rowData.detalhes_pagamento && (
+          <span className="text-xs text-500">{rowData.detalhes_pagamento}</span>
+        )}
       </div>
     );
   };
@@ -408,7 +580,7 @@ export default function Financeiro() {
             : "Registrar Pagamento"
         }
         visible={modalPagamentoVisible}
-        style={{ width: "400px" }}
+        style={{ width: "620px", maxWidth: "95vw" }}
         onHide={() => setModalPagamentoVisible(false)}
         footer={
           <div>
@@ -456,7 +628,7 @@ export default function Financeiro() {
             </label>
             <InputNumber
               value={valorPago}
-              onValueChange={(e) => setValorPago(e.value ?? null)}
+              onValueChange={(e) => atualizarValorPago(e.value ?? null)}
               mode="currency"
               currency="BRL"
               locale="pt-BR"
@@ -474,6 +646,129 @@ export default function Financeiro() {
               onChange={(e) => setDataPagamento(e.target.value)}
               className="p-inputtext p-component w-full"
               style={{ padding: "0.5rem" }}
+            />
+          </div>
+          <div className="border-1 surface-border border-round p-3">
+            <div className="flex justify-content-between align-items-center mb-3 gap-2">
+              <div>
+                <span className="block font-bold text-sm text-700">
+                  Formas de pagamento
+                </span>
+                <span className="block text-xs text-500">
+                  Use mais de uma linha quando o pagamento for dividido.
+                </span>
+              </div>
+              <Button
+                type="button"
+                label="Adicionar"
+                icon="pi pi-plus"
+                className="p-button-sm p-button-outlined"
+                onClick={adicionarFormaPagamento}
+              />
+            </div>
+
+            <div className="flex flex-column gap-3">
+              {formasPagamento.map((forma, index) => (
+                <div key={forma.id} className="surface-ground border-round p-3">
+                  <div className="flex justify-content-between align-items-center mb-2">
+                    <span className="text-xs font-bold text-600 uppercase">
+                      Forma {index + 1}
+                    </span>
+                    {formasPagamento.length > 1 && (
+                      <Button
+                        type="button"
+                        icon="pi pi-trash"
+                        className="p-button-rounded p-button-text p-button-danger p-button-sm"
+                        tooltip="Remover forma"
+                        onClick={() => removerFormaPagamento(forma.id)}
+                      />
+                    )}
+                  </div>
+
+                  <div className="grid formgrid">
+                    <div className="col-12 md:col-6">
+                      <label className="block font-bold text-sm text-700 mb-1">
+                        Tipo
+                      </label>
+                      <Dropdown
+                        value={forma.forma}
+                        options={OPCOES_FORMA_PAGAMENTO}
+                        onChange={(e) => atualizarFormaPagamento(forma.id, e.value)}
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="col-12 md:col-6">
+                      <label className="block font-bold text-sm text-700 mb-1">
+                        Valor
+                      </label>
+                      <InputNumber
+                        value={forma.valor}
+                        onValueChange={(e) => atualizarValorFormaPagamento(forma.id, e.value ?? null)}
+                        mode="currency"
+                        currency="BRL"
+                        locale="pt-BR"
+                        className="w-full"
+                        placeholder="R$ 0,00"
+                      />
+                    </div>
+
+                    {forma.forma === "PIX" && (
+                      <div className="col-12">
+                        <label className="block font-bold text-sm text-700 mb-1">
+                          Pix recebido por
+                        </label>
+                        <Dropdown
+                          value={forma.recebedor_pix}
+                          options={OPCOES_RECEBEDOR_PIX}
+                          onChange={(e) => atualizarRecebedorPix(forma.id, e.value)}
+                          placeholder="Selecione quem recebeu"
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+
+                    {forma.forma === "CARTAO" && (
+                      <div className="col-12">
+                        <label className="block font-bold text-sm text-700 mb-1">
+                          Tipo do cartão
+                        </label>
+                        <Dropdown
+                          value={forma.tipo_cartao}
+                          options={OPCOES_TIPO_CARTAO}
+                          onChange={(e) => atualizarTipoCartao(forma.id, e.value)}
+                          placeholder="Crédito ou débito"
+                          className="w-full"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-content-between align-items-center mt-3 pt-2 border-top-1 surface-border">
+              <span className="text-sm text-600">Total informado nas formas:</span>
+              <span className={`font-bold ${Math.abs(diferencaFormasPagamento) <= 0.01 ? "text-green-600" : "text-red-600"}`}>
+                {formatarMoeda(totalFormasPagamento)}
+              </span>
+            </div>
+            {Math.abs(diferencaFormasPagamento) > 0.01 && (
+              <div className="text-xs text-red-600 mt-1 text-right">
+                Diferença: {formatarMoeda(diferencaFormasPagamento)}
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="block font-bold text-sm text-700 mb-1">
+              Observação
+            </label>
+            <InputTextarea
+              value={observacaoPagamento}
+              onChange={(e) => setObservacaoPagamento(e.target.value)}
+              rows={3}
+              className="w-full"
+              placeholder='Ex: "Recebi do pai dele"'
+              autoResize
             />
           </div>
         </div>

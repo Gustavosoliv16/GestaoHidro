@@ -15,6 +15,7 @@ export interface Mensalidade {
   data_pagamento: string | null;
   valor_pago: number | null;
   criado_em: string;
+  detalhes_pagamento?: string | null;
 }
 
 export interface ResumoFinanceiroAluno {
@@ -29,10 +30,42 @@ export interface ResumoFinanceiroAluno {
   totalPago: number;
 }
 
+export type FormaPagamento = "DINHEIRO" | "PIX" | "CARTAO";
+export type RecebedorPix = "ANA" | "SAVIA" | "ALISSON" | "ZACARIAS";
+export type TipoCartao = "CREDITO" | "DEBITO";
+
+export interface DetalhePagamentoMensalidade {
+  forma_pagamento: FormaPagamento;
+  valor: number;
+  recebedor_pix?: RecebedorPix | null;
+  tipo_cartao?: TipoCartao | null;
+}
+
+export interface DadosPagamentoMensalidade {
+  detalhes?: DetalhePagamentoMensalidade[];
+  observacao?: string;
+}
+
 
 function obterHojeStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+async function garantirTabelaDetalhesPagamento(db: any): Promise<void> {
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS "PAGAMENTO_MENSALIDADE_DETALHE" (
+      "id_detalhe"      INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+      "id_mensalidade"  INTEGER NOT NULL,
+      "forma_pagamento" TEXT NOT NULL,
+      "valor"           REAL NOT NULL,
+      "recebedor_pix"   TEXT,
+      "tipo_cartao"     TEXT,
+      "observacao"      TEXT,
+      "criado_em"       TEXT NOT NULL,
+      FOREIGN KEY("id_mensalidade") REFERENCES "MENSALIDADE"("id_mensalidade")
+    );
+  `);
 }
 
 function obterMesReferenciaAtual(): string {
@@ -189,8 +222,39 @@ export async function buscarMensalidadesDoAluno(idAluno: number): Promise<Mensal
   await sincronizarMensalidades(idAluno);
 
   const db = await obterBanco();
+  await garantirTabelaDetalhesPagamento(db);
+
   const resultado: Mensalidade[] = await db.select(
-    `SELECT * FROM MENSALIDADE WHERE id_aluno = $1 ORDER BY mes_referencia DESC`,
+    `SELECT
+       m.*,
+       (
+         SELECT GROUP_CONCAT(
+           CASE
+             WHEN d.forma_pagamento = 'PIX' THEN 'Pix ' ||
+               CASE d.recebedor_pix
+                 WHEN 'ANA' THEN 'Ana'
+                 WHEN 'SAVIA' THEN 'Sávia'
+                 WHEN 'ALISSON' THEN 'Alisson'
+                 WHEN 'ZACARIAS' THEN 'Zacarias'
+                 ELSE COALESCE(d.recebedor_pix, '')
+               END || ' (' || printf('%.2f', d.valor) || ')'
+             WHEN d.forma_pagamento = 'CARTAO' THEN 'Cartão ' ||
+               CASE d.tipo_cartao
+                 WHEN 'CREDITO' THEN 'crédito'
+                 WHEN 'DEBITO' THEN 'débito'
+                 ELSE COALESCE(d.tipo_cartao, '')
+               END || ' (' || printf('%.2f', d.valor) || ')'
+             WHEN d.forma_pagamento = 'DINHEIRO' THEN 'Dinheiro (' || printf('%.2f', d.valor) || ')'
+             ELSE d.forma_pagamento || ' (' || printf('%.2f', d.valor) || ')'
+           END,
+           ' + '
+         )
+         FROM PAGAMENTO_MENSALIDADE_DETALHE d
+         WHERE d.id_mensalidade = m.id_mensalidade
+       ) as detalhes_pagamento
+     FROM MENSALIDADE m
+     WHERE m.id_aluno = $1
+     ORDER BY m.mes_referencia DESC`,
     [idAluno]
   );
   return resultado;
@@ -250,16 +314,54 @@ export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAl
 export async function registrarPagamentoMensalidade(
   idMensalidade: number,
   valorPago: number,
-  dataPagamento: string
+  dataPagamento: string,
+  dadosPagamento?: DadosPagamentoMensalidade
 ): Promise<{ sucesso: boolean; mensagem: string }> {
   const db = await obterBanco();
+  await garantirTabelaDetalhesPagamento(db);
 
-  await db.execute(
-    `UPDATE MENSALIDADE 
-     SET status = 'PAGO', valor_pago = $1, data_pagamento = $2 
-     WHERE id_mensalidade = $3`,
-    [valorPago, dataPagamento, idMensalidade]
-  );
+  try {
+    await db.execute("BEGIN TRANSACTION;");
+
+    await db.execute(
+      `UPDATE MENSALIDADE 
+       SET status = 'PAGO', valor_pago = $1, data_pagamento = $2 
+       WHERE id_mensalidade = $3`,
+      [valorPago, dataPagamento, idMensalidade]
+    );
+
+    if (dadosPagamento?.detalhes) {
+      await db.execute(
+        `DELETE FROM PAGAMENTO_MENSALIDADE_DETALHE WHERE id_mensalidade = $1`,
+        [idMensalidade]
+      );
+
+      const observacao = dadosPagamento.observacao?.trim() || null;
+      const criadoEm = new Date().toISOString();
+
+      for (const detalhe of dadosPagamento.detalhes) {
+        await db.execute(
+          `INSERT INTO PAGAMENTO_MENSALIDADE_DETALHE
+             (id_mensalidade, forma_pagamento, valor, recebedor_pix, tipo_cartao, observacao, criado_em)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+          [
+            idMensalidade,
+            detalhe.forma_pagamento,
+            detalhe.valor,
+            detalhe.recebedor_pix ?? null,
+            detalhe.tipo_cartao ?? null,
+            observacao,
+            criadoEm,
+          ]
+        );
+      }
+    }
+
+    await db.execute("COMMIT;");
+  } catch (error) {
+    await db.execute("ROLLBACK;");
+    throw error;
+  }
 
   return { sucesso: true, mensagem: "Pagamento registrado com sucesso!" };
 }
@@ -285,6 +387,12 @@ export async function estornarPagamentoMensalidade(
      SET status = $1, valor_pago = NULL, data_pagamento = NULL 
      WHERE id_mensalidade = $2`,
     [novoStatus, idMensalidade]
+  );
+
+  await garantirTabelaDetalhesPagamento(db);
+  await db.execute(
+    `DELETE FROM PAGAMENTO_MENSALIDADE_DETALHE WHERE id_mensalidade = $1`,
+    [idMensalidade]
   );
 
   return { sucesso: true, mensagem: "Pagamento estornado com sucesso!" };

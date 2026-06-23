@@ -39,10 +39,25 @@ const DIAS        = ["Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-fe
 const DIAS_CURTOS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 const DIAS_PT     = DIAS;
 
+function formatarHora(hora: string | number): string {
+  return `${String(Math.round(Number(hora))).padStart(2, "0")}:00`;
+}
+
+interface AlunoImpressao {
+  id_aluno:      number;
+  nome:          string;
+  reposicao:     boolean;
+  id_turma:      number;
+  horarioInicio: number;
+  modalidade:    string;
+}
+
 interface DadosImpressao {
-  turma:         any;
+  tipo:          "turma" | "dia";
+  turma:         any | null;
+  diaSemana:     number;
   data:          Date;
-  alunos:        Array<{ id_aluno: number; nome: string; reposicao: boolean }>;
+  alunos:        AlunoImpressao[];
   nomeProfessor: string | null;
 }
 
@@ -82,28 +97,55 @@ export default function Impressao() {
     .filter(t => Number(t.diaSemana) === diaSelecionado)
     .sort((a, b) => Number(a.horarioInicio) - Number(b.horarioInicio));
 
-  const handleImprimir = async () => {
+  const montarListaAlunosTurma = async (turma: any): Promise<AlunoImpressao[]> => {
+    const [alunos, reposicoes] = await Promise.all([
+      buscarAlunosDaTurma(turma.id_turma),
+      buscarReposicoesParaChamada(turma.id_turma, dateStr),
+    ]);
+
+    const idsMatriculados = new Set((alunos as any[]).map(a => a.id_aluno));
+    const horarioInicio   = Number(turma.horarioInicio);
+    const modalidade      = turma.modalidade ?? "";
+
+    const alunosMatriculados = (alunos as any[]).map(a => ({
+      id_aluno:      a.id_aluno,
+      nome:          a.nome,
+      reposicao:     false,
+      id_turma:      turma.id_turma,
+      horarioInicio,
+      modalidade,
+    }));
+
+    const alunosReposicao = (reposicoes as any[])
+      .filter(r => !idsMatriculados.has(r.id_aluno))
+      .map(r => ({
+        id_aluno:      r.id_aluno,
+        nome:          r.nome,
+        reposicao:     true,
+        id_turma:      turma.id_turma,
+        horarioInicio,
+        modalidade,
+      }));
+
+    return [
+      ...alunosMatriculados,
+      ...alunosReposicao,
+    ].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  };
+
+  const handleImprimirTurma = async () => {
     if (!turmaSelecionada) return;
     setCarregando(true);
     try {
-      const [alunos, professor, reposicoes] = await Promise.all([
-        buscarAlunosDaTurma(turmaSelecionada.id_turma),
+      const [listaFinal, professor] = await Promise.all([
+        montarListaAlunosTurma(turmaSelecionada),
         buscarProfessorPorModalidade(turmaSelecionada.id_modalidade),
-        buscarReposicoesParaChamada(turmaSelecionada.id_turma, dateStr),
       ]);
 
-      const idsMatriculados = new Set(alunos.map((a: any) => a.id_aluno));
-      const alunosReposicao = (reposicoes as any[])
-        .filter(r => !idsMatriculados.has(r.id_aluno))
-        .map(r => ({ id_aluno: r.id_aluno, nome: r.nome, reposicao: true }));
-
-      const listaFinal = [
-        ...(alunos as any[]).map(a => ({ ...a, reposicao: false })),
-        ...alunosReposicao,
-      ].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-
       setDadosImpressao({
+        tipo:          "turma",
         turma:         turmaSelecionada,
+        diaSemana:     Number(turmaSelecionada.diaSemana),
         data:          dataEfetiva,
         alunos:        listaFinal,
         nomeProfessor: professor?.nome ?? null,
@@ -114,6 +156,41 @@ export default function Impressao() {
         severity: "error",
         summary:  "Erro",
         detail:   "Não foi possível carregar os dados para impressão.",
+      });
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const handleImprimirDia = async () => {
+    if (turmasDoDia.length === 0) return;
+    setCarregando(true);
+    try {
+      const listasPorTurma = await Promise.all(turmasDoDia.map(turma => montarListaAlunosTurma(turma)));
+      const listaFinal = listasPorTurma
+        .flat()
+        .sort((a, b) => {
+          const porHorario = Number(a.horarioInicio) - Number(b.horarioInicio);
+          if (porHorario !== 0) return porHorario;
+          const porModalidade = a.modalidade.localeCompare(b.modalidade, "pt-BR");
+          if (porModalidade !== 0) return porModalidade;
+          return a.nome.localeCompare(b.nome, "pt-BR");
+        });
+
+      setDadosImpressao({
+        tipo:          "dia",
+        turma:         null,
+        diaSemana:     diaSelecionado,
+        data:          dataEfetiva,
+        alunos:        listaFinal,
+        nomeProfessor: null,
+      });
+    } catch (err) {
+      console.error("Erro ao preparar impressão do dia:", err);
+      toast.current?.show({
+        severity: "error",
+        summary:  "Erro",
+        detail:   "Não foi possível carregar a lista completa do dia.",
       });
     } finally {
       setCarregando(false);
@@ -187,10 +264,19 @@ export default function Impressao() {
 
       {diaSelecionado !== null && (
         <div className="surface-card border-1 surface-border border-round shadow-1 p-4 mb-4">
-          <div className="mb-2">
+          <div className="mb-2 flex align-items-center justify-content-between gap-3">
             <span className="text-xs font-bold text-600 uppercase">
               Horários — {DIAS[diaSelecionado]}
             </span>
+            {turmasDoDia.length > 0 && (
+              <Button
+                label="Imprimir Dia Inteiro"
+                icon={carregando ? "pi pi-spin pi-spinner" : "pi pi-print"}
+                className="p-button-sm p-button-outlined font-bold"
+                disabled={carregando}
+                onClick={handleImprimirDia}
+              />
+            )}
           </div>
           {turmasDoDia.length === 0 ? (
             <span className="text-sm text-400">Nenhuma turma neste dia.</span>
@@ -241,7 +327,7 @@ export default function Impressao() {
             icon={carregando ? "pi pi-spin pi-spinner" : "pi pi-print"}
             className="p-button-lg font-bold btn-primary-brand"
             disabled={carregando}
-            onClick={handleImprimir}
+            onClick={handleImprimirTurma}
           />
         </div>
       )}
@@ -249,14 +335,15 @@ export default function Impressao() {
   );
 }
 function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
-  const { turma, data, alunos, nomeProfessor } = dados;
+  const { turma, data, alunos, nomeProfessor, tipo } = dados;
 
   const dataFormatada = data.toLocaleDateString("pt-BR", {
     weekday: "long", day: "2-digit", month: "long", year: "numeric",
   });
-  const diaNome    = DIAS_PT[Number(turma.diaSemana)] ?? "";
-  const horario    = `${String(Math.round(Number(turma.horarioInicio))).padStart(2, "0")}:00`;
-  const modalidade = turma.modalidade ?? "";
+  const diaNome    = DIAS_PT[Number(dados.diaSemana)] ?? "";
+  const horario    = turma ? formatarHora(turma.horarioInicio) : "Dia inteiro";
+  const modalidade = turma?.modalidade ?? "Todas as modalidades";
+  const ehListaDia = tipo === "dia";
 
   return (
     <>
@@ -317,13 +404,16 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
         }
         .pr-table thead th:last-child { width: 200px; text-align: center; }
         .pr-table thead th:first-child { width: 36px; text-align: center; }
+        .pr-table--dia thead th:nth-child(2) { width: 72px; text-align: center; }
 
         .pr-table tbody tr { border-bottom: 1px solid #e0e0e0; height: 32px; }
         .pr-table tbody tr:nth-child(even) { background: #f7f7f7; }
         .pr-table tbody tr:last-child { border-bottom: 2px solid #000; }
 
         .pr-td-num  { width: 36px; text-align: center; font-size: 9pt; color: #666; padding: 0 6px; font-weight: 700; }
+        .pr-td-hora { width: 72px; text-align: center; font-size: 9pt; color: #111; padding: 0 8px; font-weight: 700; white-space: nowrap; }
         .pr-td-nome { padding: 0 10px; font-size: 10.5pt; }
+        .pr-modalidade { font-size: 8pt; color: #666; margin-left: 6px; }
         .pr-rep     { font-size: 8pt; color: #777; font-style: italic; margin-left: 4px; }
         .pr-td-ass  { width: 200px; padding: 0 10px; border-left: 1px solid #ddd; }
         .pr-ass-linha { border-bottom: 1px solid #aaa; height: 20px; margin: 0 8px; }
@@ -359,7 +449,7 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           <img src={logoPretoPng} alt="HydroFit" className="pr-logo" />
           <h1> HydroFIT</h1>
           <div className="pr-header-right">
-            <div className="pr-titulo">Lista de Presença</div>
+            <div className="pr-titulo">{ehListaDia ? "Lista de Presença do Dia" : "Lista de Presença"}</div>
             <div className="pr-subtitulo">{modalidade} · {diaNome} · {horario}</div>
           </div>
         </div>
@@ -376,20 +466,25 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           )}
         </div>
 
-        <table className="pr-table">
+        <table className={`pr-table${ehListaDia ? " pr-table--dia" : ""}`}>
           <thead>
             <tr>
               <th>#</th>
+              {ehListaDia && <th>Horário</th>}
               <th>Nome do Aluno</th>
               <th>Assinatura</th>
             </tr>
           </thead>
           <tbody>
             {alunos.map((aluno, i) => (
-              <tr key={aluno.id_aluno}>
+              <tr key={`${aluno.id_turma}-${aluno.id_aluno}-${aluno.reposicao ? "rep" : "fixo"}-${i}`}>
                 <td className="pr-td-num">{i + 1}</td>
+                {ehListaDia && (
+                  <td className="pr-td-hora">{formatarHora(aluno.horarioInicio)}</td>
+                )}
                 <td className="pr-td-nome">
                   {aluno.nome}
+                  {ehListaDia && <span className="pr-modalidade">— {aluno.modalidade}</span>}
                   {aluno.reposicao && <span className="pr-rep">(Reposição)</span>}
                 </td>
                 <td className="pr-td-ass">
@@ -404,7 +499,9 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           <div className="pr-ass-prof">
             <div className="pr-ass-prof-linha" />
             <div className="pr-ass-prof-label">
-              Assinatura do(a) Professor(a){nomeProfessor ? ` — ${nomeProfessor}` : ""}
+              {ehListaDia
+                ? "Assinatura do(a) responsável pela conferência"
+                : `Assinatura do(a) Professor(a)${nomeProfessor ? ` — ${nomeProfessor}` : ""}`}
             </div>
           </div>
           <div className="pr-printed-at">
