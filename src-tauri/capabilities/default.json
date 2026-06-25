@@ -8,6 +8,16 @@
     "opener:default",
     "sql:allow-execute",
     "sql:allow-load",
-    "sql:allow-select"
+    "sql:allow-select",
+    "fs:default",
+    "fs:allow-copy-file",
+    "fs:allow-create",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
+    "fs:allow-read",
+    "fs:allow-remove",
+    "fs:allow-write",
+    "fs:allow-write-text-file",
+    "fs:scope-document-recursive"
   ]
 }

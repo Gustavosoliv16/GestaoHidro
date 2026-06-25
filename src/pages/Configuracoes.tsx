@@ -2,9 +2,6 @@ import { useState, useRef } from "react";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
-import { InputText } from "primereact/inputtext";
-import { Password } from "primereact/password";
-import { InputSwitch } from "primereact/inputswitch";
 import { Divider } from "primereact/divider";
 import { Tag } from "primereact/tag";
 import {
@@ -15,14 +12,9 @@ import {
 
 export default function Configuracoes() {
   const toast = useRef<Toast>(null);
-  const [caminhoBackup, setCaminhoBackup] = useState("");
   const [backupEmAndamento, setBackupEmAndamento] = useState(false);
   const [historico, setHistorico] = useState<any[]>([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
-  
-  // Opções de proteção
-  const [protegerBackup, setProtegerBackup] = useState(false);
-  const [senhaBackup, setSenhaBackup] = useState("");
 
   const carregarHistorico = async () => {
     setCarregandoHistorico(true);
@@ -37,42 +29,28 @@ export default function Configuracoes() {
   };
 
   const executarBackup = async () => {
-    if (!caminhoBackup) {
-      toast.current?.show({
-        severity: "warn",
-        summary: "Aviso",
-        detail: "Digite um caminho para salvar o backup.",
-      });
-      return;
-    }
-
-    if (protegerBackup && !senhaBackup) {
-      toast.current?.show({
-        severity: "warn",
-        summary: "Aviso",
-        detail: "Digite uma senha para proteger o backup.",
-      });
-      return;
-    }
-
     setBackupEmAndamento(true);
     try {
-      // Cria backup diretamente no caminho especificado
-      const resultado = await criarBackup(caminhoBackup, protegerBackup ? senhaBackup : undefined);
+      console.log("Iniciando backup...");
+
+      // Cria backup na pasta padrão
+      const resultado = await criarBackup();
+
+      console.log("Resultado do backup:", resultado);
 
       if (!resultado.sucesso) {
         throw new Error(resultado.mensagem);
       }
 
       // Registra no histórico
-      await registrarBackup(caminhoBackup);
+      if (resultado.caminho) {
+        await registrarBackup(resultado.caminho);
+      }
 
       toast.current?.show({
         severity: "success",
         summary: "Backup concluído",
-        detail: protegerBackup 
-          ? `Backup protegido por senha salvo em: ${caminhoBackup}`
-          : `Backup salvo em: ${caminhoBackup}`,
+        detail: "Backup salvo com sucesso!",
         life: 5000,
       });
 
@@ -80,11 +58,15 @@ export default function Configuracoes() {
       await carregarHistorico();
     } catch (erro) {
       console.error("Erro ao fazer backup:", erro);
+
+      const mensagemErro = erro instanceof Error ? erro.message : String(erro);
+
       toast.current?.show({
         severity: "error",
-        summary: "Erro",
-        detail: `Falha ao criar backup: ${erro instanceof Error ? erro.message : String(erro)}`,
-        life: 5000,
+        summary: "Erro ao criar backup",
+        detail: mensagemErro,
+        life: 8000,
+        sticky: true,
       });
     } finally {
       setBackupEmAndamento(false);
@@ -131,70 +113,16 @@ export default function Configuracoes() {
           backup regularmente para evitar perda de dados.
         </p>
 
-        <div className="flex flex-column gap-3">
-          <div>
-            <label className="block font-semibold text-sm text-700 mb-2">
-              Caminho para salvar o backup
-            </label>
-            <InputText
-              value={caminhoBackup}
-              onChange={(e) => setCaminhoBackup(e.target.value)}
-              placeholder="Ex: C:\Backups\gestao_hidro_backup.db"
-              className="w-full"
-            />
-            <small className="text-500 mt-1 block">
-              Digite o caminho completo onde o backup será salvo
-            </small>
-          </div>
-
-          <Divider className="my-2" />
-
-          <div className="flex flex-column gap-3">
-            <div className="flex align-items-center justify-content-between">
-              <div>
-                <label className="font-semibold text-sm text-700 block mb-1">
-                  Proteger com senha
-                </label>
-                <small className="text-500 text-xs">
-                  Criptografa o backup com AES-256
-                </small>
-              </div>
-              <InputSwitch
-                checked={protegerBackup}
-                onChange={(e) => setProtegerBackup(e.value)}
-              />
-            </div>
-
-            {protegerBackup && (
-              <div>
-                <label className="block font-semibold text-sm text-700 mb-2">
-                  Senha do backup
-                </label>
-                <Password
-                  value={senhaBackup}
-                  onChange={(e) => setSenhaBackup(e.target.value)}
-                  placeholder="Digite uma senha forte"
-                  className="w-full"
-                  toggleMask
-                  feedback
-                />
-                <small className="text-500 mt-1 block">
-                  Guarde esta senha em local seguro. Sem ela, não será possível restaurar o backup.
-                </small>
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-content-end">
-            <Button
-              label={backupEmAndamento ? "Criando backup..." : "Fazer Backup Agora"}
-              icon={backupEmAndamento ? "pi pi-spin pi-spinner" : "pi pi-save"}
-              className="p-button-success"
-              onClick={executarBackup}
-              loading={backupEmAndamento}
-              disabled={!caminhoBackup || (protegerBackup && !senhaBackup)}
-            />
-          </div>
+        <div className="flex justify-content-end">
+          <Button
+            label={
+              backupEmAndamento ? "Criando backup..." : "Fazer Backup Agora"
+            }
+            icon={backupEmAndamento ? "pi pi-spin pi-spinner" : "pi pi-save"}
+            className="p-button-success"
+            onClick={executarBackup}
+            loading={backupEmAndamento}
+          />
         </div>
 
         <Divider className="my-4" />
@@ -215,7 +143,10 @@ export default function Configuracoes() {
 
         {historico.length === 0 ? (
           <div className="text-center py-4 text-500">
-            <i className="pi pi-inbox text-3xl mb-2" style={{ display: "block" }} />
+            <i
+              className="pi pi-inbox text-3xl mb-2"
+              style={{ display: "block" }}
+            />
             <p className="m-0 text-sm">Nenhum backup registrado ainda.</p>
           </div>
         ) : (

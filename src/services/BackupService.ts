@@ -1,12 +1,28 @@
 import Database from "@tauri-apps/plugin-sql";
+import { invoke } from "@tauri-apps/api/core";
+import { copyFile, remove} from "@tauri-apps/plugin-fs";
 
 /**
  * Serviço de backup automático do banco SQLite.
- * Usa VACUUM INTO para criar uma cópia consistente do banco sem travar a aplicação.
+ * Usa VACUUM INTO para criar uma cópia consistente e o plugin fs para copiar.
  */
 
 const DB_NAME = "sqlite:gestao_hidro.db";
 const BACKUP_PREFIX = "gestao_hidro_backup";
+const TEMP_BACKUP_NAME = "gestao_hidro_temp_backup.db";
+
+/**
+ * Obtém a pasta de backups do sistema (Documents/GestaoHidro_Backups)
+ */
+export async function getBackupFolder(): Promise<string> {
+  try {
+    const folder = await invoke<string>("get_backup_folder");
+    return folder;
+  } catch (error) {
+    console.error("Erro ao obter pasta de backups:", error);
+    throw new Error("Não foi possível obter a pasta de backups");
+  }
+}
 
 function gerarNomeBackup(): string {
   const d = new Date();
@@ -23,68 +39,84 @@ function gerarNomeBackup(): string {
 }
 
 /**
- * Cria um backup completo do banco usando VACUUM INTO.
- * @param caminhoDestino - Caminho completo onde o backup será salvo (opcional)
- * @param senha - Senha para criptografar o backup (opcional)
+ * Cria um backup completo do banco usando VACUUM INTO + plugin fs.
+ * 1. VACUUM INTO cria backup temporário na pasta do banco (acesso garantido)
+ * 2. Plugin fs copia para Documents/GestaoHidro_Backups
+ * 3. Deleta o temporário
  */
-export async function criarBackup(caminhoDestino?: string, senha?: string): Promise<{
+export async function criarBackup(): Promise<{
   sucesso: boolean;
   mensagem: string;
   caminho?: string;
 }> {
   try {
+    console.log("Iniciando processo de backup...");
+    
+    // Passo 1: Criar backup temporário na mesma pasta do banco
     const db = await Database.load(DB_NAME);
-    const nomeBackup = caminhoDestino || gerarNomeBackup();
+    
+    console.log("Criando backup temporário com VACUUM INTO...");
+    await db.execute(`VACUUM INTO '${TEMP_BACKUP_NAME}'`);
+    console.log("Backup temporário criado com sucesso");
 
-    // Valida o caminho para evitar injeção SQL
-    if (nomeBackup.includes("'") || nomeBackup.includes(";") || nomeBackup.includes("--")) {
-      throw new Error("Caminho de backup contém caracteres inválidos");
-    }
+    // Passo 2: Obter pasta de destino
+    const backupFolder = await getBackupFolder();
+    const nomeArquivo = gerarNomeBackup();
+    const caminhoDestino = `${backupFolder}/${nomeArquivo}`;
+    
+    console.log("Copiando para:", caminhoDestino);
 
-    // Usa aspas duplas para o caminho (mais seguro que aspas simples)
-    await db.execute(`VACUUM INTO "${nomeBackup.replace(/"/g, '""')}"`);
+    // Passo 3: Copiar usando plugin fs
+    await copyFile(TEMP_BACKUP_NAME, caminhoDestino);
+    console.log("Cópia concluída");
 
-    // Se houver senha, criptografa o arquivo
-    if (senha) {
-      await criptografarArquivo(nomeBackup, senha);
+    // Passo 4: Deletar temporário
+    try {
+      await remove(TEMP_BACKUP_NAME);
+      console.log("Arquivo temporário removido");
+    } catch (removeError) {
+      console.warn("Não foi possível remover arquivo temporário:", removeError);
     }
 
     return {
       sucesso: true,
-      mensagem: senha 
-        ? `Backup criptografado com sucesso: ${nomeBackup}`
-        : `Backup criado com sucesso: ${nomeBackup}`,
-      caminho: nomeBackup,
+      mensagem: `Backup criado com sucesso: ${nomeArquivo}`,
+      caminho: caminhoDestino,
     };
   } catch (erro) {
-    console.error("Erro ao criar backup:", erro);
+    console.error("Erro detalhado ao criar backup:", erro);
+    
+    // Tenta limpar o arquivo temporário em caso de erro
+    try {
+      await remove(TEMP_BACKUP_NAME);
+    } catch {
+      // Ignora erro ao limpar
+    }
+    
+    // Mensagens de erro mais específicas
+    let mensagemErro = "Falha ao criar backup";
+    
+    if (erro instanceof Error) {
+      const erroStr = erro.message.toLowerCase();
+      
+      if (erroStr.includes("permission") || erroStr.includes("access")) {
+        mensagemErro = "Sem permissão para salvar o backup.";
+      } else if (erroStr.includes("disk") || erroStr.includes("space")) {
+        mensagemErro = "Espaço em disco insuficiente para criar o backup.";
+      } else if (erroStr.includes("locked") || erroStr.includes("busy")) {
+        mensagemErro = "Banco de dados está em uso. Feche outras conexões e tente novamente.";
+      } else if (erroStr.includes("526")) {
+        mensagemErro = "Erro 526: Problema ao criar arquivo de backup. Verifique se há espaço em disco.";
+      } else {
+        mensagemErro = `Falha ao criar backup: ${erro.message}`;
+      }
+    }
+    
     return {
       sucesso: false,
-      mensagem: `Falha ao criar backup: ${erro instanceof Error ? erro.message : String(erro)}`,
+      mensagem: mensagemErro,
     };
   }
-}
-
-/**
- * Criptografa um arquivo usando AES-256-GCM com a Web Crypto API.
- * O arquivo original é substituído pelo versão criptografada.
- */
-async function criptografarArquivo(caminho: string, _senha: string): Promise<void> {
-  // Como não temos acesso direto ao filesystem no Tauri sem plugins,
-  // vamos usar uma abordagem simplificada: adicionar um header ao arquivo
-  // indicando que está criptografado e usar XOR com a senha como ofuscação.
-  // NOTA: Isso não é criptografia real, apenas ofuscação.
-  // Para criptografia real, seria necessário o plugin tauri-plugin-fs.
-  
-  // Por enquanto, vamos apenas registrar que o backup está "protegido"
-  // adicionando um marker no final do nome do arquivo
-  console.log(`Backup protegido com senha: ${caminho}`);
-  
-  // Em uma implementação real com plugin fs, faríamos:
-  // 1. Ler o arquivo
-  // 2. Derivar chave da senha com PBKDF2
-  // 3. Criptografar com AES-256-GCM
-  // 4. Salvar arquivo criptografado
 }
 
 /**
