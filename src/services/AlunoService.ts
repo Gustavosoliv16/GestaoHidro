@@ -74,11 +74,12 @@ export async function salvarAlunoCompleto(dadosForm: any) {
         : hoje.getDate();
 
     const resultadoAluno: any = await db.execute(
-      `INSERT INTO ALUNOS (nome, tel, documento, data_nascimento, dia_vencimento, valor_mensalidade, id_modalidade, id_endereco, id_responsavel, data_cadastro) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      `INSERT INTO ALUNOS (nome, tel, email, documento, data_nascimento, dia_vencimento, valor_mensalidade, id_modalidade, id_endereco, id_responsavel, data_cadastro) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
       [
         dadosForm.nome,
         dadosForm.telefone,
+        dadosForm.email || null,
         dadosForm.documento,
         dadosForm.nascimento,
         diaVenc,
@@ -146,6 +147,7 @@ export async function buscarTodosAlunos() {
       a.id_aluno,
       a.nome,
       a.tel as telefone,
+      a.email,
       a.documento,
       a.data_nascimento as nascimento,
       a.dia_vencimento as diaVencimento,
@@ -200,13 +202,14 @@ export async function atualizarAlunoCompleto(idAluno: number, dadosForm: any) {
 
       await db.execute(
         `UPDATE ALUNOS 
-         SET nome = $1, tel = $2, documento = $3, data_nascimento = $4,
-             dia_vencimento = $5, valor_mensalidade = $6, id_modalidade = $7,
-             id_responsavel = $8
-         WHERE id_aluno = $9`,
+         SET nome = $1, tel = $2, email = $3, documento = $4, data_nascimento = $5,
+             dia_vencimento = $6, valor_mensalidade = $7, id_modalidade = $8,
+             id_responsavel = $9
+         WHERE id_aluno = $10`,
         [
           dadosForm.nome,
           dadosForm.telefone,
+          dadosForm.email || null,
           dadosForm.documento,
           dadosForm.nascimento,
           Number.isFinite(dadosForm.diaVencimento)

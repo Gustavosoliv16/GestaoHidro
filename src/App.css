@@ -877,6 +877,44 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 }
 .animate-spin { animation: full-spin 0.6s ease-in-out; }
 
+/* Skeleton shimmer */
+@keyframes skeleton-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--color-border) 25%,
+    rgba(255,255,255,0.3) 50%,
+    var(--color-border) 75%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+/* Error banner slide-down */
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Route loading progress bar */
+@keyframes routeLoadingProgress {
+  from { transform: scaleX(0); transform-origin: left; }
+  to   { transform: scaleX(1); transform-origin: left; }
+}
+
+/* Page transition fade */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition {
+  animation: pageFadeIn 0.3s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     transition-duration: 0.01ms !important;
@@ -975,3 +1013,33 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 [data-theme="dark"] .p-inline-message.p-inline-message-success .p-inline-message-icon { color: var(--color-success) !important; }
 [data-theme="dark"] .p-inline-message.p-inline-message-warn    .p-inline-message-icon { color: var(--color-warning) !important; }
 [data-theme="dark"] .p-inline-message.p-inline-message-error   .p-inline-message-icon { color: var(--color-danger)  !important; }
+
+/* ── 5.5 Menu Dropdown Custom (engrenagem) ───────────────────────────────── */
+.menu-item-custom {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.menu-item-custom:hover {
+  background: rgba(14, 124, 140, 0.08);
+}
+
+[data-theme="dark"] .menu-item-custom {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .menu-item-custom:hover {
+  background: rgba(95, 212, 232, 0.12);
+}

@@ -76,15 +76,16 @@ export default async function initDatabase(): Promise<void> {
 );
   `);
 
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS "PAGAMENTO" (
-      "id_pagamento" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-      "id_aluno" INTEGER NOT NULL,
-      "valor_pago" REAL NOT NULL,
-      "data_pagamento" TEXT NOT NULL,
-      FOREIGN KEY("id_aluno") REFERENCES "ALUNOS"("id_aluno")
-    );
-  `);
+  // Tabela PAGAMENTO removida - sistema usa apenas MENSALIDADE
+  // await db.execute(`
+  //   CREATE TABLE IF NOT EXISTS "PAGAMENTO" (
+  //     "id_pagamento" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+  //     "id_aluno" INTEGER NOT NULL,
+  //     "valor_pago" REAL NOT NULL,
+  //     "data_pagamento" TEXT NOT NULL,
+  //     FOREIGN KEY("id_aluno") REFERENCES "ALUNOS"("id_aluno")
+  //   );
+  // `);
 
   await db.execute(`
     CREATE TABLE IF NOT EXISTS "AGENDA_CALENDARIO" (
@@ -171,7 +172,7 @@ export default async function initDatabase(): Promise<void> {
       );
     `);
   } catch (e) {
-    // tabela já existe — ignorar
+
   }
   try {
     await db.execute(

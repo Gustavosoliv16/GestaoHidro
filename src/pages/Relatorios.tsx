@@ -54,6 +54,57 @@ function hoje(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
+/**
+ * Exporta dados para CSV (compatível com Excel).
+ */
+function exportarCSV(dados: RegistroChamada[], nomeArquivo: string) {
+  if (dados.length === 0) return;
+
+  const headers = ["Data", "Dia da Semana", "Horário", "Modalidade", "Presentes", "Faltas", "Total Alunos", "% Presença", "Salvo em"];
+  
+  const linhas = dados.map((row) => {
+    const pct = row.total_alunos > 0
+      ? Math.round((row.total_presentes / row.total_alunos) * 100)
+      : 0;
+    return [
+      formatarData(row.data_aula),
+      NOMES_DIAS[Number(row.dia_semana)] ?? "—",
+      `${String(Math.round(Number(row.horario_inicio))).padStart(2, "0")}h`,
+      row.modalidade,
+      row.total_presentes,
+      row.total_faltas,
+      row.total_alunos,
+      `${pct}%`,
+      formatarDataHora(row.salvo_em),
+    ];
+  });
+
+  // BOM para Excel reconhecer UTF-8
+  const BOM = "\uFEFF";
+  const csv = BOM + [headers, ...linhas]
+    .map((linha) =>
+      linha.map((campo) => {
+        const str = String(campo);
+        // Escapa aspas e envolve em aspas se contém vírgula, aspas ou newline
+        if (str.includes(",") || str.includes('"') || str.includes("\n")) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(",")
+    )
+    .join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${nomeArquivo}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export default function Relatorios({ aoVoltar }: { aoVoltar?: () => void } = {}) {
   const toast = useRef<Toast>(null);
 
@@ -208,19 +259,37 @@ export default function Relatorios({ aoVoltar }: { aoVoltar?: () => void } = {})
       <Toast ref={toast} />
 
       {/* Cabeçalho */}
-      <div className="flex align-items-center gap-3 mb-4">
-        {aoVoltar ? (
-          <Button
-            icon="pi pi-arrow-left"
-            className="p-button-text p-button-rounded"
-            onClick={aoVoltar}
-            tooltip="Voltar"
-          />
-        ) : null}
-        <div>
-          <h2 className="text-2xl font-bold m-0 text-900">Relatório de Chamadas</h2>
-          <p className="text-sm text-500 m-0">Histórico de chamadas salvas por turma e período</p>
+      <div className="flex align-items-center justify-content-between mb-4">
+        <div className="flex align-items-center gap-3">
+          {aoVoltar ? (
+            <Button
+              icon="pi pi-arrow-left"
+              className="p-button-text p-button-rounded"
+              onClick={aoVoltar}
+              tooltip="Voltar"
+            />
+          ) : null}
+          <div>
+            <h2 className="text-2xl font-bold m-0 text-900">Relatório de Chamadas</h2>
+            <p className="text-sm text-500 m-0">Histórico de chamadas salvas por turma e período</p>
+          </div>
         </div>
+        <Button
+          icon="pi pi-download"
+          label="Exportar CSV"
+          className="p-button-outlined p-button-sm"
+          onClick={() => {
+            const timestamp = new Date().toISOString().slice(0, 10);
+            exportarCSV(chamadas, `relatorio_chamadas_${timestamp}`);
+            toast.current?.show({
+              severity: "success",
+              summary: "Exportado",
+              detail: "Arquivo CSV gerado com sucesso.",
+              life: 3000,
+            });
+          }}
+          disabled={chamadas.length === 0}
+        />
       </div>
 
       {/* ── Painel 1: Dia da semana ── */}

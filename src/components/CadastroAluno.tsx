@@ -52,6 +52,7 @@ export default function NovoAlunoModal({
   // ── Dados do aluno ─────────────────────────────────────────────────────────
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
+  const [email, setEmail] = useState("");
   const [nascimento, setNascimento] = useState("");
   const [documento, setDocumento] = useState("");
   const [modalidade, setModalidade] = useState<number | null>(null);
@@ -212,6 +213,7 @@ export default function NovoAlunoModal({
 
     setNome(a.nome || "");
     setTelefone(formatPhone(a.telefone || a.tel));
+    setEmail(a.email || "");
     setDocumento(formatCPF(a.documento));
     setNascimento(a.nascimento || a.data_nascimento || "");
     setEndereco(a.endereco || "");
@@ -229,6 +231,109 @@ export default function NovoAlunoModal({
     setDocumentoResp(formatCPF(a.documentoResponsavel || ""));
   }, [alunoParaEditar]);
 
+  // ── Rascunho (localStorage) ────────────────────────────────────────────────
+  const CHAVE_RASCUNHO = "rascunho_aluno";
+
+  // Carrega rascunho ao abrir (apenas para novo aluno)
+  useEffect(() => {
+    if (alunoParaEditar) return; // não carrega rascunho ao editar
+    
+    try {
+      const rascunhoSalvo = localStorage.getItem(CHAVE_RASCUNHO);
+      if (!rascunhoSalvo) return;
+
+      const rascunho = JSON.parse(rascunhoSalvo);
+      
+      // Preenche os campos com o rascunho
+      if (rascunho.nome) setNome(rascunho.nome);
+      if (rascunho.telefone) setTelefone(rascunho.telefone);
+      if (rascunho.email) setEmail(rascunho.email);
+      if (rascunho.documento) setDocumento(rascunho.documento);
+      if (rascunho.nascimento) setNascimento(rascunho.nascimento);
+      if (rascunho.endereco) setEndereco(rascunho.endereco);
+      if (rascunho.numero) setNumero(rascunho.numero);
+      if (rascunho.bairro) setBairro(rascunho.bairro);
+      if (rascunho.cidade) setCidade(rascunho.cidade);
+      if (rascunho.modalidade) setModalidade(rascunho.modalidade);
+      if (rascunho.diaVencimento !== null && rascunho.diaVencimento !== undefined) {
+        setDiaVencimento(rascunho.diaVencimento);
+      }
+      if (rascunho.valorMensalidade) setValorMensalidade(rascunho.valorMensalidade);
+      if (rascunho.nomeResp) setNomeResp(rascunho.nomeResp);
+      if (rascunho.telefoneResp) setTelefoneResp(rascunho.telefoneResp);
+      if (rascunho.documentoResp) setDocumentoResp(rascunho.documentoResp);
+
+      toast.current?.show({
+        severity: "info",
+        summary: "Rascunho carregado",
+        detail: "Dados do rascunho anterior foram restaurados.",
+        life: 3000,
+      });
+    } catch (e) {
+      console.error("Erro ao carregar rascunho:", e);
+    }
+  }, [alunoParaEditar]);
+
+  // Salva rascunho automaticamente (debounce de 1s)
+  useEffect(() => {
+    if (alunoParaEditar) return; // não salva rascunho ao editar
+
+    const timeoutId = setTimeout(() => {
+      const dadosRascunho = {
+        nome,
+        telefone,
+        email,
+        documento,
+        nascimento,
+        endereco,
+        numero,
+        bairro,
+        cidade,
+        modalidade,
+        diaVencimento,
+        valorMensalidade,
+        nomeResp,
+        telefoneResp,
+        documentoResp,
+        salvoEm: new Date().toISOString(),
+      };
+
+      // Só salva se tiver pelo menos o nome preenchido
+      if (nome.trim()) {
+        localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(dadosRascunho));
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    alunoParaEditar,
+    nome,
+    telefone,
+    email,
+    documento,
+    nascimento,
+    endereco,
+    numero,
+    bairro,
+    cidade,
+    modalidade,
+    diaVencimento,
+    valorMensalidade,
+    nomeResp,
+    telefoneResp,
+    documentoResp,
+  ]);
+
+  const limparRascunho = () => {
+    localStorage.removeItem(CHAVE_RASCUNHO);
+    toast.current?.show({
+      severity: "info",
+      summary: "Rascunho limpo",
+      detail: "O rascunho foi removido.",
+      life: 2000,
+    });
+  };
+
   // ── Salvar ────────────────────────────────────────────────────────────────
   const executarSalvar = async () => {
     const strip = (s: string | null | undefined) =>
@@ -237,6 +342,7 @@ export default function NovoAlunoModal({
     const dadosParaSalvar = {
       nome,
       telefone: strip(telefone),
+      email,
       documento: strip(documento),
       nascimento,
       endereco,
@@ -272,6 +378,10 @@ export default function NovoAlunoModal({
         }, 500);
       } else {
         await salvarAlunoCompleto(dadosParaSalvar);
+        
+        // Limpa o rascunho após salvar com sucesso
+        localStorage.removeItem(CHAVE_RASCUNHO);
+        
         toast.current?.show({
           severity: "success",
           summary: "Sucesso",
@@ -306,28 +416,108 @@ export default function NovoAlunoModal({
     }
   };
 
+  // ── Validações ──────────────────────────────────────────────────────────────
+  const validarTelefone = (tel: string): boolean => {
+    const digitos = tel.replace(/\D/g, "");
+    return digitos.length === 0 || (digitos.length >= 10 && digitos.length <= 11);
+  };
+
+  const validarDataNascimento = (data: string): boolean => {
+    if (!data) return true; // opcional
+    const partes = data.split("/");
+    if (partes.length !== 3) return false;
+    const [dia, mes, ano] = partes.map(Number);
+    if (!dia || !mes || !ano || ano < 1900 || ano > new Date().getFullYear()) return false;
+    const dataObj = new Date(ano, mes - 1, dia);
+    if (dataObj > new Date()) return false; // não pode ser futura
+    return true;
+  };
+
+  const validarCPF = (cpf: string): boolean => {
+    const digitos = cpf.replace(/\D/g, "");
+    if (digitos.length !== 11) return false;
+    // Verifica se todos os dígitos são iguais (CPF inválido)
+    if (/^(\d)\1{10}$/.test(digitos)) return false;
+    return true;
+  };
+
+  const validarMensalidade = (valor: number | null): boolean => {
+    return valor === null || valor >= 0;
+  };
+
   const lidarComSalvar = () => {
     const erros: string[] = [];
-    if (!nome) erros.push("Nome");
-    if (!documento || documento.replace(/\D/g, "").length < 11)
-      erros.push("CPF");
+    const avisos: string[] = [];
+
+    // Nome: obrigatório e mínimo 3 caracteres
+    if (!nome || nome.trim().length < 3) {
+      erros.push("Nome (mínimo 3 caracteres)");
+    }
+
+    // CPF: obrigatório e deve ter 11 dígitos
+    if (!documento || documento.replace(/\D/g, "").length < 11) {
+      erros.push("CPF (11 dígitos)");
+    } else if (!validarCPF(documento)) {
+      erros.push("CPF inválido");
+    }
+
+    // Telefone: se preenchido, deve ter 10 ou 11 dígitos
+    if (telefone && !validarTelefone(telefone)) {
+      avisos.push("Telefone incompleto (10 ou 11 dígitos)");
+    }
+
+    // Data de nascimento: se preenchida, deve ser válida e não futura
+    if (nascimento && !validarDataNascimento(nascimento)) {
+      erros.push("Data de nascimento inválida");
+    }
+
+    // Modalidade: obrigatória
     if (!modalidade) erros.push("Modalidade");
-    if (!diaVencimento) erros.push("Dia de vencimento");
+
+    // Dia de vencimento: obrigatório e entre 1-31
+    if (!diaVencimento || diaVencimento < 1 || diaVencimento > 31) {
+      erros.push("Dia de vencimento (1 a 31)");
+    }
+
+    // Mensalidade: não pode ser negativa
+    if (!validarMensalidade(valorMensalidade)) {
+      erros.push("Mensalidade não pode ser negativa");
+    }
 
     // Responsável obrigatório para infantil/bebê
     if (precisaResponsavel) {
-      if (!nomeResp.trim()) erros.push("Nome do responsável");
-      if (!documentoResp || documentoResp.replace(/\D/g, "").length < 11)
+      if (!nomeResp.trim() || nomeResp.trim().length < 3) {
+        erros.push("Nome do responsável (mínimo 3 caracteres)");
+      }
+      if (!documentoResp || documentoResp.replace(/\D/g, "").length < 11) {
         erros.push("CPF do responsável");
+      } else if (!validarCPF(documentoResp)) {
+        erros.push("CPF do responsável inválido");
+      }
+      if (telefoneResp && !validarTelefone(telefoneResp)) {
+        avisos.push("Telefone do responsável incompleto");
+      }
     }
 
+    // Exibe erros bloqueantes
     if (erros.length > 0) {
       toast.current?.show({
         severity: "error",
         summary: "Campos obrigatórios",
-        detail: `Preencha: ${erros.join(", ")}`,
+        detail: `Corrija: ${erros.join(", ")}`,
+        life: 5000,
       });
       return;
+    }
+
+    // Exibe avisos (não bloqueiam o salvamento)
+    if (avisos.length > 0) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Atenção",
+        detail: avisos.join(", "),
+        life: 4000,
+      });
     }
 
     confirmDialog({
@@ -346,13 +536,23 @@ export default function NovoAlunoModal({
       <Toast ref={toast} />
       <ConfirmDialog />
 
-      <div>
-        <h2 className="text-2xl font-bold m-0 text-900">
-          {alunoParaEditar ? "Editar Aluno" : "Novo Aluno"}
-        </h2>
-        <p className="text-600 text-sm mt-1 mb-0">
-          Preencha os dados do aluno abaixo
-        </p>
+      <div className="flex justify-content-between align-items-center">
+        <div>
+          <h2 className="text-2xl font-bold m-0 text-900">
+            {alunoParaEditar ? "Editar Aluno" : "Novo Aluno"}
+          </h2>
+          <p className="text-600 text-sm mt-1 mb-0">
+            Preencha os dados do aluno abaixo
+          </p>
+        </div>
+        {!alunoParaEditar && localStorage.getItem(CHAVE_RASCUNHO) && (
+          <Button
+            label="Limpar Rascunho"
+            icon="pi pi-trash"
+            className="p-button-text p-button-danger p-button-sm"
+            onClick={limparRascunho}
+          />
+        )}
       </div>
 
       {/* ── Dados do Aluno ── */}
@@ -390,6 +590,22 @@ export default function NovoAlunoModal({
                 onChange={(e: InputMaskChangeEvent) =>
                   setTelefone(e.target.value ?? "")
                 }
+                className="w-full"
+              />
+            </div>
+
+            <div className="col-12 md:col-6">
+              <label
+                htmlFor="email"
+                className="font-semibold block mb-2 text-900"
+              >
+                E-mail
+              </label>
+              <InputText
+                id="email"
+                value={email}
+                placeholder="exemplo@email.com"
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full"
               />
             </div>

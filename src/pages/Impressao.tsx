@@ -402,7 +402,7 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           text-transform: uppercase;
           letter-spacing: 0.8px;
         }
-        .pr-table thead th:last-child { width: 200px; text-align: center; }
+        .pr-table thead th:last-child { width: 280px; text-align: center; }
         .pr-table thead th:first-child { width: 36px; text-align: center; }
         .pr-table--dia thead th:nth-child(2) { width: 72px; text-align: center; }
 
@@ -413,10 +413,9 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
         .pr-td-num  { width: 36px; text-align: center; font-size: 9pt; color: #666; padding: 0 6px; font-weight: 700; }
         .pr-td-hora { width: 72px; text-align: center; font-size: 9pt; color: #111; padding: 0 8px; font-weight: 700; white-space: nowrap; }
         .pr-td-nome { padding: 0 10px; font-size: 10.5pt; }
-        .pr-modalidade { font-size: 8pt; color: #666; margin-left: 6px; }
         .pr-rep     { font-size: 8pt; color: #777; font-style: italic; margin-left: 4px; }
-        .pr-td-ass  { width: 200px; padding: 0 10px; border-left: 1px solid #ddd; }
-        .pr-ass-linha { border-bottom: 1px solid #aaa; height: 20px; margin: 0 8px; }
+        .pr-td-ass  { width: 280px; padding: 0 12px; border-left: 1px solid #ddd; }
+        .pr-ass-linha { border-bottom: 1px solid #aaa; height: 26px; margin: 0 4px; }
 
         .pr-footer {
           margin-top: 24px;
@@ -484,7 +483,6 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
                 )}
                 <td className="pr-td-nome">
                   {aluno.nome}
-                  {ehListaDia && <span className="pr-modalidade">— {aluno.modalidade}</span>}
                   {aluno.reposicao && <span className="pr-rep">(Reposição)</span>}
                 </td>
                 <td className="pr-td-ass">

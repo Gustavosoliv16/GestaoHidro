@@ -9,6 +9,7 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
+import { ConfirmDialog } from "primereact/confirmdialog";
 import {
   buscarResumoFinanceiroAlunos,
   buscarMensalidadesDoAluno,
@@ -97,6 +98,10 @@ export default function Financeiro() {
   const [dataPagamento, setDataPagamento] = useState("");
   const [formasPagamento, setFormasPagamento] = useState<FormaPagamentoUi[]>([]);
   const [observacaoPagamento, setObservacaoPagamento] = useState("");
+
+  const [modalEstornoVisible, setModalEstornoVisible] = useState(false);
+  const [mensalidadeParaEstornar, setMensalidadeParaEstornar] = useState<Mensalidade | null>(null);
+  const [motivoEstorno, setMotivoEstorno] = useState("");
 
   const totalFormasPagamento = formasPagamento.reduce(
     (total, item) => total + Number(item.valor || 0),
@@ -317,6 +322,9 @@ export default function Financeiro() {
         setMensalidades(dados);
       }
       carregarAlunos();
+
+      // Notifica o Menubar para atualizar o badge de notificações
+      window.dispatchEvent(new CustomEvent("notif-update"));
     } catch (error) {
       console.error("Erro ao registrar pagamento:", error);
       toast.current?.show({
@@ -327,11 +335,26 @@ export default function Financeiro() {
     }
   };
 
-  const estornarPagamento = async (mensalidade: Mensalidade) => {
-    if (!confirm("Tem certeza que deseja estornar este pagamento?")) return;
+  const estornarPagamento = (mensalidade: Mensalidade) => {
+    setMensalidadeParaEstornar(mensalidade);
+    setMotivoEstorno("");
+    setModalEstornoVisible(true);
+  };
+
+  const confirmarEstorno = async () => {
+    if (!mensalidadeParaEstornar) return;
+    
+    if (!motivoEstorno.trim()) {
+      toast.current?.show({
+        severity: "warn",
+        summary: "Aviso",
+        detail: "Informe o motivo do estorno.",
+      });
+      return;
+    }
 
     try {
-      await estornarPagamentoMensalidade(mensalidade.id_mensalidade);
+      await estornarPagamentoMensalidade(mensalidadeParaEstornar.id_mensalidade);
       toast.current?.show({
         severity: "info",
         summary: "Estornado",
@@ -343,6 +366,13 @@ export default function Financeiro() {
         setMensalidades(dados);
       }
       carregarAlunos();
+
+      // Notifica o Menubar para atualizar o badge de notificações
+      window.dispatchEvent(new CustomEvent("notif-update"));
+
+      setModalEstornoVisible(false);
+      setMensalidadeParaEstornar(null);
+      setMotivoEstorno("");
     } catch (error) {
       console.error("Erro ao estornar:", error);
       toast.current?.show({
@@ -455,6 +485,7 @@ export default function Financeiro() {
   return (
     <div className="w-full">
       <Toast ref={toast} />
+      <ConfirmDialog />
 
       <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center mb-4 gap-3">
         <div>
@@ -772,6 +803,65 @@ export default function Financeiro() {
             />
           </div>
         </div>
+      </Dialog>
+
+      <Dialog
+        header="Estornar Pagamento"
+        visible={modalEstornoVisible}
+        style={{ width: "500px", maxWidth: "95vw" }}
+        onHide={() => setModalEstornoVisible(false)}
+        footer={
+          <div>
+            <Button
+              label="Cancelar"
+              icon="pi pi-times"
+              className="p-button-text text-sm"
+              onClick={() => setModalEstornoVisible(false)}
+            />
+            <Button
+              label="Confirmar Estorno"
+              icon="pi pi-check"
+              className="p-button-sm font-bold p-button-danger"
+              onClick={confirmarEstorno}
+            />
+          </div>
+        }
+      >
+        {mensalidadeParaEstornar && (
+          <div className="flex flex-column gap-3 pt-2">
+            <div className="bg-red-50 border-round p-3">
+              <div className="flex justify-content-between">
+                <span className="text-sm text-600">Aluno:</span>
+                <span className="font-bold">{alunoSelecionado?.nome}</span>
+              </div>
+              <div className="flex justify-content-between mt-1">
+                <span className="text-sm text-600">Referência:</span>
+                <span className="font-bold">
+                  {formatarMesReferencia(mensalidadeParaEstornar.mes_referencia)}
+                </span>
+              </div>
+              <div className="flex justify-content-between mt-1">
+                <span className="text-sm text-600">Valor a estornar:</span>
+                <span className="font-bold text-red-600">
+                  {formatarMoeda(mensalidadeParaEstornar.valor_pago ?? 0)}
+                </span>
+              </div>
+            </div>
+            <div>
+              <label className="block font-bold text-sm text-700 mb-1">
+                Motivo do Estorno *
+              </label>
+              <InputTextarea
+                value={motivoEstorno}
+                onChange={(e) => setMotivoEstorno(e.target.value)}
+                rows={3}
+                className="w-full"
+                placeholder="Ex: Pagamento duplicado, erro no valor, cancelamento..."
+                autoResize
+              />
+            </div>
+          </div>
+        )}
       </Dialog>
     </div>
   );
