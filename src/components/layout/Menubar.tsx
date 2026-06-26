@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Toolbar } from "primereact/toolbar";
 import { Tooltip } from "primereact/tooltip";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
 import { useNavigate } from "react-router-dom";
 import Database from "@tauri-apps/plugin-sql";
@@ -575,7 +575,6 @@ export default function Menutopbar() {
   return (
     <>
       <Toast ref={toast} />
-      <ConfirmDialog />
       <Toolbar
         start={startContent}
         center={centerContent}

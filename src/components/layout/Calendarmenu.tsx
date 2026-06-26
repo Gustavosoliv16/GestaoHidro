@@ -100,7 +100,7 @@ export default function CalendarioLateral({
           <i className="pi pi-clock text-primary"></i> Selecione o Horário
         </label>
         <Dropdown
-          appendTo="self"
+          appendTo={document.body}
           value={horaAtual}
           options={opcoesHoras}
           onChange={(e) => aoMudarHora(e.value)}

@@ -485,7 +485,6 @@ export default function Financeiro() {
   return (
     <div className="w-full">
       <Toast ref={toast} />
-      <ConfirmDialog />
 
       <div className="flex flex-column md:flex-row md:justify-content-between md:align-items-center mb-4 gap-3">
         <div>

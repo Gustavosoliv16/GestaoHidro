@@ -291,7 +291,6 @@ Todos os vínculos com alunos serão removidos.`,
   return (
     <div className="w-full">
       <Toast ref={toast} />
-      <ConfirmDialog />
 
       <div className="flex align-items-center justify-content-between mb-4">
         <h2 className="text-2xl font-bold m-0 text-900">
@@ -362,7 +361,7 @@ Todos os vínculos com alunos serão removidos.`,
               Dia da Semana
             </label>
             <Dropdown
-              appendTo="self"
+              appendTo={"self"}
               value={form.diaSemana}
               options={diasSemanaOptions}
               onChange={(e) => setForm({ ...form, diaSemana: e.value })}
@@ -406,7 +405,7 @@ Todos os vínculos com alunos serão removidos.`,
               Modalidade
             </label>
             <Dropdown
-              appendTo="self"
+              appendTo={"self"}
               value={form.idModalidade}
               options={modalidades}
               optionLabel="modalidade"
@@ -437,7 +436,7 @@ Todos os vínculos com alunos serão removidos.`,
                 Atribuir Alunos Iniciais (Máx. {form.capacidadeMaxima})
               </label>
               <MultiSelect
-                appendTo="self"
+                appendTo={"self"} 
                 value={form.alunosIds}
                 options={todosAlunos}
                 optionLabel="nome"
@@ -470,7 +469,7 @@ Todos os vínculos com alunos serão removidos.`,
             </h4>
             <div className="flex gap-2">
               <Dropdown
-                appendTo="self"
+                appendTo={document.body}
                 value={alunoParaAdicionar}
                 options={todosAlunos}
                 optionLabel="nome"

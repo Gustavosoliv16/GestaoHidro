@@ -544,7 +544,7 @@ export default function GradeHoraria() {
               Modalidade
             </label>
             <Dropdown
-              appendTo="self"
+              appendTo={document.body}
               value={novaTurma.idModalidade}
               options={modalidades}
               optionLabel="modalidade"
@@ -655,7 +655,7 @@ export default function GradeHoraria() {
               {mostrarSeletorAluno && (
                 <div className="flex gap-2 align-items-center mb-3 p-2 selector-wrapper border-round border-1 surface-border">
                   <Dropdown
-                    appendTo="self"
+                    appendTo={"self"}
                     value={alunoSelecionadoId}
                     options={listaCompletaAlunos}
                     optionLabel="nome"

@@ -1,6 +1,6 @@
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
-import { copyFile, remove} from "@tauri-apps/plugin-fs";
+import { copyFile, remove } from "@tauri-apps/plugin-fs";
 
 /**
  * Serviço de backup automático do banco SQLite.

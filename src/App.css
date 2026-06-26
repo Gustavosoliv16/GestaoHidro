@@ -64,7 +64,6 @@
   --radius-full: 999px;
 }
 
-
 /* ╔══════════════════════════════════════════════════════════════════════════╗
    ║ 1. TEMAS — apenas variáveis. NUNCA colocar regras visuais aqui.          ║
    ╚══════════════════════════════════════════════════════════════════════════╝ */
@@ -541,7 +540,9 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link {
   border-radius: var(--radius-sm) !important;
 }
-
+.p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
+  color: var(--color-text) !important;
+}
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon,
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-submenu-icon {
   color: var(--color-text-secondary) !important;
@@ -577,7 +578,7 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 }
 .p-menu .p-submenu-header     { background: var(--color-bg) !important; color: var(--color-text-secondary) !important; font: 600 var(--text-xs)/1 var(--font-body) !important; letter-spacing: 0.06em !important; }
 .p-menu .p-menuitem-link      { color: var(--color-text) !important; }
-.p-menu .p-menuitem-link:hover { background: rgba(14, 124, 140, 0.08) !important; }
+.p-menu .p-menuitem-link:hover { background: rgba(255, 255, 255, 0.178) !important; }
 .p-menu .p-menuitem-separator { border-color: var(--color-border) !important; }
 /* ── 3.9 Checkbox / InputSwitch / Radio ──────────────────────────────────── */
 .p-checkbox .p-checkbox-box {
@@ -743,8 +744,8 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 .sidebar-nav .p-menuitem-content:hover,
 .sidebar-nav .p-menuitem-content:hover *,
 .sidebar-nav .p-button:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: #ffffff !important;
+  background: none !important;
+  color: none!important;
 }
 
 /* Item ativo dentro da sidebar */

@@ -136,7 +136,6 @@ export default function Professores() {
   return (
     <div className="w-full">
       <Toast ref={toast} />
-      <ConfirmDialog />
 
       {/* Cabeçalho */}
       <div className="flex align-items-center justify-content-between mb-4">
@@ -182,7 +181,7 @@ export default function Professores() {
                 Modalidade
               </label>
               <Dropdown
-                appendTo="self"
+                appendTo={document.body}
                 value={idModalidade}
                 options={opcoesModalidades}
                 onChange={(e) => setIdModalidade(e.value)}
@@ -229,7 +228,7 @@ export default function Professores() {
                         autoFocus
                       />
                       <Dropdown
-                        appendTo="self"
+                        appendTo={document.body}
                         value={editModalidade}
                         options={opcoesModalidades}
                         onChange={(e) => setEditModalidade(e.value)}

@@ -1,9 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
 import { Divider } from "primereact/divider";
 import { Tag } from "primereact/tag";
+import { InputText } from "primereact/inputtext";
+import { Dialog } from "primereact/dialog";
 import {
   criarBackup,
   registrarBackup,
@@ -15,6 +17,16 @@ export default function Configuracoes() {
   const [backupEmAndamento, setBackupEmAndamento] = useState(false);
   const [historico, setHistorico] = useState<any[]>([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
+  
+  // Estados para alteração de PIN
+  const [dialogPinVisible, setDialogPinVisible] = useState(false);
+  const [pinAtual, setPinAtual] = useState("");
+  const [novoPin, setNovoPin] = useState("");
+  const [confirmarNovoPin, setConfirmarNovoPin] = useState("");
+
+  useEffect(() => {
+    carregarHistorico();
+  }, []);
 
   const carregarHistorico = async () => {
     setCarregandoHistorico(true);
@@ -32,8 +44,7 @@ export default function Configuracoes() {
     setBackupEmAndamento(true);
     try {
       console.log("Iniciando backup...");
-
-      // Cria backup na pasta padrão
+      
       const resultado = await criarBackup();
 
       console.log("Resultado do backup:", resultado);
@@ -42,7 +53,6 @@ export default function Configuracoes() {
         throw new Error(resultado.mensagem);
       }
 
-      // Registra no histórico
       if (resultado.caminho) {
         await registrarBackup(resultado.caminho);
       }
@@ -54,13 +64,12 @@ export default function Configuracoes() {
         life: 5000,
       });
 
-      // Recarrega histórico
       await carregarHistorico();
     } catch (erro) {
       console.error("Erro ao fazer backup:", erro);
-
+      
       const mensagemErro = erro instanceof Error ? erro.message : String(erro);
-
+      
       toast.current?.show({
         severity: "error",
         summary: "Erro ao criar backup",
@@ -88,6 +97,58 @@ export default function Configuracoes() {
     }
   };
 
+  const alterarPin = () => {
+    const pinSalvo = localStorage.getItem('pin_acesso') || '1234';
+    
+    if (pinAtual !== pinSalvo) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'PIN atual incorreto.',
+        life: 3000
+      });
+      return;
+    }
+
+    if (novoPin.length !== 4) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'O novo PIN deve ter 4 dígitos.',
+        life: 3000
+      });
+      return;
+    }
+
+    if (novoPin !== confirmarNovoPin) {
+      toast.current?.show({
+        severity: 'error',
+        summary: 'Erro',
+        detail: 'Os PINs não coincidem.',
+        life: 3000
+      });
+      return;
+    }
+
+    localStorage.setItem('pin_acesso', novoPin);
+    toast.current?.show({
+      severity: 'success',
+      summary: 'Sucesso',
+      detail: 'PIN alterado com sucesso.',
+      life: 3000
+    });
+
+    setPinAtual("");
+    setNovoPin("");
+    setConfirmarNovoPin("");
+    setDialogPinVisible(false);
+  };
+
+  const logout = () => {
+    localStorage.removeItem('ultimo_login');
+    window.location.reload();
+  };
+
   return (
     <div style={{ maxWidth: "900px", margin: "0 auto" }}>
       <Toast ref={toast} />
@@ -113,11 +174,9 @@ export default function Configuracoes() {
           backup regularmente para evitar perda de dados.
         </p>
 
-        <div className="flex justify-content-end">
+        <div className="flex justify-content-end mb-4">
           <Button
-            label={
-              backupEmAndamento ? "Criando backup..." : "Fazer Backup Agora"
-            }
+            label={backupEmAndamento ? "Criando backup..." : "Fazer Backup Agora"}
             icon={backupEmAndamento ? "pi pi-spin pi-spinner" : "pi pi-save"}
             className="p-button-success"
             onClick={executarBackup}
@@ -143,10 +202,7 @@ export default function Configuracoes() {
 
         {historico.length === 0 ? (
           <div className="text-center py-4 text-500">
-            <i
-              className="pi pi-inbox text-3xl mb-2"
-              style={{ display: "block" }}
-            />
+            <i className="pi pi-inbox text-3xl mb-2" style={{ display: "block" }} />
             <p className="m-0 text-sm">Nenhum backup registrado ainda.</p>
           </div>
         ) : (
@@ -179,6 +235,129 @@ export default function Configuracoes() {
         )}
       </Card>
 
+      {/* Segurança */}
+      <Card className="mb-4 shadow-1">
+        <div className="flex align-items-center gap-2 mb-3">
+          <i className="pi pi-shield text-primary text-xl" />
+          <h3 className="m-0 text-lg font-bold text-900">
+            Segurança
+          </h3>
+        </div>
+
+        <div className="flex flex-column gap-3">
+          <div className="flex align-items-center justify-content-between">
+            <div>
+              <div className="font-semibold text-sm text-900">PIN de Acesso</div>
+              <small className="text-500">
+                PIN atual: <strong>••••</strong>
+              </small>
+            </div>
+            <Button
+              label="Alterar PIN"
+              icon="pi pi-key"
+              className="p-button-outlined p-button-sm"
+              onClick={() => setDialogPinVisible(true)}
+            />
+          </div>
+
+          <Divider className="my-2" />
+
+          <div className="flex align-items-center justify-content-between">
+            <div>
+              <div className="font-semibold text-sm text-900">Sair do Sistema</div>
+              <small className="text-500">
+                Bloqueia o acesso até inserir o PIN novamente
+              </small>
+            </div>
+            <Button
+              label="Logout"
+              icon="pi pi-sign-out"
+              className="p-button-danger p-button-outlined p-button-sm"
+              onClick={logout}
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Dialog para Alterar PIN */}
+      <Dialog
+        header="Alterar PIN de Acesso"
+        visible={dialogPinVisible}
+        style={{ width: '450px' }}
+        modal
+        onHide={() => {
+          setDialogPinVisible(false);
+          setPinAtual("");
+          setNovoPin("");
+          setConfirmarNovoPin("");
+        }}
+      >
+        <div className="flex flex-column gap-3 pt-3">
+          <div>
+            <label className="block text-sm font-semibold text-900 mb-2">
+              PIN Atual
+            </label>
+            <InputText
+              type="password"
+              value={pinAtual}
+              onChange={(e) => setPinAtual(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              maxLength={4}
+              className="w-full"
+              placeholder="••••"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-900 mb-2">
+              Novo PIN
+            </label>
+            <InputText
+              type="password"
+              value={novoPin}
+              onChange={(e) => setNovoPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              maxLength={4}
+              className="w-full"
+              placeholder="••••"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-900 mb-2">
+              Confirmar Novo PIN
+            </label>
+            <InputText
+              type="password"
+              value={confirmarNovoPin}
+              onChange={(e) => setConfirmarNovoPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              maxLength={4}
+              className="w-full"
+              placeholder="••••"
+            />
+          </div>
+
+          <div className="flex justify-content-end gap-2 mt-3">
+            <Button
+              label="Cancelar"
+              icon="pi pi-times"
+              className="p-button-text"
+              onClick={() => {
+                setDialogPinVisible(false);
+                setPinAtual("");
+                setNovoPin("");
+                setConfirmarNovoPin("");
+              }}
+            />
+            <Button
+              label="Salvar"
+              icon="pi pi-check"
+              className="p-button-success"
+              onClick={alterarPin}
+              disabled={!pinAtual || !novoPin || !confirmarNovoPin}
+            />
+          </div>
+        </div>
+      </Dialog>
+
       {/* Informações do Sistema */}
       <Card className="shadow-1">
         <div className="flex align-items-center gap-2 mb-3">
@@ -193,7 +372,7 @@ export default function Configuracoes() {
             <div className="text-xs font-semibold text-600 uppercase mb-1">
               Versão
             </div>
-            <div className="text-sm font-bold text-900">0.1.0</div>
+            <div className="text-sm font-bold text-900">1.3.0</div>
           </div>
           <div className="col-12 md:col-6">
             <div className="text-xs font-semibold text-600 uppercase mb-1">

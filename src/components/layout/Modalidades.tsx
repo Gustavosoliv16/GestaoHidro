@@ -115,7 +115,6 @@ export default function Modalidades() {
   return (
     <div className="w-full">
       <Toast ref={toast} />
-      <ConfirmDialog />
 
       {/* Cabeçalho */}
       <div className="flex align-items-center justify-content-between mb-4">

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { ConfirmDialog } from "primereact/confirmdialog";
 
 import Menutopbar from "../src/components/layout/Menubar";
 import Homepage    from "../src/pages/Homepage";
@@ -37,6 +38,7 @@ function AppContent() {
 
   return (
     <>
+      <ConfirmDialog />
       <RouteLoading loading={routeLoading} />
       <ErrorBanner />
       <Menutopbar />

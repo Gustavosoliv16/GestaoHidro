@@ -172,7 +172,7 @@ export default async function initDatabase(): Promise<void> {
       );
     `);
   } catch (e) {
-
+    // tabela já existe — ignorar
   }
   try {
     await db.execute(

@@ -282,7 +282,6 @@ export default function Reposicoes() {
   return (
     <div className="w-full">
       <Toast ref={toast} />
-      <ConfirmDialog />
 
       {/* Cabeçalho */}
       <div className="flex align-items-center justify-content-between mb-4">
@@ -336,7 +335,7 @@ export default function Reposicoes() {
           <div className="flex flex-column gap-1">
             <label className="text-xs font-bold text-600 uppercase">Status</label>
             <Dropdown
-              appendTo="self"
+              appendTo={document.body}
               value={filtroStatus}
               options={STATUS_OPTIONS}
               onChange={(e) => setFiltroStatus(e.value)}
@@ -433,7 +432,7 @@ export default function Reposicoes() {
               Aluno <span className="text-red-500">*</span>
             </label>
             <Dropdown
-              appendTo="self"
+              appendTo={document.body}
               value={novoIdAluno}
               options={alunos}
               onChange={(e) => setNovoIdAluno(e.value)}
@@ -452,7 +451,7 @@ export default function Reposicoes() {
               Turma para reposição <span className="text-red-500">*</span>
             </label>
             <Dropdown
-              appendTo="self"
+              appendTo={document.body}
               value={novoIdTurma}
               options={turmas}
               onChange={(e) => setNovoIdTurma(e.value)}

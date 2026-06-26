@@ -356,8 +356,8 @@ export default function NovoAlunoModal({
       responsavel: nomeResp.trim()
         ? {
             nome: nomeResp.trim(),
-            telefone: telefoneResp,
-            documento: documentoResp,
+            telefone: strip(telefoneResp),
+            documento: strip(documentoResp),
           }
         : undefined,
     };
@@ -534,7 +534,6 @@ export default function NovoAlunoModal({
   return (
     <div className="flex flex-column gap-4 w-full">
       <Toast ref={toast} />
-      <ConfirmDialog />
 
       <div className="flex justify-content-between align-items-center">
         <div>
@@ -717,7 +716,7 @@ export default function NovoAlunoModal({
                 Modalidade
               </label>
               <Dropdown
-                appendTo="self"
+                appendTo={document.body}
                 value={modalidade}
                 options={opcoesModalidades}
                 onChange={(e) => setModalidade(e.value)}
@@ -874,7 +873,7 @@ export default function NovoAlunoModal({
                     Turma
                   </label>
                   <Dropdown
-                    appendTo="self"
+                    appendTo={document.body}
                     value={turmaSelecionadaReposicao}
                     options={opcoesTurmasReposicao}
                     onChange={(e) => setTurmaSelecionadaReposicao(e.value)}
