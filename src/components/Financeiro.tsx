@@ -9,7 +9,6 @@ import { InputTextarea } from "primereact/inputtextarea";
 import { Dropdown } from "primereact/dropdown";
 import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
-import { ConfirmDialog } from "primereact/confirmdialog";
 import {
   buscarResumoFinanceiroAlunos,
   buscarMensalidadesDoAluno,
@@ -383,9 +382,16 @@ export default function Financeiro() {
     }
   };
 
-  const alunosFiltrados = alunos.filter((a) =>
-    a.nome.toLowerCase().includes(busca.toLowerCase())
-  );
+  const alunosFiltrados = busca.trim() === ""
+    ? alunos
+    : alunos.filter((a) => {
+        const termo = busca.toLowerCase();
+        const termoCpf = busca.replace(/\D/g, "");
+        const nomeBate = a.nome?.toLowerCase().includes(termo);
+        const cpfLimpo = String(a.documento ?? "").replace(/\D/g, "");
+        const cpfBate = termoCpf.length > 0 && cpfLimpo.includes(termoCpf);
+        return nomeBate || cpfBate;
+      });
 
   const valorTemplate = (rowData: ResumoFinanceiroAluno) => (
     <span className="font-semibold">{formatarMoeda(rowData.valorMensalidade)}</span>
@@ -497,18 +503,19 @@ export default function Financeiro() {
           <InputText
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar aluno por nome..."
+            placeholder="Buscar por nome ou CPF..."
             className="w-full md:w-20rem p-inputtext-sm"
           />
         </div>
       </div>
 
       <DataTable
+        key={busca}
         value={alunosFiltrados}
         loading={carregando}
         rows={10}
         paginator
-        emptyMessage="Nenhum aluno ativo encontrado."
+        emptyMessage={busca ? `Nenhum aluno encontrado para "${busca}".` : "Nenhum aluno ativo encontrado."}
         className="p-datatable-sm shadow-1 border-round overflow-hidden"
       >
         <Column field="nome" header="Aluno" sortable style={{ fontWeight: "bold" }} />

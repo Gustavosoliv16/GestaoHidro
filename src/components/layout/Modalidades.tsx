@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "primereact/button";
 import { InputText } from "primereact/inputtext";
 import { Toast } from "primereact/toast";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { Tag } from "primereact/tag";
 import Database from "@tauri-apps/plugin-sql";
 

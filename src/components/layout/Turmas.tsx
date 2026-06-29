@@ -5,10 +5,11 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
-import { MultiSelect } from "primereact/multiselect";
+import { OverlayPanel } from "primereact/overlaypanel";
+import { Checkbox } from "primereact/checkbox";
 import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import Database from "@tauri-apps/plugin-sql";
 
 import {
@@ -43,6 +44,7 @@ const diasSemanaOptions = [
 
 export default function Turmas() {
   const toast = useRef<Toast>(null);
+  const listagemAlunos = useRef<OverlayPanel>(null);
 
   const [turmas, setTurmas] = useState<any[]>([]);
   const [modalidades, setModalidades] = useState<any[]>([]);
@@ -431,24 +433,66 @@ Todos os vínculos com alunos serão removidos.`,
           </div>
 
           {!modoEdicao && (
-            <div className="field col-12">
-              <label className="font-semibold text-sm mb-1 block">
-                Atribuir Alunos Iniciais (Máx. {form.capacidadeMaxima})
-              </label>
-              <MultiSelect
-                appendTo={"self"} 
-                value={form.alunosIds}
-                options={todosAlunos}
-                optionLabel="nome"
-                optionValue="id_aluno"
-                placeholder="Selecione os alunos"
-                filter
-                selectionLimit={form.capacidadeMaxima}
-                display="chip"
-                onChange={(e) => setForm({ ...form, alunosIds: e.value })}
+  <div className="field col-12">
+    <label className="font-semibold text-sm mb-1 block">
+      Atribuir Alunos Iniciais (Máx. {form.capacidadeMaxima})
+    </label>
+
+    <div className="flex gap-2 mb-2">
+      <Dropdown
+        appendTo="self"
+        value={null}
+        options={todosAlunos.filter((a) => !form.alunosIds.includes(a.id_aluno))}
+        optionLabel="nome"
+        optionValue="id_aluno"
+        filter
+        placeholder="Selecione um aluno"
+        className="flex-grow-1"
+        onChange={(e) => {
+          if (form.alunosIds.length < form.capacidadeMaxima) {
+            setForm({ ...form, alunosIds: [...form.alunosIds, e.value] });
+          } else {
+            toast.current?.show({
+              severity: "warn",
+              summary: "Lotado",
+              detail: `Capacidade máxima de ${form.capacidadeMaxima} alunos atingida.`,
+            });
+          }
+        }}
+      />
+    </div>
+
+    {form.alunosIds.length > 0 && (
+      <div className="border-1 surface-border border-round">
+        <DataTable
+          value={todosAlunos.filter((a) => form.alunosIds.includes(a.id_aluno))}
+          emptyMessage=""
+          size="small"
+        >
+          <Column field="nome" header="Nome" />
+          <Column
+            header=""
+            style={{ width: "4rem", textAlign: "center" }}
+            body={(row) => (
+              <Button
+                icon="pi pi-trash"
+                className="p-button-danger p-button-text p-button-sm"
+                tooltip="Remover"
+                onClick={() =>
+                  setForm({
+                    ...form,
+                    alunosIds: form.alunosIds.filter((id) => id !== row.id_aluno),
+                  })
+                }
               />
-            </div>
-          )}
+            )}
+          />
+        </DataTable>
+      </div>
+    )}
+  </div>
+)}
+
         </div>
       </Dialog>
 
@@ -469,7 +513,7 @@ Todos os vínculos com alunos serão removidos.`,
             </h4>
             <div className="flex gap-2">
               <Dropdown
-                appendTo={document.body}
+                appendTo="self"
                 value={alunoParaAdicionar}
                 options={todosAlunos}
                 optionLabel="nome"

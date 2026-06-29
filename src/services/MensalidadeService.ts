@@ -21,6 +21,7 @@ export interface Mensalidade {
 export interface ResumoFinanceiroAluno {
   id_aluno: number;
   nome: string;
+  documento: string;
   valorMensalidade: number;
   diaVencimento: number;
   modalidade: string | null;
@@ -267,6 +268,7 @@ export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAl
     SELECT 
       a.id_aluno,
       a.nome,
+      a.documento,
       a.valor_mensalidade as valorMensalidade,
       a.dia_vencimento as diaVencimento,
       a.data_cadastro,
@@ -300,6 +302,7 @@ export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAl
     return {
       id_aluno: a.id_aluno,
       nome: a.nome,
+      documento: a.documento || "",
       valorMensalidade: Number(a.valorMensalidade || 0),
       diaVencimento: Math.trunc(Number(a.diaVencimento || 10)),
       modalidade: a.modalidade || null,

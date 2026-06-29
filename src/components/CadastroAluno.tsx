@@ -13,7 +13,7 @@ import {
 } from "../services/ReposicaoService";
 import { buscarTodasTurmas } from "../services/TurmaService";
 import { Toast } from "primereact/toast";
-import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
+import { confirmDialog } from "primereact/confirmdialog";
 import { InputNumber } from "primereact/inputnumber";
 import { Dropdown } from "primereact/dropdown";
 import { Button } from "primereact/button";

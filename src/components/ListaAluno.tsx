@@ -27,13 +27,15 @@ export default function ListaAlunos({
 
   // Filtra por nome ou CPF (ignora formatação)
   const alunosFiltrados = busca.trim() === ""
-    ? alunos
-    : alunos.filter(a => {
-        const nomeBate = a.nome?.toLowerCase().includes(busca.toLowerCase());
-        const cpfLimpo = String(a.documento ?? "").replace(/\D/g, "");
-        const cpfBate  = cpfLimpo.includes(busca.replace(/\D/g, ""));
-        return nomeBate || cpfBate;
-      });
+  ? alunos
+  : alunos.filter((a) => {
+      const termo = busca.toLowerCase();
+      const termoCpf = busca.replace(/\D/g, "");
+      const nomeBate = a.nome?.toLowerCase().includes(termo);
+      const cpfLimpo = String(a.documento ?? "").replace(/\D/g, "");
+      const cpfBate = termoCpf.length > 0 && cpfLimpo.includes(termoCpf);
+      return nomeBate || cpfBate;
+    });
 
   const carregarDadosDoBanco = async () => {
     setCarregando(true);
@@ -158,14 +160,17 @@ export default function ListaAlunos({
       {/* Barra de busca */}
       <div className="flex align-items-center gap-2 p-3 border-bottom-1 surface-border">
         <IconField iconPosition="left" className="flex-1">
+          </IconField>
           <InputIcon className="pi pi-search" />
+          <div className="p-input-icon-left w-full md:w-auto">
           <InputText
             value={busca}
-            onChange={e => setBusca(e.target.value)}
+            onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome ou CPF..."
-            className="w-full"
+            className="w-full md:w-20rem p-inputtext-sm"
           />
-        </IconField>
+        </div>
+
         {busca && (
           <Button
             icon="pi pi-times"
@@ -182,6 +187,7 @@ export default function ListaAlunos({
       </div>
 
       <DataTable
+        key={busca}
         tableStyle={{ tableLayout: "auto", width: "100%" }}
         value={alunosFiltrados}
         loading={carregando}

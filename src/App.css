@@ -541,7 +541,7 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   border-radius: var(--radius-sm) !important;
 }
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-text {
-  color: var(--color-text) !important;
+  color: white !important;
 }
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-menuitem-icon,
 .p-panelmenu .p-panelmenu-content .p-menuitem > .p-menuitem-content .p-menuitem-link .p-submenu-icon {

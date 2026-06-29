@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { Password } from 'primereact/password';
 import { logoBranco } from '../assets/brand';
 
 interface LoginProps {
