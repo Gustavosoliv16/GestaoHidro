@@ -25,8 +25,16 @@
       "csp": null
     }
   },
+  "plugins":{
+    "updater": {
+      "active": true,
+      "endpoints": ["https://github.com/Gustavosoliv16/GestaoHidro/releases/latest/download/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEY2NzlBQ0Y4MUZDRDZCOTUKUldTVmE4MGYrS3g1OXJlUHgyQjYxV1diVEhGUWVWcVoxU1h3V1BvQnYzTDN0T3NLZThGTElCZm4K"
+    }
+  },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "publisher": "HydroFit",
     "copyright": "Copyright © 2026 HydroFit. Todos os direitos reservados.",

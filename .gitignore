@@ -35,3 +35,8 @@ horario_aulas.csv
 *.njsproj
 *.sln
 *.sw?
+
+*.key
+*.key.pub
+~/
+.tauri/
