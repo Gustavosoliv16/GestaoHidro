@@ -5,8 +5,7 @@ import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { Dropdown } from "primereact/dropdown";
 import { InputNumber } from "primereact/inputnumber";
-import { OverlayPanel } from "primereact/overlaypanel";
-import { Checkbox } from "primereact/checkbox";
+
 import { Toast } from "primereact/toast";
 import { Tag } from "primereact/tag";
 import { confirmDialog } from "primereact/confirmdialog";
@@ -44,7 +43,6 @@ const diasSemanaOptions = [
 
 export default function Turmas() {
   const toast = useRef<Toast>(null);
-  const listagemAlunos = useRef<OverlayPanel>(null);
 
   const [turmas, setTurmas] = useState<any[]>([]);
   const [modalidades, setModalidades] = useState<any[]>([]);

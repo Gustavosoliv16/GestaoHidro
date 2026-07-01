@@ -230,6 +230,20 @@ export default function Menutopbar() {
         <i className="pi pi-users text-2xl" />
       </NavBtn>
 
+      <NavBtn id="btn-novo-aluno" tooltip="Novo Aluno"    onClick={() => {
+        localStorage.setItem('viewAtiva', 'cadastro');
+        navigate("/alunos");
+      }}>
+        <i className="pi pi-user-plus text-2xl" />
+      </NavBtn>
+
+      <NavBtn id="btn-pagamentos" tooltip="Pagamentos"    onClick={() => {
+        localStorage.setItem('viewAtiva', 'pagamentos');
+        navigate("/alunos");
+      }}>
+        <i className="pi pi-money-bill text-2xl" />
+      </NavBtn>
+
       <NavBtn id="btn-horarios"   tooltip="Grade Horária" onClick={() => navigate("/horarios")}>
         <i className="pi pi-calendar text-2xl" />
       </NavBtn>
@@ -387,7 +401,8 @@ export default function Menutopbar() {
                       }}
                       onClick={() => {
                         marcarComoLido(v.id_aluno, v.mes_referencia);
-                        navigate(`/alunos?pagar=${v.id_aluno}`);
+                        localStorage.setItem('viewAtiva', 'pagamentos');
+                        navigate('/alunos');
                         setNotifAberto(false);
                       }}
                       onMouseEnter={e => {
@@ -445,6 +460,7 @@ export default function Menutopbar() {
             >
               <button
                 onClick={() => {
+                  localStorage.setItem('viewAtiva', 'pagamentos');
                   navigate("/alunos");
                   setNotifAberto(false);
                 }}

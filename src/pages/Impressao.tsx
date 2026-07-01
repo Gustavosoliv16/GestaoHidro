@@ -354,7 +354,7 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           inset: 0;
           z-index: 99999;
           background: #fff;
-          padding: 18mm 16mm 14mm 16mm;
+          padding: 10mm 12mm 10mm 12mm;
         }
 
         #print-root * {
@@ -389,10 +389,14 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           border-radius: 4px;
           background: #fafafa;
           font-size: 10pt;
+          page-break-inside: avoid;
         }
         .pr-info-item strong { font-weight: 700; margin-right: 4px; }
 
         .pr-table { width: 100%; border-collapse: collapse; }
+        .pr-table thead {
+          display: table-header-group;
+        }
         .pr-table thead tr { background: #ffffffff; }
         .pr-table thead th {
           color: #000000ff;
@@ -406,7 +410,14 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
         .pr-table thead th:first-child { width: 36px; text-align: center; }
         .pr-table--dia thead th:nth-child(2) { width: 72px; text-align: center; }
 
-        .pr-table tbody tr { border-bottom: 1px solid #e0e0e0; height: 32px; }
+        .pr-table tbody {
+          display: table-row-group;
+        }
+        .pr-table tbody tr { 
+          border-bottom: 1px solid #e0e0e0; 
+          height: 32px;
+          page-break-inside: avoid;
+        }
         .pr-table tbody tr:nth-child(even) { background: #f7f7f7; }
         .pr-table tbody tr:last-child { border-bottom: 2px solid #000; }
 
@@ -422,6 +433,7 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           display: flex;
           justify-content: space-between;
           align-items: flex-end;
+          page-break-inside: avoid;
         }
         .pr-ass-prof { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
         .pr-ass-prof-linha { width: 260px; border-bottom: 1.5px solid #000; }
@@ -431,14 +443,27 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
 
         @page {
           size: A4 portrait;
-          margin: 0;
+          margin: 8mm;
         }
 
         @media print {
           body > *:not(#print-root) { display: none !important; }
-          #print-root { display: block !important; }
+          #print-root { 
+            display: block !important;
+            position: static;
+            overflow: visible;
+          }
           /* Force no browser-added headers/footers */
           html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          
+          /* Garantir que o conteúdo flua para múltiplas páginas */
+          body {
+            overflow: visible !important;
+          }
+          
+          #print-root {
+            page-break-after: auto;
+          }
         }
       `}</style>
 

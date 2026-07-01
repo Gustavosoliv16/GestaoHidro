@@ -102,6 +102,8 @@ export default function Financeiro() {
   const [mensalidadeParaEstornar, setMensalidadeParaEstornar] = useState<Mensalidade | null>(null);
   const [motivoEstorno, setMotivoEstorno] = useState("");
 
+  const [vencimentosProximos, setVencimentosProximos] = useState<any[]>([]);
+
   const totalFormasPagamento = formasPagamento.reduce(
     (total, item) => total + Number(item.valor || 0),
     0
@@ -125,8 +127,40 @@ export default function Financeiro() {
     }
   };
 
+  const carregarVencimentosProximos = async () => {
+    try {
+      const Database = (await import("@tauri-apps/plugin-sql")).default;
+      const db = await Database.load("sqlite:gestao_hidro.db");
+      
+      const hoje = new Date();
+      const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+      
+      const vencimentos: any[] = await db.select(`
+        SELECT 
+          m.id_mensalidade,
+          a.nome,
+          a.id_aluno,
+          m.mes_referencia,
+          m.data_vencimento,
+          m.valor,
+          m.status
+        FROM MENSALIDADE m
+        JOIN ALUNOS a ON m.id_aluno = a.id_aluno
+        WHERE m.status IN ('EM_ABERTO', 'PENDENTE', 'ATRASADO')
+          AND m.data_vencimento >= $1
+        ORDER BY m.data_vencimento ASC
+        LIMIT 10
+      `, [hojeStr]);
+      
+      setVencimentosProximos(vencimentos);
+    } catch (error) {
+      console.error("Erro ao carregar vencimentos:", error);
+    }
+  };
+
   useEffect(() => {
     carregarAlunos();
+    carregarVencimentosProximos();
   }, []);
 
   const abrirMensalidades = async (aluno: ResumoFinanceiroAluno) => {
@@ -393,6 +427,34 @@ export default function Financeiro() {
         return nomeBate || cpfBate;
       });
 
+  const getCorUrgencia = (dataVencimento: string) => {
+    const hoje = new Date();
+    const venc = new Date(dataVencimento + "T00:00:00");
+    const diffDias = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDias < 0) return "var(--color-danger)";
+    if (diffDias <= 3) return "var(--color-danger)";
+    if (diffDias <= 7) return "var(--color-warning)";
+    return "var(--color-info)";
+  };
+
+  const getLabelUrgencia = (dataVencimento: string) => {
+    const hoje = new Date();
+    const venc = new Date(dataVencimento + "T00:00:00");
+    const diffDias = Math.ceil((venc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDias < 0) return `${Math.abs(diffDias)}d atrasado`;
+    if (diffDias === 0) return "Vence hoje";
+    if (diffDias === 1) return "Vence amanhã";
+    if (diffDias <= 7) return `${diffDias} dias`;
+    return `${diffDias} dias`;
+  };
+
+  const handleVencimentoClick = async (vencimento: any) => {
+    const aluno = alunos.find(a => a.id_aluno === vencimento.id_aluno);
+    if (aluno) {
+      await abrirMensalidades(aluno);
+    }
+  };
+
   const valorTemplate = (rowData: ResumoFinanceiroAluno) => (
     <span className="font-semibold">{formatarMoeda(rowData.valorMensalidade)}</span>
   );
@@ -508,6 +570,53 @@ export default function Financeiro() {
           />
         </div>
       </div>
+
+      {/* Seção de Vencimentos Próximos */}
+      {vencimentosProximos.length > 0 && (
+        <div className="card surface-card p-3 mb-4 border-round shadow-1" style={{ borderLeft: '3px solid var(--color-warning)' }}>
+          <div className="flex align-items-center gap-2 mb-2">
+            <i className="pi pi-clock" style={{ fontSize: '1rem', color: 'var(--color-warning)' }} />
+            <span className="text-sm font-bold text-900">Vencimentos Próximos</span>
+            <span className="ml-auto text-xs text-500">{vencimentosProximos.length}</span>
+          </div>
+          <div className="flex flex-column gap-1">
+            {vencimentosProximos.map((v) => {
+              const corUrgencia = getCorUrgencia(v.data_vencimento);
+              const labelUrgencia = getLabelUrgencia(v.data_vencimento);
+              const dataFormatada = formatarData(v.data_vencimento);
+              
+              return (
+                <div
+                  key={v.id_mensalidade}
+                  className="flex align-items-center justify-content-between px-2 py-1 border-round cursor-pointer transition-all transition-duration-150"
+                  style={{ borderLeft: `2px solid ${corUrgencia}` }}
+                  onClick={() => handleVencimentoClick(v)}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(14, 124, 140, 0.06)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <div className="flex align-items-center gap-2">
+                    <span className="text-sm font-semibold text-900">{v.nome}</span>
+                    <span className="text-xs text-500">{dataFormatada}</span>
+                  </div>
+                  <div className="flex align-items-center gap-2">
+                    <span className="text-sm font-bold text-900">{formatarMoeda(v.valor)}</span>
+                    <span
+                      className="text-xs font-bold px-2 py-0 border-round"
+                      style={{
+                        color: corUrgencia,
+                        background: `${corUrgencia}15`,
+                        fontSize: '0.65rem',
+                      }}
+                    >
+                      {labelUrgencia}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <DataTable
         key={busca}

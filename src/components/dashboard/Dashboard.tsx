@@ -483,10 +483,13 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
           <Button
-            label="Ver inadimplentes"
+            label="Ver mensalidades"
             icon="pi pi-arrow-right"
             className="p-button-text p-button-sm"
-            onClick={() => setActiveView('inadimplencia')}
+            onClick={() => {
+              localStorage.setItem('viewAtiva', 'pagamentos');
+              window.location.hash = '/alunos';
+            }}
           />
         </div>
       )}

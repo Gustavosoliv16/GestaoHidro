@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Button } from "primereact/button";
 import { PanelMenu } from "primereact/panelmenu";
 import { Sidebar } from "primereact/sidebar";
@@ -22,6 +22,24 @@ export default function Alunos() {
   const [showAside, setShowAside] = useState(false);
   const [atualizarTabelaGatilho, setAtualizarTabelaGatilho] = useState(0);
   const [expandedKeys, setExpandedKeys] = useState<any>({});
+
+  // Lê view do localStorage ao montar e quando o hash muda
+  useEffect(() => {
+    const lerView = () => {
+      const viewSalva = localStorage.getItem('viewAtiva');
+      if (viewSalva) {
+        const viewsValidas = ["consultar", "cadastro", "status", "modalidades", "turmas", "pagamentos", "relatorios", "reposicoes", "professores", "impressao"];
+        if (viewsValidas.includes(viewSalva)) {
+          setViewAtiva(viewSalva as typeof viewAtiva);
+          localStorage.removeItem('viewAtiva');
+        }
+      }
+    };
+
+    lerView();
+    window.addEventListener('hashchange', lerView);
+    return () => window.removeEventListener('hashchange', lerView);
+  }, []);
 
   const trocarView = useCallback((view: typeof viewAtiva) => {
     setViewAtiva(view);

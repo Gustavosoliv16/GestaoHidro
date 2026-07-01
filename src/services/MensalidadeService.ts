@@ -119,23 +119,16 @@ function calcularMesesNecessarios(mesCadastro: string, mesAtual: string): string
   return gerarMesesEntre(mesCadastro, mesFim);
 }
 
-function diasEntre(data1: string, data2: string): number {
-  const d1 = new Date(data1 + "T00:00:00");
-  const d2 = new Date(data2 + "T00:00:00");
-  return Math.floor((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-
-function calcularStatusPorData(dataVencimento: string): "EM_ABERTO" | "PENDENTE" | "ATRASADO" {
-  const hoje = obterHojeStr();
-  const diff = diasEntre(dataVencimento, hoje);
-
-  if (diff > 10) {
-    return "ATRASADO";
-  } else if (diff > 0) {
-    return "PENDENTE";
+function calcularStatusPorMes(mesReferencia: string): "EM_ABERTO" | "PENDENTE" | "ATRASADO" {
+  const mesAtual = obterMesReferenciaAtual();
+  
+  // Compara strings no formato "YYYY-MM"
+  if (mesReferencia > mesAtual) {
+    return "EM_ABERTO"; // Mês futuro
+  } else if (mesReferencia === mesAtual) {
+    return "PENDENTE"; // Mês atual
   } else {
-    return "EM_ABERTO";
+    return "ATRASADO"; // Mês passado
   }
 }
 
@@ -175,7 +168,7 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
     const dataVencimento = calcularDataVencimento(mes, diaVencimento);
 
     if (!mesesExistentes.has(mes)) {
-      const statusInicial = calcularStatusPorData(dataVencimento);
+      const statusInicial = calcularStatusPorMes(mes);
       await db.execute(
         `INSERT INTO MENSALIDADE (id_aluno, mes_referencia, data_vencimento, valor, status, criado_em)
          VALUES ($1, $2, $3, $4, $5, $6)`,
@@ -184,11 +177,13 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
     } else {
       const existente = mesesExistentes.get(mes)!;
       if (existente.status !== "PAGO") {
-        const novoStatus = calcularStatusPorData(dataVencimento);
-        if (novoStatus !== existente.status) {
+        const novoStatus = calcularStatusPorMes(mes);
+        // Atualiza data_vencimento se mudou e status se necessário
+        const dataVencExistente = existente.data_vencimento;
+        if (novoStatus !== existente.status || dataVencimento !== dataVencExistente) {
           await db.execute(
-            `UPDATE MENSALIDADE SET status = $1 WHERE id_mensalidade = $2`,
-            [novoStatus, existente.id_mensalidade]
+            `UPDATE MENSALIDADE SET status = $1, data_vencimento = $2 WHERE id_mensalidade = $3`,
+            [novoStatus, dataVencimento, existente.id_mensalidade]
           );
         }
       }
@@ -375,7 +370,7 @@ export async function estornarPagamentoMensalidade(
   const db = await obterBanco();
 
   const mensalidades: any[] = await db.select(
-    `SELECT data_vencimento FROM MENSALIDADE WHERE id_mensalidade = $1`,
+    `SELECT mes_referencia FROM MENSALIDADE WHERE id_mensalidade = $1`,
     [idMensalidade]
   );
 
@@ -383,7 +378,7 @@ export async function estornarPagamentoMensalidade(
     return { sucesso: false, mensagem: "Mensalidade não encontrada." };
   }
 
-  const novoStatus = calcularStatusPorData(mensalidades[0].data_vencimento);
+  const novoStatus = calcularStatusPorMes(mensalidades[0].mes_referencia);
 
   await db.execute(
     `UPDATE MENSALIDADE 
