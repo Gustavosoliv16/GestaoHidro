@@ -249,3 +249,87 @@ export async function alternarStatusAluno(idAluno: number, statusAtual: number) 
 
   return novoStatus;
 }
+
+export async function excluirAlunoCompleto(idAluno: number) {
+  const db = await obterBancoPreparado();
+
+  try {
+    await db.execute("BEGIN TRANSACTION;");
+
+    // 1. Verificar se o endereço é compartilhado
+    const infoAluno: any[] = await db.select(
+      "SELECT id_endereco, id_responsavel FROM ALUNOS WHERE id_aluno = $1",
+      [idAluno]
+    );
+
+    if (infoAluno.length === 0) {
+      throw new Error("Aluno não encontrado.");
+    }
+
+    const { id_endereco, id_responsavel } = infoAluno[0];
+
+    // 2. Verificar se outro aluno usa o mesmo endereço
+    let enderecoCompartilhado = false;
+    if (id_endereco) {
+      const outrosComEndereco: any[] = await db.select(
+        "SELECT COUNT(*) as total FROM ALUNOS WHERE id_endereco = $1 AND id_aluno != $2",
+        [id_endereco, idAluno]
+      );
+      enderecoCompartilhado = Number(outrosComEndereco[0]?.total ?? 0) > 0;
+    }
+
+    // 3. Verificar se outro aluno tem o mesmo responsável
+    let responsavelCompartilhado = false;
+    if (id_responsavel) {
+      const outrosComResponsavel: any[] = await db.select(
+        "SELECT COUNT(*) as total FROM ALUNOS WHERE id_responsavel = $1 AND id_aluno != $2",
+        [id_responsavel, idAluno]
+      );
+      responsavelCompartilhado = Number(outrosComResponsavel[0]?.total ?? 0) > 0;
+    }
+
+    // 4. Cancelar reposições agendadas (não pagas)
+    await cancelarReposicoesDoAluno(idAluno);
+
+    // 5. Remover vínculos com turmas
+    await db.execute(
+      "DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_aluno = $1",
+      [idAluno]
+    );
+
+    // 6. Remover mensalidades NÃO PAGAS (manter histórico financeiro)
+    await db.execute(
+      "DELETE FROM MENSALIDADE WHERE id_aluno = $1 AND status != 'PAGO'",
+      [idAluno]
+    );
+
+    // 7. Remover endereço se não for compartilhado
+    if (id_endereco && !enderecoCompartilhado) {
+      await db.execute(
+        "DELETE FROM ENDERECO WHERE id_endereco = $1",
+        [id_endereco]
+      );
+    }
+
+    // 8. Remover responsável se não for compartilhado
+    if (id_responsavel && !responsavelCompartilhado) {
+      await db.execute(
+        "DELETE FROM RESPONSAVEL WHERE id_responsavel = $1",
+        [id_responsavel]
+      );
+    }
+
+    // 9. Remover o aluno
+    await db.execute(
+      "DELETE FROM ALUNOS WHERE id_aluno = $1",
+      [idAluno]
+    );
+
+    await db.execute("COMMIT;");
+    return { sucesso: true };
+  } catch (erro) {
+    await db.execute("ROLLBACK;");
+    console.error("Erro ao excluir aluno:", erro);
+    throw erro;
+  }
+}

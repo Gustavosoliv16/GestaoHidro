@@ -7,9 +7,11 @@ import { IconField } from "primereact/iconfield";
 import { InputIcon } from "primereact/inputicon";
 import { InputSwitch } from "primereact/inputswitch";
 import { Tag } from "primereact/tag";
+import { confirmDialog } from "primereact/confirmdialog";
 import {
   buscarTodosAlunos,
   alternarStatusAluno,
+  excluirAlunoCompleto,
 } from "../services/AlunoService";
 
 interface ListaAlunosProps {
@@ -144,17 +146,46 @@ export default function ListaAlunos({
     );
   };
 
-  const acoesTemplate = (rowData: any) => (
-    <div className="flex gap-1 justify-content-center">
-      <Button
-        icon="pi pi-pencil"
-        className="p-button-sm p-button-warning p-button-outlined"
-        tooltip="Editar aluno"
-        tooltipOptions={{ position: "top" }}
-        onClick={() => onEditarAluno(rowData)}
-      />
-    </div>
-  );
+  const acoesTemplate = (rowData: any) => {
+    const confirmarExclusao = (event: React.MouseEvent) => {
+      event.stopPropagation();
+      confirmDialog({
+        message: `Tem certeza que deseja excluir o aluno "${rowData.nome}"? Os históricos de pagamento serão mantidos.`,
+        header: "Confirmar exclusão",
+        icon: "pi pi-exclamation-triangle",
+        acceptLabel: "Sim, excluir",
+        rejectLabel: "Cancelar",
+        acceptClassName: "p-button-danger",
+        accept: async () => {
+          try {
+            await excluirAlunoCompleto(rowData.id_aluno);
+            setAlunos((prev) => prev.filter((a) => a.id_aluno !== rowData.id_aluno));
+          } catch (erro) {
+            console.error("Erro ao excluir aluno:", erro);
+          }
+        },
+      });
+    };
+
+    return (
+      <div className="flex gap-1 justify-content-center">
+        <Button
+          icon="pi pi-pencil"
+          className="p-button-sm p-button-warning p-button-outlined"
+          tooltip="Editar aluno"
+          tooltipOptions={{ position: "top" }}
+          onClick={() => onEditarAluno(rowData)}
+        />
+        <Button
+          icon="pi pi-trash"
+          className="p-button-sm p-button-danger p-button-outlined"
+          tooltip="Excluir aluno"
+          tooltipOptions={{ position: "top" }}
+          onClick={confirmarExclusao}
+        />
+      </div>
+    );
+  };
   return (
     <div className="card surface-card border-1 surface-border p-0 w-full">
       {/* Barra de busca */}
