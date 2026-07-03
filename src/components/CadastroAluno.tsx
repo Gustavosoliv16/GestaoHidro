@@ -505,7 +505,7 @@ export default function NovoAlunoModal({
         severity: "error",
         summary: "Campos obrigatórios",
         detail: `Corrija: ${erros.join(", ")}`,
-        life: 5000,
+        life: 4000,
       });
       return;
     }

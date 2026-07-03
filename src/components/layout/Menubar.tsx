@@ -3,12 +3,10 @@ import { Toolbar } from "primereact/toolbar";
 import { Tooltip } from "primereact/tooltip";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
+import { logoBranco } from "../../assets/brand";
+import { gotaBranca } from "../../assets/brand";
 import { useNavigate } from "react-router-dom";
 import Database from "@tauri-apps/plugin-sql";
-import {
-  logoBranco,
-  gotaBranca,
-} from "../../assets/brand";
 
 interface Vencimento {
   id_aluno: number;
@@ -226,21 +224,21 @@ export default function Menutopbar() {
         <i className="pi pi-home text-2xl" />
       </NavBtn>
 
-      <NavBtn id="btn-alunos"     tooltip="Cadastros"     onClick={() => navigate("/alunos")}>
+      <NavBtn id="btn-alunos" tooltip="Cadastros" onClick={() => {
+    localStorage.setItem('viewAtiva', 'consultar');
+    navigate("/alunos#consultar");}}>
         <i className="pi pi-users text-2xl" />
       </NavBtn>
 
-      <NavBtn id="btn-novo-aluno" tooltip="Novo Aluno"    onClick={() => {
-        localStorage.setItem('viewAtiva', 'cadastro');
-        navigate("/alunos");
-      }}>
-        <i className="pi pi-user-plus text-2xl" />
+      <NavBtn id="btn-novo-aluno" tooltip="Novo Aluno" onClick={() => {
+    localStorage.setItem('viewAtiva', 'cadastro');
+    navigate("/alunos#cadastro");}}>  
+      <i className="pi pi-user-plus text-2xl" />
       </NavBtn>
-
-      <NavBtn id="btn-pagamentos" tooltip="Pagamentos"    onClick={() => {
-        localStorage.setItem('viewAtiva', 'pagamentos');
-        navigate("/alunos");
-      }}>
+      
+      <NavBtn id="btn-pagamentos" tooltip="Pagamentos" onClick={() => {
+    localStorage.setItem('viewAtiva', 'pagamentos');
+    navigate("/alunos#pagamentos");}}>
         <i className="pi pi-money-bill text-2xl" />
       </NavBtn>
 
@@ -256,7 +254,7 @@ export default function Menutopbar() {
         <i className="pi pi-history text-2xl" />
       </NavBtn>
 
-      {/* Ícone de gota da marca para relatórios — identidade visual */}
+  
       <NavBtn id="btn-relatorios" tooltip="Relatórios"    onClick={() => navigate("/Relatorios")}>
         <img
           src={gotaBranca}

@@ -2,8 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
 import { Toast } from 'primereact/toast';
-import { logoBranco } from '../assets/brand';
-
+import { gotaBranca } from '../assets/brand';
 interface LoginProps {
   onLogin: () => void;
 }
@@ -78,7 +77,7 @@ export default function Login({ onLogin }: LoginProps) {
           severity: 'error',
           summary: 'Bloqueado',
           detail: 'PIN incorreto 3 vezes. Bloqueado por 30 segundos.',
-          life: 5000
+          life: 3000
         });
       } else {
         setErro(`PIN incorreto. Tentativa ${novasTentativas} de 3.`);
@@ -121,7 +120,7 @@ export default function Login({ onLogin }: LoginProps) {
       >
         <div className="flex flex-column align-items-center mb-5">
           <img 
-            src={logoBranco} 
+            src={gotaBranca} 
             alt="Gestão Hidro" 
             style={{ 
               width: '180px', 

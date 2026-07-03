@@ -6,11 +6,7 @@ import { Divider } from "primereact/divider";
 import { Tag } from "primereact/tag";
 import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
-import {
-  criarBackup,
-  registrarBackup,
-  buscarHistoricoBackups,
-} from "../services/BackupService";
+import { executarBackupAutomatico, buscarHistoricoBackups} from "../services/BackupService";
 
 export default function Configuracoes() {
   const toast = useRef<Toast>(null);
@@ -45,7 +41,7 @@ export default function Configuracoes() {
     try {
       console.log("Iniciando backup...");
       
-      const resultado = await criarBackup();
+      const resultado = await executarBackupAutomatico();
 
       console.log("Resultado do backup:", resultado);
 
@@ -53,15 +49,11 @@ export default function Configuracoes() {
         throw new Error(resultado.mensagem);
       }
 
-      if (resultado.caminho) {
-        await registrarBackup(resultado.caminho);
-      }
-
       toast.current?.show({
         severity: "success",
         summary: "Backup concluído",
         detail: "Backup salvo com sucesso!",
-        life: 5000,
+        life: 3000,
       });
 
       await carregarHistorico();

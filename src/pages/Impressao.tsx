@@ -8,7 +8,7 @@ import { Toast } from "primereact/toast";
 import { buscarTodasTurmas, buscarAlunosDaTurma } from "../services/TurmaService";
 import { buscarProfessorPorModalidade } from "../services/ProfessorService";
 import { buscarReposicoesParaChamada } from "../services/ReposicaoService";
-import logoPretoPng from "../assets/HIDROFIT GOTA PRETA.png";
+import logoPretoPng from "../assets/HIDROFIT_GOTA_PRETA.png";
 
 function toDateStr(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

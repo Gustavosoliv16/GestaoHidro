@@ -1,15 +1,15 @@
 import Database from "@tauri-apps/plugin-sql";
 import { invoke } from "@tauri-apps/api/core";
-import { copyFile, remove } from "@tauri-apps/plugin-fs";
+import { remove, exists } from "@tauri-apps/plugin-fs";
 
 /**
  * Serviço de backup automático do banco SQLite.
- * Usa VACUUM INTO para criar uma cópia consistente e o plugin fs para copiar.
+ * Usa VACUUM INTO para criar cópia consistente diretamente na pasta de backups.
  */
 
 const DB_NAME = "sqlite:gestao_hidro.db";
 const BACKUP_PREFIX = "gestao_hidro_backup";
-const TEMP_BACKUP_NAME = "gestao_hidro_temp_backup.db";
+const MAX_BACKUPS = 5;
 
 /**
  * Obtém a pasta de backups do sistema (Documents/GestaoHidro_Backups)
@@ -39,10 +39,15 @@ function gerarNomeBackup(): string {
 }
 
 /**
- * Cria um backup completo do banco usando VACUUM INTO + plugin fs.
- * 1. VACUUM INTO cria backup temporário na pasta do banco (acesso garantido)
- * 2. Plugin fs copia para Documents/GestaoHidro_Backups
- * 3. Deleta o temporário
+ * Escapa aspas simples em caminhos para uso seguro em SQL.
+ */
+function escapeSqlPath(path: string): string {
+  return path.replace(/'/g, "''");
+}
+
+/**
+ * Cria um backup completo do banco usando VACUUM INTO diretamente
+ * na pasta de backups (caminho absoluto), sem arquivo temporário.
  */
 export async function criarBackup(): Promise<{
   sucesso: boolean;
@@ -51,32 +56,30 @@ export async function criarBackup(): Promise<{
 }> {
   try {
     console.log("Iniciando processo de backup...");
-    
-    // Passo 1: Criar backup temporário na mesma pasta do banco
-    const db = await Database.load(DB_NAME);
-    
-    console.log("Criando backup temporário com VACUUM INTO...");
-    await db.execute(`VACUUM INTO '${TEMP_BACKUP_NAME}'`);
-    console.log("Backup temporário criado com sucesso");
 
-    // Passo 2: Obter pasta de destino
+    // Obter pasta de destino (caminho absoluto)
     const backupFolder = await getBackupFolder();
     const nomeArquivo = gerarNomeBackup();
     const caminhoDestino = `${backupFolder}/${nomeArquivo}`;
-    
-    console.log("Copiando para:", caminhoDestino);
 
-    // Passo 3: Copiar usando plugin fs
-    await copyFile(TEMP_BACKUP_NAME, caminhoDestino);
-    console.log("Cópia concluída");
-
-    // Passo 4: Deletar temporário
+    // Se por acaso o arquivo já existir (mesmo nome, mesmo segundo), remover antes
     try {
-      await remove(TEMP_BACKUP_NAME);
-      console.log("Arquivo temporário removido");
-    } catch (removeError) {
-      console.warn("Não foi possível remover arquivo temporário:", removeError);
+      const existe = await exists(caminhoDestino);
+      if (existe) {
+        await remove(caminhoDestino);
+      }
+    } catch {
+      // ignora — segue em frente
     }
+
+    console.log("Criando backup com VACUUM INTO em:", caminhoDestino);
+
+    // VACUUM INTO direto no destino final (caminho absoluto)
+    const db = await Database.load(DB_NAME);
+    const caminhoEscaped = escapeSqlPath(caminhoDestino);
+    await db.execute(`VACUUM INTO '${caminhoEscaped}'`);
+
+    console.log("Backup concluído com sucesso:", nomeArquivo);
 
     return {
       sucesso: true,
@@ -85,35 +88,29 @@ export async function criarBackup(): Promise<{
     };
   } catch (erro) {
     console.error("Erro detalhado ao criar backup:", erro);
-    
-    // Tenta limpar o arquivo temporário em caso de erro
-    try {
-      await remove(TEMP_BACKUP_NAME);
-    } catch {
-    }
 
     const mensagemErro =
-    erro instanceof Error 
-    ? erro.message
-    : typeof erro === "string"
-    ? erro
-    : JSON.stringify(erro);
+      erro instanceof Error
+        ? erro.message
+        : typeof erro === "string"
+        ? erro
+        : JSON.stringify(erro);
 
     return { sucesso: false, mensagem: mensagemErro };
   }
 }
 
-//Limpa backups antigos, mantendo apenas os N mais recentes.
-export async function limparBackupsAntigos(diasManter: number = 7): Promise<{
+/**
+ * Limpa backups antigos do disco e do log, mantendo apenas os MAX_BACKUPS mais recentes.
+ */
+export async function limparBackupsAntigos(): Promise<{
   sucesso: boolean;
   mensagem: string;
 }> {
   try {
     const db = await Database.load(DB_NAME);
-    const corte = new Date();
-    corte.setDate(corte.getDate() - diasManter);
 
-    // Lista backups na tabela de controle (se existir)
+    // Garante que a tabela existe
     await db.execute(`
       CREATE TABLE IF NOT EXISTS "BACKUP_LOG" (
         "id_backup"   INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -124,21 +121,47 @@ export async function limparBackupsAntigos(diasManter: number = 7): Promise<{
       )
     `);
 
-    // Registra o último backup criado
-    const ultimoBackup: any[] = await db.select(
-      `SELECT nome_arquivo FROM BACKUP_LOG ORDER BY criado_em DESC LIMIT 1`
+    // Busca todos os backups ordenados do mais recente para o mais antigo
+    const todosBackups: any[] = await db.select(
+      `SELECT id_backup, nome_arquivo FROM BACKUP_LOG
+       WHERE sucesso = 1
+       ORDER BY criado_em DESC`
     );
 
-    if (ultimoBackup.length > 0) {
+    if (todosBackups.length <= MAX_BACKUPS) {
       return {
         sucesso: true,
-        mensagem: `Backups registrados: ${ultimoBackup.length}. Mantendo últimos ${diasManter} dias.`,
+        mensagem: `${todosBackups.length} backup(s). Nenhum precisa ser removido.`,
       };
+    }
+
+    // Backups a remover: todos além dos MAX_BACKUPS mais recentes
+    const backupsParaRemover = todosBackups.slice(MAX_BACKUPS);
+    let removidos = 0;
+
+    for (const backup of backupsParaRemover) {
+      // Tenta remover o arquivo do disco
+      try {
+        const existe = await exists(backup.nome_arquivo);
+        if (existe) {
+          await remove(backup.nome_arquivo);
+        }
+      } catch (e) {
+        console.warn("Não foi possível remover arquivo de backup:", backup.nome_arquivo, e);
+      }
+
+      // Remove o registro do log
+      try {
+        await db.execute(`DELETE FROM BACKUP_LOG WHERE id_backup = $1`, [backup.id_backup]);
+        removidos++;
+      } catch (e) {
+        console.warn("Não foi possível remover registro do log:", backup.id_backup, e);
+      }
     }
 
     return {
       sucesso: true,
-      mensagem: "Nenhum backup registrado para limpar.",
+      mensagem: `${removidos} backup(s) antigo(s) removido(s). Mantendo os ${MAX_BACKUPS} mais recentes.`,
     };
   } catch (erro) {
     console.error("Erro ao limpar backups:", erro);
@@ -201,7 +224,7 @@ export async function buscarHistoricoBackups(): Promise<any[]> {
       `SELECT id_backup, nome_arquivo, criado_em, tamanho_kb, sucesso
        FROM BACKUP_LOG
        ORDER BY criado_em DESC
-       LIMIT 20`
+       LIMIT 5`
     );
   } catch (erro) {
     console.error("Erro ao buscar histórico de backups:", erro);
@@ -221,11 +244,62 @@ export async function executarBackupAutomatico(): Promise<{
 
   if (resultado.sucesso && resultado.caminho) {
     await registrarBackup(resultado.caminho);
-    await limparBackupsAntigos(7);
+    await limparBackupsAntigos();
   }
 
   return {
     sucesso: resultado.sucesso,
     mensagem: resultado.mensagem,
   };
+}
+
+/**
+ * Verifica se já foi feito um backup hoje.
+ * Usado para evitar backups automáticos repetidos no mesmo dia.
+ */
+export async function jaFeitoBackupHoje(): Promise<boolean> {
+  try {
+    const db = await Database.load(DB_NAME);
+
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS "BACKUP_LOG" (
+        "id_backup"   INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        "nome_arquivo" TEXT NOT NULL,
+        "criado_em"   TEXT NOT NULL,
+        "tamanho_kb"  INTEGER,
+        "sucesso"     INTEGER DEFAULT 1
+      )
+    `);
+
+    const hoje = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const backupsHoje: any[] = await db.select(
+      `SELECT COUNT(*) as total FROM BACKUP_LOG
+       WHERE sucesso = 1 AND criado_em LIKE $1`,
+      [`${hoje}%`]
+    );
+
+    return (backupsHoje[0]?.total ?? 0) > 0;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Executa backup automático silencioso (para startup do app).
+ * Só faz backup se ainda não foi feito um hoje.
+ */
+export async function backupStartup(): Promise<void> {
+  try {
+    const jaFeito = await jaFeitoBackupHoje();
+    if (jaFeito) {
+      console.log("Backup automático: já existe backup de hoje. Pulando.");
+      return;
+    }
+
+    console.log("Backup automático: executando backup de startup...");
+    const resultado = await executarBackupAutomatico();
+    console.log("Backup automático:", resultado.sucesso ? "OK" : "FALHA", resultado.mensagem);
+  } catch (erro) {
+    console.error("Erro no backup automático de startup:", erro);
+  }
 }

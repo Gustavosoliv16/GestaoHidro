@@ -17,6 +17,7 @@ import AtalhoModal from "./components/ui/AtalhoModal";
 import RouteLoading from "./components/ui/RouteLoading";
 import { useKeyboardShortcuts } from "./components/ui/useKeyboardShortcuts";
 import { useRouteLoading } from "./components/ui/useRouteLoading";
+import { backupStartup } from "./services/BackupService";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
@@ -30,6 +31,15 @@ function AppContent() {
 
   // Verifica atualizações do aplicativo
   useAppUpdater();
+
+  // Executa backup automático na inicialização
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      backupStartup();
+    }, 6000); // Aguarda 6 segundos antes de iniciar o backup
+
+    return () => clearTimeout(timer); // Limpa o timer se o componente for desmontado
+  }, []);
   
   // Atalhos de teclado globais
   useKeyboardShortcuts({
@@ -51,7 +61,7 @@ function AppContent() {
         onHide={() => setAtalhoModalVisible(false)} 
       />
 
-      <main className="app-main page-transition" key={location.pathname}>
+      <main className="app-main page-transition" key={location.pathname + location.hash}>
         <Routes>
           <Route path="/"          element={<Homepage />} />
           <Route path="/alunos"    element={<Alunos />} />
