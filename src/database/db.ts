@@ -116,6 +116,40 @@ export default async function initDatabase(): Promise<void> {
     );
   `);
 
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS "FLUXO_CAIXA" (
+    "id_caixa" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+    "tipo" TEXT NOT NULL, -- 'RECEITA' ou 'DESPESA'
+    "valor" REAL NOT NULL,
+    "data_pagamento" TEXT NOT NULL,
+    "descricao" TEXT NOT NULL,
+    "criado_em" TEXT NOT NULL
+    );
+  `);
+
+  try {
+    const checkCaixa: any = await db.select("SELECT COUNT(*) as count FROM FLUXO_CAIXA");
+    if (checkCaixa[0].count === 0) {
+      console.log("Migrando historico de financeiro para o Caixa...");
+      await db.execute(`
+        INSERT INTO FLUXO_CAIXA (tipo, valor, data_pagamento, descricao, criado_em)
+        SELECT
+          'RECEITA',
+          m.valor_pago,
+          m.data_pagamento,
+          'Mensalidade ref. ' || m.mes_referencia || ' - Aluno: ' || a.nome,
+          m.criado_em
+        FROM MENSALIDADE m
+        INNER JOIN ALUNOS a ON m.id_aluno = a.id_aluno
+        WHERE m.status = 'PAGO' AND m.valor_pago IS NOT NULL;
+        `);
+    }
+  } catch (e){
+    console.error("Erro ao migrar historico de financeiro para o Caixa:", e);
+  }
+
+
+
   await db.execute("COMMIT;");
 
   try {

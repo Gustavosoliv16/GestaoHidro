@@ -11,7 +11,7 @@ import { confirmDialog } from "primereact/confirmdialog";
 import {
   buscarTodosAlunos,
   alternarStatusAluno,
-  excluirAlunoCompleto,
+  excluirAluno,
 } from "../services/AlunoService";
 
 interface ListaAlunosProps {
@@ -158,7 +158,7 @@ export default function ListaAlunos({
         acceptClassName: "p-button-danger",
         accept: async () => {
           try {
-            await excluirAlunoCompleto(rowData.id_aluno);
+            await excluirAluno(rowData.id_aluno);
             setAlunos((prev) => prev.filter((a) => a.id_aluno !== rowData.id_aluno));
           } catch (erro) {
             console.error("Erro ao excluir aluno:", erro);
