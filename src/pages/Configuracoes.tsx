@@ -66,20 +66,25 @@ export default function Configuracoes() {
 
       await carregarHistorico();
     } catch (erro) {
-      console.error("Erro ao fazer backup:", erro);
-      
-      const mensagemErro = erro instanceof Error ? erro.message : String(erro);
-      
-      toast.current?.show({
-        severity: "error",
-        summary: "Erro ao criar backup",
-        detail: mensagemErro,
-        life: 8000,
-        sticky: true,
-      });
-    } finally {
-      setBackupEmAndamento(false);
-    }
+  console.error("Erro ao fazer backup:", erro);
+
+  const mensagemErro =
+    erro instanceof Error
+      ? erro.message
+      : typeof erro === "string"
+      ? erro
+      : JSON.stringify(erro);
+
+  toast.current?.show({
+    severity: "error",
+    summary: "Erro ao criar backup",
+    detail: mensagemErro,
+    life: 4000,     // some depois de 4s
+    sticky: false,  // NÃO fica travado na tela
+  });
+} finally {
+  setBackupEmAndamento(false);
+}
   };
 
   const formatarData = (isoStr: string) => {

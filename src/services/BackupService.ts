@@ -90,40 +90,20 @@ export async function criarBackup(): Promise<{
     try {
       await remove(TEMP_BACKUP_NAME);
     } catch {
-      // Ignora erro ao limpar
     }
-    
-    // Mensagens de erro mais específicas
-    let mensagemErro = "Falha ao criar backup";
-    
-    if (erro instanceof Error) {
-      const erroStr = erro.message.toLowerCase();
-      
-      if (erroStr.includes("permission") || erroStr.includes("access")) {
-        mensagemErro = "Sem permissão para salvar o backup.";
-      } else if (erroStr.includes("disk") || erroStr.includes("space")) {
-        mensagemErro = "Espaço em disco insuficiente para criar o backup.";
-      } else if (erroStr.includes("locked") || erroStr.includes("busy")) {
-        mensagemErro = "Banco de dados está em uso. Feche outras conexões e tente novamente.";
-      } else if (erroStr.includes("526")) {
-        mensagemErro = "Erro 526: Problema ao criar arquivo de backup. Verifique se há espaço em disco.";
-      } else {
-        mensagemErro = `Falha ao criar backup: ${erro.message}`;
-      }
-    }
-    
-    return {
-      sucesso: false,
-      mensagem: mensagemErro,
-    };
+
+    const mensagemErro =
+    erro instanceof Error 
+    ? erro.message
+    : typeof erro === "string"
+    ? erro
+    : JSON.stringify(erro);
+
+    return { sucesso: false, mensagem: mensagemErro };
   }
 }
 
-/**
- * Limpa backups antigos, mantendo apenas os N mais recentes.
- * Como o SQLite via Tauri não tem acesso direto ao filesystem para listar/deletar,
- * esta função deleta backups por uma janela de dias.
- */
+//Limpa backups antigos, mantendo apenas os N mais recentes.
 export async function limparBackupsAntigos(diasManter: number = 7): Promise<{
   sucesso: boolean;
   mensagem: string;
