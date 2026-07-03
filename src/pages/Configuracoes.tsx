@@ -372,7 +372,7 @@ export default function Configuracoes() {
             <div className="text-xs font-semibold text-600 uppercase mb-1">
               Versão
             </div>
-            <div className="text-sm font-bold text-900">1.3.0</div>
+            <div className="text-sm font-bold text-900">1.6.3</div>
           </div>
           <div className="col-12 md:col-6">
             <div className="text-xs font-semibold text-600 uppercase mb-1">
