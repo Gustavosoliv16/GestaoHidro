@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { ConfirmDialog } from "primereact/confirmdialog";
+import { useAppUpdater } from "./services/useAppUpdater";
 
 import Menutopbar from "../src/components/layout/Menubar";
 import Homepage    from "../src/pages/Homepage";
@@ -27,6 +28,9 @@ function AppContent() {
   const [atalhoModalVisible, setAtalhoModalVisible] = useState(false);
   const routeLoading = useRouteLoading();
 
+  // Verifica atualizações do aplicativo
+  useAppUpdater();
+  
   // Atalhos de teclado globais
   useKeyboardShortcuts({
     "ctrl+h": () => navigate("/"),
