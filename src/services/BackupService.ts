@@ -303,3 +303,65 @@ export async function backupStartup(): Promise<void> {
     console.error("Erro no backup automático de startup:", erro);
   }
 }
+
+export interface BackupDisponivel {
+  nome: string;
+  caminho: string;
+  tamanho_kb: number;
+  data_modificacao: string;
+}
+
+/**
+ * Lista todos os arquivos de backup disponíveis na pasta de backups.
+ */
+export async function listarBackupsDisponiveis(): Promise<BackupDisponivel[]> {
+  try {
+    const backups = await invoke<BackupDisponivel[]>("listar_backups");
+    return backups;
+  } catch (error) {
+    console.error("Erro ao listar backups:", error);
+    return [];
+  }
+}
+
+/**
+ * Restaura um backup a partir do caminho do arquivo.
+ * IMPORTANTE: O app deve ser reiniciado após a restauração.
+ */
+export async function restaurarBackup(caminhoBackup: string): Promise<{
+  sucesso: boolean;
+  mensagem: string;
+}> {
+  try {
+    if (!caminhoBackup || caminhoBackup.trim() === "") {
+      return {
+        sucesso: false,
+        mensagem: "Caminho do backup não fornecido.",
+      };
+    }
+    
+    console.log("Restaurando backup:", caminhoBackup);
+    const resultado = await invoke<string>("restaurar_backup", {
+      caminhoBackup: caminhoBackup,
+    });
+
+    return {
+      sucesso: true,
+      mensagem: resultado,
+    };
+  } catch (erro) {
+    console.error("Erro ao restaurar backup:", erro);
+
+    const mensagemErro =
+      erro instanceof Error
+        ? erro.message
+        : typeof erro === "string"
+        ? erro
+        : JSON.stringify(erro);
+
+    return {
+      sucesso: false,
+      mensagem: mensagemErro,
+    };
+  }
+}

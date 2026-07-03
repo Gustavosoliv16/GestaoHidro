@@ -945,6 +945,14 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 [data-theme="dark"] .text-blue-600,
 [data-theme="dark"] .text-blue-700   { color: var(--color-cyan-400)       !important; }
 
+/* ── 5.2.1 Dark: Ícones de calendário ────────────────────────────────────── */
+[data-theme="dark"] .pi-calendar,
+[data-theme="dark"] .pi-calendar-plus,
+[data-theme="dark"] .pi-calendar-times,
+[data-theme="dark"] .pi-calendar-clock {
+  color: var(--color-text) !important;
+}
+
 /* Cards de stat (mantém a cor de borda definida no inline style) */
 [data-theme="dark"] .border-top-3 { border-color: inherit !important; }
 /* ── 5.3 Dark: backgrounds hardcoded em style={{}} dos componentes ───────── */
@@ -1037,6 +1045,21 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
 
 [data-theme="dark"] .menu-item-custom {
   color: var(--color-text);
+}
+
+[data-theme="dark"] .menu-item-custom:hover {
+  background: rgba(95, 212, 232, 0.12);
+}
+
+/* ── 5.6 Dark: Input date calendar icon ──────────────────────────────────── */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+  cursor: pointer;
+}
+
+[data-theme="dark"] input[type="date"]::-moz-calendar-picker-indicator {
+  filter: invert(1) brightness(2);
+  cursor: pointer;
 }
 
 [data-theme="dark"] .menu-item-custom:hover {

@@ -6,7 +6,7 @@ import { Divider } from "primereact/divider";
 import { Tag } from "primereact/tag";
 import { InputText } from "primereact/inputtext";
 import { Dialog } from "primereact/dialog";
-import { executarBackupAutomatico, buscarHistoricoBackups} from "../services/BackupService";
+import { executarBackupAutomatico, buscarHistoricoBackups, listarBackupsDisponiveis, restaurarBackup, type BackupDisponivel,} from "../services/BackupService";
 
 export default function Configuracoes() {
   const toast = useRef<Toast>(null);
@@ -14,14 +14,23 @@ export default function Configuracoes() {
   const [historico, setHistorico] = useState<any[]>([]);
   const [carregandoHistorico, setCarregandoHistorico] = useState(false);
   
+  //Estados para backups disponíveis e restauração
+  const [backupsDisponiveis, setBackupsDisponiveis] = useState<BackupDisponivel[]>([]);
+  const [carregandoBackups, setCarregandoBackups] = useState(false);
+  const [restaurando, setRestaurando] = useState(false);
+  const [dialogRestaurarVisible, setDialogRestaurarVisible] = useState(false);
+  const [backupSelecionado, setBackupSelecionado] = useState<BackupDisponivel | null>(null);
+
   // Estados para alteração de PIN
   const [dialogPinVisible, setDialogPinVisible] = useState(false);
   const [pinAtual, setPinAtual] = useState("");
   const [novoPin, setNovoPin] = useState("");
   const [confirmarNovoPin, setConfirmarNovoPin] = useState("");
 
+
   useEffect(() => {
     carregarHistorico();
+    carregarBackupsDisponiveis();
   }, []);
 
   const carregarHistorico = async () => {
@@ -35,6 +44,75 @@ export default function Configuracoes() {
       setCarregandoHistorico(false);
     }
   };
+
+  const carregarBackupsDisponiveis = async () => {
+    setCarregandoBackups(true);
+    try {
+      const backups = await listarBackupsDisponiveis();
+      setBackupsDisponiveis(backups);
+    } catch (erro) {
+      console.error("Erro ao carregar backups disponíveis:", erro);
+    } finally {
+      setCarregandoBackups(false);
+    }
+  };
+
+  const formatarDataBackup = (timestamp: string) => {
+    try {
+      const ts = parseInt(timestamp);
+      if (isNaN(ts)) return timestamp;
+      const d = new Date(ts * 1000);
+      return d.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return timestamp;
+    }
+  };
+
+  const confirmarRestauracao = (backup: BackupDisponivel) => {
+    setBackupSelecionado(backup);
+    setDialogRestaurarVisible(true);
+  };
+
+  const executarRestauracao = async () => {
+    if (!backupSelecionado) return;
+
+console.log("Conteúdo do backup selecionado:", backupSelecionado);
+setRestaurando(true);
+    try {
+      const resultado = await restaurarBackup(backupSelecionado.caminho);
+
+      if (resultado.sucesso) {
+        toast.current?.show({
+          severity: "success",
+          summary: "Backup restaurado",
+          detail: "Reinicie o aplicativo para aplicar as mudanças.",
+          life: 4000,
+        });
+        setDialogRestaurarVisible(false);
+      } else {
+        throw new Error(resultado.mensagem);
+      }
+    } catch (erro) {
+      console.error("Erro ao restaurar backup:", erro);
+      const mensagemErro =
+        erro instanceof Error ? erro.message : String(erro);
+
+      toast.current?.show({
+        severity: "error",
+        summary: "Erro ao restaurar",
+        detail: mensagemErro,
+        life: 5000,
+      });
+    } finally {
+      setRestaurando(false);
+    }
+  }
 
   const executarBackup = async () => {
     setBackupEmAndamento(true);
@@ -232,6 +310,75 @@ export default function Configuracoes() {
         )}
       </Card>
 
+      {/* Backups Disponíveis para Restauração */}
+      <Card className="mb-4 shadow-1">
+        <div className="flex align-items-center gap-2 mb-3">
+          <i className="pi pi-refresh text-primary text-xl" />
+          <h3 className="m-0 text-lg font-bold text-900">
+            Restaurar Backup
+          </h3>
+        </div>
+
+        <p className="text-sm text-600 mb-4">
+          Selecione um backup para restaurar. Um backup de segurança do banco atual será criado automaticamente antes da restauração.
+        </p>
+
+        <div className="flex align-items-center justify-content-between mb-3">
+          <h4 className="m-0 text-md font-bold text-900">
+            Backups Disponíveis
+          </h4>
+          <Button
+            label="Atualizar"
+            icon="pi pi-refresh"
+            className="p-button-text p-button-sm"
+            onClick={carregarBackupsDisponiveis}
+            loading={carregandoBackups}
+          />
+        </div>
+
+        {backupsDisponiveis.length === 0 ? (
+          <div className="text-center py-4 text-500">
+            <i className="pi pi-inbox text-3xl mb-2" style={{ display: "block" }} />
+            <p className="m-0 text-sm">Nenhum backup encontrado.</p>
+            <p className="m-0 text-xs mt-1">Crie um backup primeiro usando o botão acima.</p>
+          </div>
+        ) : (
+          <div className="flex flex-column gap-2">
+            {backupsDisponiveis.map((backup, idx) => (
+              <div
+                key={idx}
+                className="flex align-items-center justify-content-between p-3 border-round border-1 surface-border"
+                style={{ background: "var(--color-bg)" }}
+              >
+                <div className="flex align-items-center gap-3">
+                  <i className="pi pi-database text-primary" />
+                  <div>
+                    <div className="text-sm font-semibold text-900">
+                      {backup.nome}
+                    </div>
+                    <div className="text-xs text-500">
+                      {formatarDataBackup(backup.data_modificacao)}
+                      {backup.tamanho_kb > 0 && ` • ${backup.tamanho_kb} KB`}
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  label="Restaurar"
+                  icon="pi pi-refresh"
+                  className="p-button-sm p-button-warning"
+                  onClick={() => confirmarRestauracao(backup)}
+                  loading={restaurando}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+
+
+
+
       {/* Segurança */}
       <Card className="mb-4 shadow-1">
         <div className="flex align-items-center gap-2 mb-3">
@@ -355,6 +502,61 @@ export default function Configuracoes() {
         </div>
       </Dialog>
 
+       <Dialog
+        header="Confirmar Restauração de Backup"
+        visible={dialogRestaurarVisible}
+        style={{ width: '450px' }}
+        modal
+        onHide={() => {
+          setDialogRestaurarVisible(false);
+          setBackupSelecionado(null);
+        }}
+      >
+        <div className="flex flex-column gap-3 pt-3">
+          <div className="flex align-items-center gap-3 p-3 border-round" style={{ background: 'var(--color-warning-bg, #fff3cd)' }}>
+            <i className="pi pi-exclamation-triangle text-2xl" style={{ color: 'var(--color-warning, #f59e0b)' }} />
+            <div>
+              <div className="font-semibold text-sm">Atenção!</div>
+              <div className="text-xs">Esta ação substituirá o banco de dados atual.</div>
+            </div>
+          </div>
+
+          {backupSelecionado && (
+            <div className="p-3 border-round border-1 surface-border">
+              <div className="text-xs text-500 mb-1">Backup selecionado:</div>
+              <div className="text-sm font-semibold text-900">{backupSelecionado.nome}</div>
+              <div className="text-xs text-500 mt-1">
+                {formatarDataBackup(backupSelecionado.data_modificacao)}
+                {backupSelecionado.tamanho_kb > 0 && ` • ${backupSelecionado.tamanho_kb} KB`}
+              </div>
+            </div>
+          )}
+
+          <p className="text-sm text-600 m-0">
+            Um backup de segurança do banco atual será criado automaticamente antes da restauração. Após confirmar, você precisará reiniciar o aplicativo.
+          </p>
+
+          <div className="flex justify-content-end gap-2 mt-3">
+            <Button
+              label="Cancelar"
+              icon="pi pi-times"
+              className="p-button-text"
+              onClick={() => {
+                setDialogRestaurarVisible(false);
+                setBackupSelecionado(null);
+              }}
+            />
+            <Button
+              label="Confirmar Restauração"
+              icon="pi pi-check"
+              className="p-button-warning"
+              onClick={executarRestauracao}
+              loading={restaurando}
+            />
+          </div>
+        </div>
+      </Dialog>
+
       {/* Informações do Sistema */}
       <Card className="shadow-1">
         <div className="flex align-items-center gap-2 mb-3">
@@ -369,7 +571,7 @@ export default function Configuracoes() {
             <div className="text-xs font-semibold text-600 uppercase mb-1">
               Versão
             </div>
-            <div className="text-sm font-bold text-900">1.6.3</div>
+            <div className="text-sm font-bold text-900">1.6.5</div>
           </div>
           <div className="col-12 md:col-6">
             <div className="text-xs font-semibold text-600 uppercase mb-1">

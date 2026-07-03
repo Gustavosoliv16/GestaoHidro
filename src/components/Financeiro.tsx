@@ -790,7 +790,7 @@ export default function Financeiro() {
               type="date"
               value={dataPagamento}
               onChange={(e) => setDataPagamento(e.target.value)}
-              className="p-inputtext p-component w-full"
+              className="p-inputtext p-calendar w-full"
               style={{ padding: "0.5rem" }}
             />
           </div>
