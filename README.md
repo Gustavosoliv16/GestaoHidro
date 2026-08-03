@@ -39,8 +39,8 @@ Sistema desktop completo e 100% offline para gestão comercial, operacional e fi
 Este software é um produto proprietário sob licença comercial.
 
 - **Desenvolvedor:** Gustavo Oliveira
-- **Suporte Técnico:** [Inserir seu e-mail ou WhatsApp corporativo]
-- **Contato Comercial:** [Inserir link para site, e-mail ou WhatsApp]
+- **Suporte Técnico:** gustavosoliveiraem@gmail.com
+- **Contato Comercial:** (33) 99865-7032
 
 ---
 
