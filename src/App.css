@@ -590,7 +590,9 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   background: var(--color-primary) !important;
   border-color: var(--color-primary) !important;
 }
-.p-checkbox .p-checkbox-box .p-checkbox-icon { color: #fff !important; }
+/* Ícone de check: preto em modo claro, branco em modo escuro */
+.p-checkbox .p-checkbox-box .p-checkbox-icon { color: #000000 !important; }
+[data-theme="dark"] .p-checkbox .p-checkbox-box .p-checkbox-icon { color: #ffffff !important; }
 .p-checkbox:focus .p-checkbox-box            { box-shadow: 0 0 0 3px rgba(14, 124, 140, 0.15) !important; }
 
 .p-inputswitch .p-inputswitch-slider                       { background: var(--color-border)  !important; }
@@ -600,13 +602,17 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-md) !important;
 }
-.p-toast .p-toast-message.p-toast-message-success { background: rgba(27, 158, 107, 0.1) !important; border-left: 4px solid var(--color-success) !important; }
-.p-toast .p-toast-message.p-toast-message-warn    { background: rgba(217, 164, 65, 0.1) !important; border-left: 4px solid var(--color-warning) !important; }
-.p-toast .p-toast-message.p-toast-message-error   { background: rgba(209, 75, 75, 0.1)  !important; border-left: 4px solid var(--color-danger)  !important; }
-.p-toast .p-toast-message.p-toast-message-info    { background: rgba(14, 124, 140, 0.1) !important; border-left: 4px solid var(--color-info)    !important; }
-.p-toast .p-toast-message-text { color: var(--color-text) !important; }
-.p-toast .p-toast-summary      { font: 600 var(--text-sm)/1.2 var(--font-display) !important; color: var(--color-text) !important; }
-.p-toast .p-toast-detail       { font: 400 var(--text-sm)/1.4 var(--font-body)    !important; color: var(--color-text-secondary) !important; }
+.p-toast .p-toast-message.p-toast-message-success { background: rgba(27, 158, 107, 0.92) !important; border-left: 4px solid var(--color-success) !important; }
+.p-toast .p-toast-message.p-toast-message-warn    { background: rgba(217, 164, 65, 0.92)  !important; border-left: 4px solid var(--color-warning) !important; }
+.p-toast .p-toast-message.p-toast-message-error   { background: rgba(170, 36, 50, 0.92)   !important; border-left: 4px solid var(--color-danger)  !important; }
+.p-toast .p-toast-message.p-toast-message-info    { background: rgba(14, 124, 140, 0.92)  !important; border-left: 4px solid var(--color-info)    !important; }
+.p-toast .p-toast-message-text { color: #ffffff !important; }
+.p-toast .p-toast-summary      { font: 700 var(--text-sm)/1.2 var(--font-display) !important; color: #ffffff !important; }
+.p-toast .p-toast-detail       { font: 400 var(--text-sm)/1.4 var(--font-body)    !important; color: rgba(255,255,255,0.88) !important; }
+.p-toast .p-toast-icon         { color: #ffffff !important; }
+.p-toast .p-toast-message-icon { color: #ffffff !important; }
+.p-toast .p-toast-message-close { color: rgba(255,255,255,0.7) !important; }
+.p-toast .p-toast-message-close:hover { color: #ffffff !important; }
 /* ── 3.11 Message / Inline alert ─────────────────────────────────────────── */
 /* PrimeReact <Message> renderiza como .p-inline-message, não .p-message. */
 .p-inline-message {

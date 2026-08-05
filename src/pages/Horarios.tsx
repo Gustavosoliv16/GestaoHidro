@@ -14,14 +14,9 @@ import {
   buscarAlunosDaTurma,
   vincularAlunoTurma,
   desvincularAlunoTurma,
+  verificarConflitoDeTurma,
 } from "../services/TurmaService";
-
-async function buscarTodosAlunosDoSistema() {
-  const db = await Database.load("sqlite:gestao_hidro.db");
-  return await db.select<any[]>(
-    "SELECT id_aluno, nome FROM ALUNOS ORDER BY nome ASC",
-  );
-}
+import { buscarTodosAlunos } from "../services/AlunoService";
 
 async function buscarTodasModalidades() {
   const db = await Database.load("sqlite:gestao_hidro.db");
@@ -157,7 +152,7 @@ export default function GradeHoraria() {
       const listaTurmas = await buscarTodasTurmas();
       setTurmas(listaTurmas);
 
-      const todosAlunos = await buscarTodosAlunosDoSistema();
+      const todosAlunos = await buscarTodosAlunos();
       setListaCompletaAlunos(todosAlunos);
 
       const listaModalidade = await buscarTodasModalidades();
@@ -266,6 +261,21 @@ export default function GradeHoraria() {
       });
       return;
     }
+
+    const conflito = await verificarConflitoDeTurma(
+      novaTurma.diaSemana,
+      novaTurma.horarioInicio,
+    );
+    if (conflito) {
+      toast.current?.show({
+        severity: "error",
+        summary: "Conflito de horário",
+        detail: `Já existe uma turma às ${String(novaTurma.horarioInicio).padStart(2, "0")}h neste dia da semana.`,
+        life: 5000,
+      });
+      return;
+    }
+
     try {
       await criarTurma(novaTurma as any);
       toast.current?.show({

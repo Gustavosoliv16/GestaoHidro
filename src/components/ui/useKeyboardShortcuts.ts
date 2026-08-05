@@ -7,18 +7,11 @@ interface ShortcutMap {
 /**
  * Hook para atalhos de teclado globais.
  * Suporta combinações com Ctrl, Shift, Alt.
- *
- * Exemplo de uso:
- *   useKeyboardShortcuts({
- *     'ctrl+n': () => navigate('/alunos'),
- *     'ctrl+f': () => focusSearch(),
- *     'ctrl+p': () => openPayment(),
- *   });
+ * Teclas sem modificador (ex: "esc") funcionam mesmo dentro de inputs.
  */
 export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // Ignora se estiver em um input/textarea/select
       const target = e.target as HTMLElement;
       const isInput =
         target.tagName === "INPUT" ||
@@ -26,14 +19,12 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
         target.tagName === "SELECT" ||
         target.isContentEditable;
 
-      // Constrói a combinação de teclas
       const parts: string[] = [];
       if (e.ctrlKey || e.metaKey) parts.push("ctrl");
       if (e.shiftKey) parts.push("shift");
       if (e.altKey) parts.push("alt");
 
       const key = e.key.toLowerCase();
-      // Mapeia teclas especiais
       const keyMap: Record<string, string> = {
         escape: "esc",
         enter: "enter",
@@ -41,8 +32,11 @@ export function useKeyboardShortcuts(shortcuts: ShortcutMap) {
       };
       const normalizedKey = keyMap[key] || key;
 
-      // Se é uma tecla de letra/numero e não tem modificador, ignora em inputs
-      if (isInput && parts.length === 0) return;
+      // Teclas sem modificador dentro de inputs: só permite esc e enter
+      const semModificador = parts.length === 0;
+      if (isInput && semModificador) {
+        if (normalizedKey !== "esc" && normalizedKey !== "enter") return;
+      }
 
       parts.push(normalizedKey);
       const combo = parts.join("+");

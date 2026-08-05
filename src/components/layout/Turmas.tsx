@@ -56,9 +56,9 @@ export default function Turmas() {
 
   const [modalAlunosVisible, setModalAlunosVisible] = useState(false);
   const [turmaSelecionada, setTurmaSelecionada] = useState<any | null>(null);
-  const [alunoParaAdicionar, setAlunoParaAdicionar] = useState<number | null>(
-    null,
-  );
+  const [alunoParaAdicionar, setAlunoParaAdicionar] = useState<number | null>(null);
+  // estado separado para o seletor de alunos iniciais no form de criação
+  const [alunoSelecionadoNoForm, setAlunoSelecionadoNoForm] = useState<number | null>(null);
   const carregar = async () => {
     try {
       const [listaTurmas, listaAlunos] = await Promise.all([
@@ -86,6 +86,7 @@ export default function Turmas() {
     setModoEdicao(false);
     setTurmaEmEdicao(null);
     setForm({ ...FORM_VAZIO });
+    setAlunoSelecionadoNoForm(null);
     setModalFormVisible(true);
   };
 
@@ -439,23 +440,32 @@ Todos os vínculos com alunos serão removidos.`,
     <div className="flex gap-2 mb-2">
       <Dropdown
         appendTo="self"
-        value={null}
+        value={alunoSelecionadoNoForm}
         options={todosAlunos.filter((a) => !form.alunosIds.includes(a.id_aluno))}
         optionLabel="nome"
         optionValue="id_aluno"
         filter
         placeholder="Selecione um aluno"
         className="flex-grow-1"
-        onChange={(e) => {
-          if (form.alunosIds.length < form.capacidadeMaxima) {
-            setForm({ ...form, alunosIds: [...form.alunosIds, e.value] });
-          } else {
+        onChange={(e) => setAlunoSelecionadoNoForm(e.value)}
+      />
+      <Button
+        label="Adicionar"
+        icon="pi pi-plus"
+        className="p-button-success p-button-sm"
+        disabled={!alunoSelecionadoNoForm}
+        onClick={() => {
+          if (!alunoSelecionadoNoForm) return;
+          if (form.alunosIds.length >= form.capacidadeMaxima) {
             toast.current?.show({
               severity: "warn",
               summary: "Lotado",
               detail: `Capacidade máxima de ${form.capacidadeMaxima} alunos atingida.`,
             });
+            return;
           }
+          setForm({ ...form, alunosIds: [...form.alunosIds, alunoSelecionadoNoForm] });
+          setAlunoSelecionadoNoForm(null);
         }}
       />
     </div>

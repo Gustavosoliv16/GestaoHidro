@@ -97,6 +97,22 @@ export default function Modalidades() {
       accept: async () => {
         try {
           const db = await Database.load("sqlite:gestao_hidro.db");
+
+          // Verifica alunos vinculados
+          const alunosVinculados: any[] = await db.select(
+            `SELECT COUNT(*) as total FROM ALUNOS WHERE id_modalidade = $1 AND ativo = 1`,
+            [mod.id_modalidade]
+          );
+          if (Number(alunosVinculados[0]?.total) > 0) {
+            toast.current?.show({
+              severity: "warn",
+              summary: "Não é possível excluir",
+              detail: `Existem ${alunosVinculados[0].total} aluno(s) ativo(s) nesta modalidade. Transfira-os antes de excluir.`,
+              life: 6000,
+            });
+            return;
+          }
+
           await db.execute("DELETE FROM MODALIDADE WHERE id_modalidade = $1", [mod.id_modalidade]);
           carregarModalidades();
           toast.current?.show({ severity: "info", summary: "Excluída", detail: `"${mod.modalidade}" foi removida.` });

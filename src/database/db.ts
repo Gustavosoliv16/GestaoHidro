@@ -215,4 +215,40 @@ export default async function initDatabase(): Promise<void> {
   } catch (e) {
     console.warn("Could not migrate ALUNOS.dia_vencimento:", e);
   }
+
+  // Funcionários e log de acesso — sistema de sessão auditável
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS "FUNCIONARIOS" (
+        "id_funcionario" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        "nome"           TEXT NOT NULL,
+        "pin_hash"       TEXT NOT NULL,
+        "ativo"          INTEGER NOT NULL DEFAULT 1,
+        "criado_em"      TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `);
+    // Seed: funcionário Admin padrão com PIN 1234
+    // SHA-256("1234") = 03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4
+    await db.execute(`
+      INSERT OR IGNORE INTO FUNCIONARIOS (id_funcionario, nome, pin_hash, ativo)
+      VALUES (1, 'Admin', '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4', 1);
+    `);
+  } catch (e) {
+    console.warn("Could not create FUNCIONARIOS table:", e);
+  }
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS "LOG_ACESSO" (
+        "id_log"           INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+        "id_funcionario"   INTEGER NOT NULL,
+        "nome_funcionario" TEXT NOT NULL,
+        "tipo"             TEXT NOT NULL,
+        "ocorrido_em"      TEXT NOT NULL DEFAULT (datetime('now')),
+        FOREIGN KEY("id_funcionario") REFERENCES "FUNCIONARIOS"("id_funcionario")
+      );
+    `);
+  } catch (e) {
+    console.warn("Could not create LOG_ACESSO table:", e);
+  }
+
 }

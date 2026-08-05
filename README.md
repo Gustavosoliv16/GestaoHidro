@@ -1,6 +1,6 @@
 # Gestão HidroEscola
  
-![Versão](https://img.shields.io/badge/versão-1.6.5-blue)
+![Versão](https://img.shields.io/badge/versão-1.7.1-blue)
 ![Licença](https://img.shields.io/badge/licença-MIT-green)
 ![Plataforma](https://img.shields.io/badge/plataforma-Windows-0078D6?logo=windows&logoColor=white)
 ![Tauri](https://img.shields.io/badge/Tauri-2.0-FFC131?logo=tauri&logoColor=white)

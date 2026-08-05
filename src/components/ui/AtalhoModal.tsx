@@ -9,9 +9,10 @@ interface AtalhoModalProps {
 export default function AtalhoModal({ visible, onHide }: AtalhoModalProps) {
   const atalhos = [
     { tecla: "Ctrl + H", acao: "Ir para Home (Dashboard)" },
-    { tecla: "Ctrl + N", acao: "Ir para Cadastros (Novo Aluno)" },
+    { tecla: "Ctrl + N", acao: "Ir para Cadastros" },
     { tecla: "Ctrl + L", acao: "Ir para Relatórios" },
     { tecla: "Ctrl + G", acao: "Ir para Grade Horária" },
+    { tecla: "Ctrl + Q", acao: "Sair do sistema (logout)" },
     { tecla: "Ctrl + ?", acao: "Abrir este modal de atalhos" },
     { tecla: "Esc", acao: "Fechar modais e dropdowns" },
   ];

@@ -387,7 +387,7 @@ export default function Financeiro() {
     }
 
     try {
-      await estornarPagamentoMensalidade(mensalidadeParaEstornar.id_mensalidade);
+      await estornarPagamentoMensalidade(mensalidadeParaEstornar.id_mensalidade, motivoEstorno.trim());
       toast.current?.show({
         severity: "info",
         summary: "Estornado",

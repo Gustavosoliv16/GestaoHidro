@@ -49,7 +49,11 @@ export default function NovoAlunoModal({
 }: NovoAlunoModalProps) {
   const toast = useRef<Toast>(null);
 
-  // ── Dados do aluno ─────────────────────────────────────────────────────────
+  // ── Rascunho — estado reativo para controlar visibilidade do botão ─────────
+  const CHAVE_RASCUNHO = "rascunho_aluno";
+  const [temRascunho, setTemRascunho] = useState(
+    () => !alunoParaEditar && !!localStorage.getItem("rascunho_aluno")
+  );
   const [nome, setNome] = useState("");
   const [telefone, setTelefone] = useState("");
   const [email, setEmail] = useState("");
@@ -232,7 +236,6 @@ export default function NovoAlunoModal({
   }, [alunoParaEditar]);
 
   // ── Rascunho (localStorage) ────────────────────────────────────────────────
-  const CHAVE_RASCUNHO = "rascunho_aluno";
 
   // Carrega rascunho ao abrir (apenas para novo aluno)
   useEffect(() => {
@@ -301,6 +304,7 @@ export default function NovoAlunoModal({
       // Só salva se tiver pelo menos o nome preenchido
       if (nome.trim()) {
         localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(dadosRascunho));
+        setTemRascunho(true);
       }
     }, 1000);
 
@@ -326,6 +330,7 @@ export default function NovoAlunoModal({
 
   const limparRascunho = () => {
     localStorage.removeItem(CHAVE_RASCUNHO);
+    setTemRascunho(false);
     toast.current?.show({
       severity: "info",
       summary: "Rascunho limpo",
@@ -381,6 +386,7 @@ export default function NovoAlunoModal({
         
         // Limpa o rascunho após salvar com sucesso
         localStorage.removeItem(CHAVE_RASCUNHO);
+        setTemRascunho(false);
         
         toast.current?.show({
           severity: "success",
@@ -544,7 +550,7 @@ export default function NovoAlunoModal({
             Preencha os dados do aluno abaixo
           </p>
         </div>
-        {!alunoParaEditar && localStorage.getItem(CHAVE_RASCUNHO) && (
+        {!alunoParaEditar && temRascunho && (
           <Button
             label="Limpar Rascunho"
             icon="pi pi-trash"

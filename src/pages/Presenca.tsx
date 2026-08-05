@@ -87,10 +87,17 @@ export default function Presenca() {
   const [searchParams] = useSearchParams();
   const toast = useRef<Toast>(null);
 
-  // Hoje e ontem como objetos fixos para o ciclo de render
-  const hoje = new Date();
-  const ontem = new Date(hoje);
-  ontem.setDate(hoje.getDate() - 1);
+  // Hoje e ontem estabilizados em refs — não recriados a cada render
+  const hoje = useRef<Date>((() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  })()).current;
+  const ontem = useRef<Date>((() => {
+    const d = new Date(hoje);
+    d.setDate(d.getDate() - 1);
+    return d;
+  })()).current;
 
   const opcoesDia = [
     { label: "Hoje",  value: "hoje"  },

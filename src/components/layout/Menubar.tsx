@@ -3,10 +3,12 @@ import { Toolbar } from "primereact/toolbar";
 import { Tooltip } from "primereact/tooltip";
 import { confirmDialog } from "primereact/confirmdialog";
 import { Toast } from "primereact/toast";
-import { logoBranco } from "../../assets/brand";
 import { gotaBranca } from "../../assets/brand";
 import { useNavigate } from "react-router-dom";
 import Database from "@tauri-apps/plugin-sql";
+import { useEscolaConfig } from "../../contexts/EscolaContext";
+import { useSession } from "../../contexts/SessionContext";
+import logoBrancoFallback from "../../assets/HIDROFIT_BRANCO.png";
 
 interface Vencimento {
   id_aluno: number;
@@ -64,6 +66,9 @@ export default function Menutopbar() {
   const notifRef = useRef<HTMLDivElement>(null);
   const toast = useRef<Toast>(null);
   const navigate = useNavigate();
+
+  const { config: escolaConfig } = useEscolaConfig();
+  const { sessao, logout } = useSession();
 
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
@@ -207,13 +212,14 @@ export default function Menutopbar() {
 
   // ── Conteúdo da barra ─────────────────────────────────────────────────────
 
-  // Logo completo branco (texto + gota) para o fundo teal
+  // Logo dinâmica: usa logo da escola salva no banco, fallback para imagem padrão
+  const logoSrc    = escolaConfig.logo_b64 ?? logoBrancoFallback;
+
   const startContent = (
-    <div className="flex align-items-center px-2">
+    <div className="flex align-items-center gap-2 px-2">
       <img
-        src={logoBranco}
-        alt="HydroFit"
-        style={{ height: 38, objectFit: "contain" }}
+        src={logoSrc}
+        style={{ height: 38, objectFit: "contain", maxWidth: 160 }}
       />
     </div>
   );
@@ -267,6 +273,43 @@ export default function Menutopbar() {
 
   const endContent = (
     <div className="flex align-items-center gap-2 px-2">
+
+      {/* Chip do usuário logado */}
+      {sessao && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.4rem",
+            padding: "0.25rem 0.75rem 0.25rem 0.4rem",
+            background: "rgba(255,255,255,0.12)",
+            borderRadius: 999,
+            color: "#ffffff",
+            fontSize: "0.8rem",
+            fontWeight: 600,
+            letterSpacing: "0.01em",
+          }}
+        >
+          <div
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, var(--color-cyan-600), var(--color-cyan-400))",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              flexShrink: 0,
+            }}
+          >
+            {sessao.nome.charAt(0).toUpperCase()}
+          </div>
+          <span>{sessao.nome}</span>
+        </div>
+      )}
+
       {/* Sino de Notificações */}
       <div style={{ position: "relative" }} ref={notifRef}>
         <Tooltip target=".btn-notif" content="Notificações" position="bottom" />
@@ -542,7 +585,7 @@ export default function Menutopbar() {
           </button>
 
           <button
-            onClick={() => { navigate("/perfil"); setMenuAberto(false); }}
+            onClick={() => { navigate("/configuracoes#minha-conta"); setMenuAberto(false); }}
             className="menu-item-custom"
           >
             <i className="pi pi-user" style={{ fontSize: "1rem" }} />
@@ -568,11 +611,11 @@ export default function Menutopbar() {
                 acceptLabel: "Sim, sair",
                 rejectLabel: "Cancelar",
                 acceptClassName: "p-button-danger",
-                accept: () => {
-                  window.close();
+                accept: async () => {
+                  await logout();
+                  setMenuAberto(false);
                 },
               });
-              setMenuAberto(false);
             }}
             className="menu-item-custom"
             style={{ color: "var(--color-danger)" }}

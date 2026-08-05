@@ -350,11 +350,20 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
       <style>{`
         #print-root {
           display: none;
-          position: fixed;
-          inset: 0;
-          z-index: 99999;
-          background: #fff;
-          padding: 10mm 12mm 10mm 12mm;
+        }
+
+        @media print {
+          body > *:not(#print-root) { display: none !important; }
+          #print-root {
+            display: block !important;
+            position: static;
+            overflow: visible;
+            background: #fff;
+            padding: 0;
+          }
+          html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          body { overflow: visible !important; background: #fff !important; }
+          #print-root { page-break-after: auto; }
         }
 
         #print-root * {
@@ -367,17 +376,29 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
 
         .pr-header {
           display: flex;
-          align-items: flex-end;
+          align-items: center;
           justify-content: space-between;
-          padding-bottom: 10px;
+          padding-bottom: 12px;
           margin-bottom: 14px;
           border-bottom: 3px solid #000;
         }
-        .pr-logo { height: 60px; width: auto; object-fit: contain; }
+        .pr-header-marca {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .pr-logo { height: 48px; width: auto; object-fit: contain; }
+        .pr-marca-nome {
+          font-size: 20pt;
+          font-weight: 900;
+          letter-spacing: 1px;
+          color: #000;
+          line-height: 1;
+        }
 
         .pr-header-right { text-align: right; }
-        .pr-titulo   { font-size: 18pt; font-weight: 900; letter-spacing: 1.5px; text-transform: uppercase; line-height: 1; }
-        .pr-subtitulo { font-size: 10pt; color: #555; margin-top: 4px; }
+        .pr-titulo   { font-size: 15pt; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; line-height: 1.1; color: #000; }
+        .pr-subtitulo { font-size: 9pt; color: #444; margin-top: 5px; }
 
         .pr-info-block {
           display: grid;
@@ -445,33 +466,15 @@ function FolhaImpressao({ dados }: { dados: DadosImpressao }) {
           size: A4 portrait;
           margin: 8mm;
         }
-
-        @media print {
-          body > *:not(#print-root) { display: none !important; }
-          #print-root { 
-            display: block !important;
-            position: static;
-            overflow: visible;
-          }
-          /* Force no browser-added headers/footers */
-          html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          
-          /* Garantir que o conteúdo flua para múltiplas páginas */
-          body {
-            overflow: visible !important;
-          }
-          
-          #print-root {
-            page-break-after: auto;
-          }
-        }
       `}</style>
 
       <div id="print-root">
 
         <div className="pr-header">
-          <img src={logoPretoPng} alt="HydroFit" className="pr-logo" />
-          <h1> HydroFIT</h1>
+          <div className="pr-header-marca">
+            <img src={logoPretoPng} alt="Hidroescola" className="pr-logo" />
+            <span className="pr-marca-nome">HydroFIT</span>
+          </div>
           <div className="pr-header-right">
             <div className="pr-titulo">{ehListaDia ? "Lista de Presença do Dia" : "Lista de Presença"}</div>
             <div className="pr-subtitulo">{modalidade} · {diaNome} · {horario}</div>

@@ -191,16 +191,14 @@ export default function ListaAlunos({
       {/* Barra de busca */}
       <div className="flex align-items-center gap-2 p-3 border-bottom-1 surface-border">
         <IconField iconPosition="left" className="flex-1">
-          </IconField>
           <InputIcon className="pi pi-search" />
-          <div className="p-input-icon-left w-full md:w-auto">
           <InputText
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome ou CPF..."
-            className="w-full md:w-20rem p-inputtext-sm"
+            className="w-full p-inputtext-sm"
           />
-        </div>
+        </IconField>
 
         {busca && (
           <Button

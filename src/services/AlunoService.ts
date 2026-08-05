@@ -107,7 +107,7 @@ export async function salvarAlunoCompleto(dadosForm: any) {
         } else {
           const novaTurma: any = await db.execute(
             `INSERT INTO TURMAS (dia_semana, horario_inicio, horario_fim, id_modalidade) VALUES ($1, $2, $3, $4)`,
-            [diaSem, h.hora, h.hora, idModalidade]
+            [diaSem, h.hora, String(parseInt(h.hora, 10) + 1), idModalidade]
           );
           idTurma = novaTurma.lastInsertId;
         }

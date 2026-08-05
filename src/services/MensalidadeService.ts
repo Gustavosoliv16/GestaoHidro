@@ -365,7 +365,8 @@ export async function registrarPagamentoMensalidade(
 }
 
 export async function estornarPagamentoMensalidade(
-  idMensalidade: number
+  idMensalidade: number,
+  motivo?: string
 ): Promise<{ sucesso: boolean; mensagem: string }> {
   const db = await obterBanco();
 
@@ -392,6 +393,16 @@ export async function estornarPagamentoMensalidade(
     `DELETE FROM PAGAMENTO_MENSALIDADE_DETALHE WHERE id_mensalidade = $1`,
     [idMensalidade]
   );
+
+  // Registra o motivo do estorno como log
+  if (motivo?.trim()) {
+    await db.execute(
+      `INSERT INTO PAGAMENTO_MENSALIDADE_DETALHE
+         (id_mensalidade, forma_pagamento, valor, observacao, criado_em)
+       VALUES ($1, 'ESTORNO', 0, $2, datetime('now'))`,
+      [idMensalidade, motivo.trim()]
+    );
+  }
 
   return { sucesso: true, mensagem: "Pagamento estornado com sucesso!" };
 }

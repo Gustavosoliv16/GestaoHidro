@@ -22,6 +22,8 @@ export function useAppUpdater() {
           },
         });
       } catch (erro) {
+        // Em desenvolvimento não há endpoint de release — suprimir o ruído
+        if (import.meta.env.DEV) return;
         console.error("Erro ao verificar atualização:", erro);
       }
     }
