@@ -35,7 +35,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { sessao, logout } = useSession();
+  const { logout } = useSession();
   const [atalhoModalVisible, setAtalhoModalVisible] = useState(false);
   const routeLoading = useRouteLoading();
 
