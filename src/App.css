@@ -1044,7 +1044,6 @@ html .p-selectbutton .p-button.p-highlight:focus-visible {
   cursor: pointer;
   transition: background 0.15s ease;
 }
-
 .menu-item-custom:hover {
   background: rgba(14, 124, 140, 0.08);
 }

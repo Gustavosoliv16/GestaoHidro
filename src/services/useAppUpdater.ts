@@ -1,10 +1,16 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { confirmDialog } from "primereact/confirmdialog";
 
 export function useAppUpdater() {
+  // Garante que o dialog só aparece uma vez por sessão
+  const jaVerificou = useRef(false);
+
   useEffect(() => {
+    if (jaVerificou.current) return;
+    jaVerificou.current = true;
+
     async function verificarAtualizacao() {
       try {
         const update = await check();
