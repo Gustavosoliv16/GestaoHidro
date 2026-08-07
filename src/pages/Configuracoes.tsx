@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
+import { getVersion } from "@tauri-apps/api/app";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
 import { Toast } from "primereact/toast";
@@ -38,6 +39,12 @@ export default function Configuracoes() {
     const hash = location.hash.replace("#", "") as Aba;
     return hash === "minha-conta" ? "minha-conta" : "configuracoes";
   });
+
+  // ── Versão do app (lida do executável, nunca do banco) ────────────────────
+  const [versaoApp, setVersaoApp] = useState("...");
+  useEffect(() => {
+    getVersion().then(setVersaoApp).catch(() => setVersaoApp("—"));
+  }, []);
 
   useEffect(() => {
     const hash = location.hash.replace("#", "") as Aba;
@@ -478,7 +485,7 @@ export default function Configuracoes() {
             <div className="grid">
               <div className="col-12 md:col-6">
                 <div className="text-xs font-semibold text-600 uppercase mb-1">Versão</div>
-                <div className="text-sm font-bold text-900">1.7.3</div>
+                <div className="text-sm font-bold text-900">{versaoApp}</div>
               </div>
               <div className="col-12 md:col-6">
                 <div className="text-xs font-semibold text-600 uppercase mb-1">Banco de Dados</div>
