@@ -1471,7 +1471,7 @@ dependencies = [
 
 [[package]]
 name = "gestaohidro"
-version = "1.7.3"
+version = "1.7.4"
 dependencies = [
  "dirs 5.0.1",
  "serde",
