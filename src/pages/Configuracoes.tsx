@@ -478,7 +478,7 @@ export default function Configuracoes() {
             <div className="grid">
               <div className="col-12 md:col-6">
                 <div className="text-xs font-semibold text-600 uppercase mb-1">Versão</div>
-                <div className="text-sm font-bold text-900">1.7.1</div>
+                <div className="text-sm font-bold text-900">1.7.3</div>
               </div>
               <div className="col-12 md:col-6">
                 <div className="text-xs font-semibold text-600 uppercase mb-1">Banco de Dados</div>
@@ -614,11 +614,11 @@ export default function Configuracoes() {
         onHide={() => { setDialogRestaurarVisible(false); setBackupSelecionado(null); }}
       >
         <div className="flex flex-column gap-3 pt-3">
-          <div className="flex align-items-center gap-3 p-3 border-round" style={{ background: "var(--color-warning-bg, #fff3cd)" }}>
-            <i className="pi pi-exclamation-triangle text-2xl" style={{ color: "var(--color-warning, #f59e0b)" }} />
+          <div className="flex align-items-center gap-3 p-3 border-round" style={{ background: "var(--color-warning, #f59e0b)", borderRadius: 6 }}>
+            <i className="pi pi-exclamation-triangle text-2xl" style={{ color: "#000", flexShrink: 0 }} />
             <div>
-              <div className="font-semibold text-sm">Atenção!</div>
-              <div className="text-xs">Esta ação substituirá o banco de dados atual.</div>
+              <div className="font-semibold text-sm" style={{ color: "#000" }}>Atenção!</div>
+              <div className="text-xs" style={{ color: "#000" }}>Esta ação substituirá o banco de dados atual.</div>
             </div>
           </div>
           {backupSelecionado && (
