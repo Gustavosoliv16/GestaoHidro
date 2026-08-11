@@ -48,6 +48,80 @@ export interface DadosPagamentoMensalidade {
 }
 
 
+// Constante de tolerância — aluno só é inativado com 3+ meses atrasados
+const MESES_TOLERANCIA_INATIVACAO = 3;
+
+export interface AlertaInadimplencia {
+  id_aluno:       number;
+  nome:           string;
+  totalAtrasado:  number;
+  emRisco:        boolean; // 2 meses — aviso
+  seraCancelado:  boolean; // 3+ meses — será inativado
+}
+
+export interface AlunoInativadoPorInadimplencia {
+  id_aluno:      number;
+  nome:          string;
+  totalAtrasado: number;
+  modalidade:    string | null;
+}
+
+/**
+ * Retorna alunos inativos (ativo = 0) que possuem 3 ou mais mensalidades ATRASADAS,
+ * indicando que foram inativados automaticamente por inadimplência.
+ */
+export async function buscarAlunosInativadosPorInadimplencia(): Promise<AlunoInativadoPorInadimplencia[]> {
+  const db = await obterBanco();
+  const rows: any[] = await db.select(`
+    SELECT
+      a.id_aluno,
+      a.nome,
+      mo.modalidade,
+      COUNT(m.id_mensalidade) as totalAtrasado
+    FROM ALUNOS a
+    JOIN MENSALIDADE m  ON m.id_aluno = a.id_aluno
+    LEFT JOIN MODALIDADE mo ON a.id_modalidade = mo.id_modalidade
+    WHERE a.ativo = 0
+      AND m.status = 'ATRASADO'
+    GROUP BY a.id_aluno, a.nome, mo.modalidade
+    HAVING COUNT(m.id_mensalidade) >= $1
+    ORDER BY totalAtrasado DESC, a.nome ASC
+  `, [MESES_TOLERANCIA_INATIVACAO]);
+
+  return rows.map(r => ({
+    id_aluno:      r.id_aluno,
+    nome:          r.nome,
+    totalAtrasado: Number(r.totalAtrasado),
+    modalidade:    r.modalidade ?? null,
+  }));
+}
+
+/** Retorna alunos ativos com 2 ou mais meses atrasados para exibir alertas. */
+export async function buscarAlertasInadimplencia(): Promise<AlertaInadimplencia[]> {
+  const db = await obterBanco();
+  const rows: any[] = await db.select(`
+    SELECT
+      a.id_aluno,
+      a.nome,
+      COUNT(*) as totalAtrasado
+    FROM MENSALIDADE m
+    JOIN ALUNOS a ON m.id_aluno = a.id_aluno
+    WHERE m.status = 'ATRASADO'
+      AND a.ativo = 1
+    GROUP BY a.id_aluno, a.nome
+    HAVING COUNT(*) >= 2
+    ORDER BY totalAtrasado DESC, a.nome ASC
+  `);
+
+  return rows.map(r => ({
+    id_aluno:      r.id_aluno,
+    nome:          r.nome,
+    totalAtrasado: Number(r.totalAtrasado),
+    emRisco:       Number(r.totalAtrasado) === 2,
+    seraCancelado: Number(r.totalAtrasado) >= MESES_TOLERANCIA_INATIVACAO,
+  }));
+}
+
 function obterHojeStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -132,7 +206,7 @@ function calcularStatusPorMes(mesReferencia: string): "EM_ABERTO" | "PENDENTE" |
   }
 }
 
-export async function sincronizarMensalidades(idAluno: number): Promise<void> {
+export async function sincronizarMensalidades(idAluno: number): Promise<boolean> {
   const db = await obterBanco();
 
   const alunos: any[] = await db.select(
@@ -140,7 +214,7 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
     [idAluno]
   );
 
-  if (alunos.length === 0) return;
+  if (alunos.length === 0) return false;
 
   const aluno = alunos[0];
   const diaVencimento = Math.trunc(Number(aluno.dia_vencimento || 10));
@@ -190,27 +264,38 @@ export async function sincronizarMensalidades(idAluno: number): Promise<void> {
     }
   }
 
-  // Auto-inativar aluno se tiver mensalidade ATRASADA e ainda estiver ativo
+  // Auto-inativar aluno somente com 3+ meses atrasados
   const atrasadas: any[] = await db.select(
     `SELECT COUNT(*) as total FROM MENSALIDADE WHERE id_aluno = $1 AND status = 'ATRASADO'`,
     [idAluno]
   );
-  const temAtrasada = Number(atrasadas[0]?.total ?? 0) > 0;
+  const totalAtrasado = Number(atrasadas[0]?.total ?? 0);
 
-  if (temAtrasada) {
-    // Inativa o aluno
-    await db.execute(
-      `UPDATE ALUNOS SET ativo = 0 WHERE id_aluno = $1 AND ativo = 1`,
+  if (totalAtrasado >= MESES_TOLERANCIA_INATIVACAO) {
+    // Inativa o aluno (apenas se ainda estiver ativo — evita efeitos duplicados)
+    const resultado: any[] = await db.select(
+      `SELECT ativo FROM ALUNOS WHERE id_aluno = $1`,
       [idAluno]
     );
-    // Remove de todas as turmas
-    await db.execute(
-      `DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_aluno = $1`,
-      [idAluno]
-    );
-    // Cancela todas as reposições agendadas do aluno
-    await cancelarReposicoesDoAluno(idAluno);
+    const estaAtivo = resultado.length > 0 && resultado[0].ativo === 1;
+
+    if (estaAtivo) {
+      await db.execute(
+        `UPDATE ALUNOS SET ativo = 0 WHERE id_aluno = $1`,
+        [idAluno]
+      );
+      // Remove de todas as turmas
+      await db.execute(
+        `DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_aluno = $1`,
+        [idAluno]
+      );
+      // Cancela todas as reposições agendadas do aluno
+      await cancelarReposicoesDoAluno(idAluno);
+      return true; // inativado agora
+    }
   }
+
+  return false; // sem inativação
 }
 
 export async function buscarMensalidadesDoAluno(idAluno: number): Promise<Mensalidade[]> {
@@ -256,7 +341,13 @@ export async function buscarMensalidadesDoAluno(idAluno: number): Promise<Mensal
   return resultado;
 }
 
-export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAluno[]> {
+export interface ResultadoResumoFinanceiro {
+  alunos: ResumoFinanceiroAluno[];
+  /** Nomes dos alunos que foram inativados automaticamente nesta chamada */
+  inativadosAgora: string[];
+}
+
+export async function buscarResumoFinanceiroAlunos(): Promise<ResultadoResumoFinanceiro> {
   const db = await obterBanco();
 
   const alunos: any[] = await db.select(`
@@ -274,8 +365,13 @@ export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAl
     ORDER BY a.nome ASC
   `);
 
+  const inativadosAgora: string[] = [];
+
   for (const aluno of alunos) {
-    await sincronizarMensalidades(aluno.id_aluno);
+    const foiInativado = await sincronizarMensalidades(aluno.id_aluno);
+    if (foiInativado) {
+      inativadosAgora.push(aluno.nome);
+    }
   }
 
   const mesAtual = obterMesReferenciaAtual();
@@ -292,21 +388,27 @@ export async function buscarResumoFinanceiroAlunos(): Promise<ResumoFinanceiroAl
   `, [mesAtual]);
   const contagemMap = new Map(contagens.map((c) => [c.id_aluno, c]));
 
-  return alunos.map((a) => {
-    const c = contagemMap.get(a.id_aluno);
-    return {
-      id_aluno: a.id_aluno,
-      nome: a.nome,
-      documento: a.documento || "",
-      valorMensalidade: Number(a.valorMensalidade || 0),
-      diaVencimento: Math.trunc(Number(a.diaVencimento || 10)),
-      modalidade: a.modalidade || null,
-      totalEmAberto: Math.trunc(Number(c?.totalEmAberto || 0)),
-      totalPendente: Math.trunc(Number(c?.totalPendente || 0)),
-      totalAtrasado: Math.trunc(Number(c?.totalAtrasado || 0)),
-      totalPago: Math.trunc(Number(c?.totalPago || 0)),
-    };
-  });
+  return {
+    alunos: alunos
+      // filtra fora os que acabaram de ser inativados (ativo=0 agora)
+      .filter(a => !inativadosAgora.includes(a.nome))
+      .map((a) => {
+        const c = contagemMap.get(a.id_aluno);
+        return {
+          id_aluno: a.id_aluno,
+          nome: a.nome,
+          documento: a.documento || "",
+          valorMensalidade: Number(a.valorMensalidade || 0),
+          diaVencimento: Math.trunc(Number(a.diaVencimento || 10)),
+          modalidade: a.modalidade || null,
+          totalEmAberto: Math.trunc(Number(c?.totalEmAberto || 0)),
+          totalPendente: Math.trunc(Number(c?.totalPendente || 0)),
+          totalAtrasado: Math.trunc(Number(c?.totalAtrasado || 0)),
+          totalPago: Math.trunc(Number(c?.totalPago || 0)),
+        };
+      }),
+    inativadosAgora,
+  };
 }
 
 export async function registrarPagamentoMensalidade(
