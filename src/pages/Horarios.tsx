@@ -338,6 +338,16 @@ export default function GradeHoraria() {
     }
   };
 
+  const [copiado, setCopiado] = useState<number | null>(null);
+
+  const copiarTelefone = (idAluno: number, telefone: string) => {
+    const numero = telefone.replace(/\D/g, "");
+    navigator.clipboard.writeText(numero).then(() => {
+      setCopiado(idAluno);
+      setTimeout(() => setCopiado(null), 2000);
+    });
+  };
+
   const gerenciarDesvinculoAluno = async (idAluno: number) => {
     if (!turmaSelecionada) return;
 
@@ -703,8 +713,21 @@ export default function GradeHoraria() {
                           {aluno.nome}
                         </span>
                         {aluno.telefone && (
-                          <span className="text-xs text-500">
-                            {aluno.telefone}
+                          <span
+                            className="text-xs text-500"
+                            onClick={() => copiarTelefone(aluno.id_aluno, aluno.telefone)}
+                            title="Clique para copiar"
+                            style={{
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "0.25rem",
+                              transition: "color 0.15s ease",
+                              color: copiado === aluno.id_aluno ? "var(--color-success, #22c55e)" : undefined,
+                            }}
+                          >
+                            <i className={`pi ${copiado === aluno.id_aluno ? "pi-check" : "pi-copy"}`} style={{ fontSize: "10px" }} />
+                            {copiado === aluno.id_aluno ? "Copiado!" : aluno.telefone}
                           </span>
                         )}
                       </div>

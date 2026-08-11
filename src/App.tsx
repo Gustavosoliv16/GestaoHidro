@@ -28,6 +28,7 @@ import "./App.css";
 // ── Guard: só renderiza filhos se há sessão ativa ──────────────────────────
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { logado } = useSession();
+  useAppUpdater();
   if (!logado) return <Login />;
   return <>{children}</>;
 }
@@ -38,8 +39,6 @@ function AppContent() {
   const { logout } = useSession();
   const [atalhoModalVisible, setAtalhoModalVisible] = useState(false);
   const routeLoading = useRouteLoading();
-
-  useAppUpdater();
 
   useEffect(() => {
     const timer = setTimeout(() => {

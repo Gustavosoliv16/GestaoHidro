@@ -15,6 +15,7 @@ import { salvarChamada, verificarChamadaSalva } from "../services/AttendanceServ
 import {
   buscarReposicoesParaChamada,
   marcarReposicaoRealizada,
+  cancelarReposicao,
   ReposicaoChamada,
 } from "../services/ReposicaoService";
 
@@ -289,9 +290,12 @@ export default function Presenca() {
 
     await salvarPresenca(turmaSelecionada.id_turma, rep.id_aluno, dateStr, novoStatus);
 
-    // Se marcou PRESENTE, atualiza status da reposição para REALIZADA
+    // Se marcou PRESENTE → reposição REALIZADA
+    // Se marcou FALTOU   → reposição CANCELADA (não compareceu)
     if (novoStatus === "PRESENTE") {
       await marcarReposicaoRealizada(rep.id_reposicao);
+    } else if (novoStatus === "FALTOU") {
+      await cancelarReposicao(rep.id_reposicao);
     }
 
     toast.current?.show({

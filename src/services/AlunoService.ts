@@ -96,10 +96,17 @@ export async function salvarAlunoCompleto(dadosForm: any) {
     // o ROLLBACK desfaz tanto o aluno quanto as turmas criadas neste bloco.
     if (dadosForm.horariosFixos && dadosForm.horariosFixos.length > 0) {
       for (const h of dadosForm.horariosFixos) {
-        const diaSem = Number.isFinite(h.diaSemana) ? Math.trunc(h.diaSemana) : h.diaSemana;
+        const diaSem    = Number.isFinite(h.diaSemana) ? Math.trunc(h.diaSemana) : Number(h.diaSemana);
+        // Normaliza a hora para inteiro independente do formato ("08:00" ou 8)
+        const horaInt   = typeof h.hora === "string" && h.hora.includes(":")
+          ? parseInt(h.hora.split(":")[0], 10)
+          : Math.trunc(Number(h.hora));
+        const horaFimInt = horaInt + 1;
+
+        // Busca por inteiro para garantir que encontra turmas criadas por qualquer fluxo
         const buscarTurma: any[] = await db.select(
-          "SELECT id_turma FROM TURMAS WHERE dia_semana = $1 AND horario_inicio = $2",
-          [diaSem, h.hora]
+          "SELECT id_turma FROM TURMAS WHERE dia_semana = $1 AND CAST(horario_inicio AS INTEGER) = $2",
+          [diaSem, horaInt]
         );
         let idTurma: number;
         if (buscarTurma.length > 0) {
@@ -107,7 +114,7 @@ export async function salvarAlunoCompleto(dadosForm: any) {
         } else {
           const novaTurma: any = await db.execute(
             `INSERT INTO TURMAS (dia_semana, horario_inicio, horario_fim, id_modalidade) VALUES ($1, $2, $3, $4)`,
-            [diaSem, h.hora, String(parseInt(h.hora, 10) + 1), idModalidade]
+            [diaSem, horaInt, horaFimInt, idModalidade]
           );
           idTurma = novaTurma.lastInsertId;
         }
