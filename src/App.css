@@ -104,6 +104,20 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
+/* Portais do PrimeReact (Dropdown, Dialog, etc.) são renderizados direto no
+   body — precisam herdar as variáveis de tema do html para funcionar no dark */
+[data-theme="dark"] body,
+[data-theme="dark"] .p-dropdown-panel,
+[data-theme="dark"] .p-overlaypanel,
+[data-theme="dark"] .p-dialog-mask {
+  --color-bg:              #0A1620;
+  --color-surface:         #102536;
+  --color-border:          #1E3A4F;
+  --color-text:            #E8F1F5;
+  --color-text-secondary:  #9FB8C4;
+  --color-primary:         var(--color-cyan-600);
+}
+
 
 /* ╔══════════════════════════════════════════════════════════════════════════╗
    ║ 2. RESET + BASE                                                          ║
@@ -358,11 +372,16 @@ input[type="date"]:focus {
   border: 1px solid var(--color-border) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-md) !important;
+  color: var(--color-text) !important;
 }
-.p-dropdown-item               { color: var(--color-text) !important; font-family: var(--font-body) !important; }
+.p-dropdown-panel .p-dropdown-items-wrapper { background: var(--color-surface) !important; }
+.p-dropdown-panel .p-dropdown-header        { background: var(--color-surface) !important; border-bottom: 1px solid var(--color-border) !important; }
+.p-dropdown-item               { color: var(--color-text) !important; font-family: var(--font-body) !important; background: var(--color-surface) !important; }
 .p-dropdown-item:hover,
-.p-dropdown-item.p-highlight   { background: rgba(14, 124, 140, 0.08) !important; color: var(--color-text) !important; }
+.p-dropdown-item.p-highlight   { background: rgba(14, 124, 140, 0.12) !important; color: var(--color-text) !important; }
 .p-dropdown-filter             { background: var(--color-surface) !important; color: var(--color-text) !important; border-color: var(--color-border) !important; }
+.p-dropdown-filter::placeholder { color: var(--color-text-secondary) !important; }
+.p-dropdown-filter-container .p-icon { color: var(--color-text-secondary) !important; }
 
 /* SelectButton — prefixado com `html` para superar especificidade do tema PrimeReact */
 html .p-selectbutton            { border-radius: var(--radius-md) !important; overflow: hidden; }

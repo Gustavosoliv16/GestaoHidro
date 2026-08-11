@@ -56,9 +56,9 @@ export async function agendarReposicao(
   if (aluno.length === 0) return { sucesso: false, mensagem: "Aluno não encontrado." };
   if (Number(aluno[0].ativo) === 0) return { sucesso: false, mensagem: "Alunos inativos não podem agendar reposição." };
 
-  // Valida data futura (deve ser maior que hoje)
-  if (dataReposicao <= hojeStr()) {
-    return { sucesso: false, mensagem: "A data da reposição deve ser uma data futura." };
+  // Valida data: deve ser hoje ou futura
+  if (dataReposicao < hojeStr()) {
+    return { sucesso: false, mensagem: "A data da reposição não pode ser no passado." };
   }
 
   // Valida capacidade da turma na data

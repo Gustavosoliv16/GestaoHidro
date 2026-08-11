@@ -47,12 +47,6 @@ function hoje(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function amanha(): string {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
 function statusSeverity(s: string): "info" | "success" | "secondary" | "warning" {
   if (s === "AGENDADA")  return "info";
   if (s === "REALIZADA") return "success";
@@ -82,7 +76,7 @@ export default function Reposicoes() {
   const [turmas,           setTurmas]           = useState<{ label: string; value: number }[]>([]);
   const [novoIdAluno,      setNovoIdAluno]      = useState<number | null>(null);
   const [novoIdTurma,      setNovoIdTurma]      = useState<number | null>(null);
-  const [novaData,         setNovaData]         = useState(amanha());
+  const [novaData,         setNovaData]         = useState(hoje());
   const [novaObs,          setNovaObs]          = useState("");
 
   // ── Busca da listagem ───────────────────────────────────────────────────────
@@ -129,7 +123,7 @@ export default function Reposicoes() {
       // Reset do formulário
       setNovoIdAluno(null);
       setNovoIdTurma(null);
-      setNovaData(amanha());
+      setNovaData(hoje());
       setNovaObs("");
       setAgendaVisible(true);
     } catch (err) {
@@ -472,12 +466,12 @@ export default function Reposicoes() {
             <input
               type="date"
               value={novaData}
-              min={amanha()}
+              min={hoje()}
               onChange={(e) => setNovaData(e.target.value)}
               className="p-inputtext p-component w-full"
               style={{ padding: "0.5rem" }}
             />
-            <span className="text-xs text-500">A data deve ser posterior a hoje.</span>
+            <span className="text-xs text-500">A data pode ser hoje ou uma data futura.</span>
           </div>
 
           {/* Observação */}

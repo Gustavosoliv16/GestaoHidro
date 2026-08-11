@@ -39,6 +39,14 @@ export function parseHora(valor: string | number): number {
 export async function buscarTodasTurmas() {
   const db = await obterBancoPreparado();
 
+  // Migração silenciosa: normaliza horario_inicio/fim que foram salvos como "HH:MM"
+  await db.execute(`
+    UPDATE TURMAS
+    SET horario_inicio = CAST(horario_inicio AS INTEGER),
+        horario_fim    = CAST(horario_fim    AS INTEGER)
+    WHERE horario_inicio LIKE '%:%' OR horario_fim LIKE '%:%'
+  `);
+
   const turmas: any[] = await db.select(`
     SELECT 
       t.id_turma,
