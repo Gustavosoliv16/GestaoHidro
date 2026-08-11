@@ -14,13 +14,18 @@ import {
   buscarMensalidadesDoAluno,
   registrarPagamentoMensalidade,
   estornarPagamentoMensalidade,
+  buscarAlertasInadimplencia,
+  buscarAlunosInativadosPorInadimplencia,
   ResumoFinanceiroAluno,
   Mensalidade,
+  AlertaInadimplencia,
+  AlunoInativadoPorInadimplencia,
   DetalhePagamentoMensalidade,
   FormaPagamento,
   RecebedorPix,
   TipoCartao,
 } from "../services/MensalidadeService";
+import { alternarStatusAluno } from "../services/AlunoService";
 
 const formatarMoeda = (valor: number): string => {
   return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -103,6 +108,9 @@ export default function Financeiro() {
   const [motivoEstorno, setMotivoEstorno] = useState("");
 
   const [vencimentosProximos, setVencimentosProximos] = useState<any[]>([]);
+  const [alertasInadimplencia, setAlertasInadimplencia] = useState<AlertaInadimplencia[]>([]);
+  const [inativadosPorInadimplencia, setInativadosPorInadimplencia] = useState<AlunoInativadoPorInadimplencia[]>([]);
+  const [reativando, setReativando] = useState<number | null>(null);
 
   const totalFormasPagamento = formasPagamento.reduce(
     (total, item) => total + Number(item.valor || 0),
@@ -113,8 +121,20 @@ export default function Financeiro() {
   const carregarAlunos = async () => {
     setCarregando(true);
     try {
-      const dados = await buscarResumoFinanceiroAlunos();
-      setAlunos(dados);
+      const resultado = await buscarResumoFinanceiroAlunos();
+      setAlunos(resultado.alunos);
+
+      if (resultado.inativadosAgora.length > 0) {
+        const nomes = resultado.inativadosAgora.join(", ");
+        toast.current?.show({
+          severity: "warn",
+          summary: "Alunos inativados por inadimplência",
+          detail: `${nomes} ${resultado.inativadosAgora.length === 1 ? "foi inativado" : "foram inativados"} automaticamente por 3+ meses em atraso e removido das turmas.`,
+          life: 8000,
+        });
+        // Atualiza o badge de notificações no menu
+        window.dispatchEvent(new CustomEvent("notif-update"));
+      }
     } catch (error) {
       console.error("Erro ao carregar dados financeiros:", error);
       toast.current?.show({
@@ -158,10 +178,47 @@ export default function Financeiro() {
     }
   };
 
+  const carregarInativadosPorInadimplencia = async () => {
+    try {
+      const dados = await buscarAlunosInativadosPorInadimplencia();
+      setInativadosPorInadimplencia(dados);
+    } catch (error) {
+      console.error("Erro ao carregar inativados:", error);
+    }
+  };
+
   useEffect(() => {
     carregarAlunos();
     carregarVencimentosProximos();
+    buscarAlertasInadimplencia().then(setAlertasInadimplencia).catch(console.error);
+    carregarInativadosPorInadimplencia();
   }, []);
+
+  const reativarAluno = async (aluno: AlunoInativadoPorInadimplencia) => {
+    setReativando(aluno.id_aluno);
+    try {
+      await alternarStatusAluno(aluno.id_aluno, 0); // 0 = inativo → reativa
+      toast.current?.show({
+        severity: "success",
+        summary: "Aluno reativado",
+        detail: `${aluno.nome} foi reativado. As turmas precisam ser vinculadas manualmente.`,
+        life: 6000,
+      });
+      carregarAlunos();
+      buscarAlertasInadimplencia().then(setAlertasInadimplencia).catch(console.error);
+      carregarInativadosPorInadimplencia();
+      window.dispatchEvent(new CustomEvent("notif-update"));
+    } catch (error) {
+      console.error("Erro ao reativar aluno:", error);
+      toast.current?.show({
+        severity: "error",
+        summary: "Erro",
+        detail: "Falha ao reativar o aluno.",
+      });
+    } finally {
+      setReativando(null);
+    }
+  };
 
   const abrirMensalidades = async (aluno: ResumoFinanceiroAluno) => {
     setAlunoSelecionado(aluno);
@@ -355,6 +412,8 @@ export default function Financeiro() {
         setMensalidades(dados);
       }
       carregarAlunos();
+      buscarAlertasInadimplencia().then(setAlertasInadimplencia).catch(console.error);
+      carregarInativadosPorInadimplencia();
 
       // Notifica o Menubar para atualizar o badge de notificações
       window.dispatchEvent(new CustomEvent("notif-update"));
@@ -399,6 +458,8 @@ export default function Financeiro() {
         setMensalidades(dados);
       }
       carregarAlunos();
+      buscarAlertasInadimplencia().then(setAlertasInadimplencia).catch(console.error);
+      carregarInativadosPorInadimplencia();
 
       // Notifica o Menubar para atualizar o badge de notificações
       window.dispatchEvent(new CustomEvent("notif-update"));
@@ -570,6 +631,109 @@ export default function Financeiro() {
           />
         </div>
       </div>
+
+      {/* Painel de Alertas de Inadimplência */}
+      {alertasInadimplencia.length > 0 && (
+        <div className="card surface-card p-3 mb-4 border-round shadow-1" style={{ borderLeft: '3px solid var(--color-danger)' }}>
+          <div className="flex align-items-center gap-2 mb-2">
+            <i className="pi pi-exclamation-triangle" style={{ fontSize: '1rem', color: 'var(--color-danger)' }} />
+            <span className="text-sm font-bold text-900">Alunos em Risco de Inativação</span>
+            <span className="ml-auto text-xs text-500">{alertasInadimplencia.length}</span>
+          </div>
+          <div className="flex flex-column gap-1">
+            {alertasInadimplencia.map((a) => (
+              <div
+                key={a.id_aluno}
+                className="flex align-items-center justify-content-between px-2 py-1 border-round cursor-pointer transition-all transition-duration-150"
+                style={{ borderLeft: `2px solid ${a.seraCancelado ? 'var(--color-danger)' : 'var(--color-warning)'}` }}
+                onClick={() => {
+                  const aluno = alunos.find(al => al.id_aluno === a.id_aluno);
+                  if (aluno) abrirMensalidades(aluno);
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239, 68, 68, 0.06)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <div className="flex align-items-center gap-2">
+                  <i className="pi pi-user text-xs text-500" />
+                  <span className="text-sm font-semibold text-900">{a.nome}</span>
+                </div>
+                <div className="flex align-items-center gap-2">
+                  <span
+                    className="text-xs font-bold px-2 py-0 border-round"
+                    style={{
+                      color: a.seraCancelado ? 'var(--color-danger)' : 'var(--color-warning)',
+                      background: a.seraCancelado ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                      fontSize: '0.65rem',
+                    }}
+                  >
+                    {a.seraCancelado
+                      ? `${a.totalAtrasado} meses — será inativado`
+                      : `${a.totalAtrasado} meses — em risco`}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-xs text-500 mt-2" style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem' }}>
+            <i className="pi pi-info-circle mr-1" />
+            Alunos com 3+ meses atrasados são inativados automaticamente.
+          </div>
+        </div>
+      )}
+
+      {/* Seção de Alunos Inativados por Inadimplência */}
+      {inativadosPorInadimplencia.length > 0 && (
+        <div className="card surface-card p-3 mb-4 border-round shadow-1" style={{ borderLeft: '3px solid var(--color-500, #6b7280)' }}>
+          <div className="flex align-items-center gap-2 mb-2">
+            <i className="pi pi-ban" style={{ fontSize: '1rem', color: 'var(--color-500, #6b7280)' }} />
+            <span className="text-sm font-bold text-900">Inativos por Inadimplência</span>
+            <span className="ml-auto text-xs text-500">{inativadosPorInadimplencia.length}</span>
+          </div>
+          <div className="flex flex-column gap-1">
+            {inativadosPorInadimplencia.map((a) => (
+              <div
+                key={a.id_aluno}
+                className="flex align-items-center justify-content-between px-2 py-1 border-round"
+                style={{ borderLeft: '2px solid var(--surface-400, #9ca3af)' }}
+              >
+                <div className="flex align-items-center gap-2">
+                  <i className="pi pi-user-minus text-xs text-400" />
+                  <div className="flex flex-column">
+                    <span className="text-sm font-semibold text-700">{a.nome}</span>
+                    {a.modalidade && (
+                      <span className="text-xs text-400">{a.modalidade}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex align-items-center gap-2">
+                  <span
+                    className="text-xs font-bold px-2 border-round"
+                    style={{
+                      color: 'var(--color-danger)',
+                      background: 'rgba(239,68,68,0.08)',
+                      fontSize: '0.65rem',
+                    }}
+                  >
+                    {a.totalAtrasado} meses em atraso
+                  </span>
+                  <Button
+                    label="Reativar"
+                    icon="pi pi-refresh"
+                    className="p-button-sm p-button-outlined p-button-success"
+                    style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem' }}
+                    loading={reativando === a.id_aluno}
+                    onClick={() => reativarAluno(a)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="text-xs text-400 mt-2" style={{ borderTop: '1px solid var(--color-border)', paddingTop: '0.5rem' }}>
+            <i className="pi pi-info-circle mr-1" />
+            Ao reativar, o aluno precisa ser vinculado manualmente às turmas desejadas.
+          </div>
+        </div>
+      )}
 
       {/* Seção de Vencimentos Próximos */}
       {vencimentosProximos.length > 0 && (

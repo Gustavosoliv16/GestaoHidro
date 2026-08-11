@@ -16,9 +16,9 @@ export interface StatusPagamentoAluno {
 
 export async function buscarStatusPagamentoAlunos(): Promise<StatusPagamentoAluno[]> {
   const db = await obterBancoPreparado();
-  
+
   const resultado: StatusPagamentoAluno[] = await db.select(`
-    SELECT 
+    SELECT
       a.id_aluno,
       a.nome,
       a.valor_mensalidade as valorMensalidade,
@@ -45,9 +45,9 @@ export async function registrarNovoPagamento(idAluno: number, valorPago: number,
 export async function buscarHistoricoPagamentos(idAluno: number) {
   const db = await obterBancoPreparado();
   const resultado: any[] = await db.select(
-    `SELECT id_pagamento, valor_pago as valorPago, data_pagamento as dataPagamento 
-     FROM PAGAMENTO 
-     WHERE id_aluno = $1 
+    `SELECT id_pagamento, valor_pago as valorPago, data_pagamento as dataPagamento
+     FROM PAGAMENTO
+     WHERE id_aluno = $1
      ORDER BY data_pagamento DESC, id_pagamento DESC`,
     [idAluno]
   );

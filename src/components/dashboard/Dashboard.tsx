@@ -9,7 +9,7 @@ import Database from "@tauri-apps/plugin-sql";
 
 import { buscarTodosAlunos } from '../../services/AlunoService';
 import { buscarTodasTurmas } from '../../services/TurmaService';
-import { buscarResumoFinanceiroAlunos } from '../../services/MensalidadeService';
+import { buscarResumoFinanceiroAlunos, ResumoFinanceiroAluno } from '../../services/MensalidadeService';
 import { SkeletonDashboard } from '../ui/SkeletonLoader';
 import EmptyState from '../ui/EmptyState';
 
@@ -55,7 +55,7 @@ const Dashboard: React.FC = () => {
 
         // 3. Financeiro
         const resumoFin = await buscarResumoFinanceiroAlunos();
-        const comAtraso = resumoFin.filter(r => r.totalAtrasado > 0);
+        const comAtraso = resumoFin.alunos.filter((r: ResumoFinanceiroAluno) => r.totalAtrasado > 0);
         setInadimplentes(comAtraso);
 
         // 4. Buscar últimos pagamentos (ordenados do mais recente)
