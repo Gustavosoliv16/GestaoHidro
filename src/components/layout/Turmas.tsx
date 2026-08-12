@@ -199,13 +199,22 @@ Todos os vínculos com alunos serão removidos.`,
       acceptLabel: "Excluir",
       rejectLabel: "Cancelar",
       accept: async () => {
-        await excluirTurma(turma.id_turma);
-        toast.current?.show({
-          severity: "info",
-          summary: "Excluída",
-          detail: "Turma removida.",
-        });
-        carregar();
+        try {
+          await excluirTurma(turma.id_turma);
+          toast.current?.show({
+            severity: "info",
+            summary: "Excluída",
+            detail: "Turma removida.",
+          });
+          carregar();
+        } catch (err) {
+          console.error("Erro ao excluir turma:", err);
+          toast.current?.show({
+            severity: "error",
+            summary: "Erro",
+            detail: "Não foi possível excluir a turma.",
+          });
+        }
       },
     });
   };

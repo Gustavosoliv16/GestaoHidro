@@ -177,10 +177,15 @@ export async function editarTurma(idTurma: number, dados: {
 
 export async function excluirTurma(idTurma: number) {
   const db = await obterBancoPreparado();
-  // Remover todas as dependências antes de deletar a turma
-  await db.execute(`DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_turma = $1`, [idTurma]);
-  await db.execute(`DELETE FROM AGENDA_CALENDARIO WHERE id_turma = $1`, [idTurma]);
-  await db.execute(`DELETE FROM REPOSICAO_AULA WHERE id_turma_reposicao = $1`, [idTurma]);
-  await db.execute(`DELETE FROM TURMAS WHERE id_turma = $1`, [idTurma]);
+  // Garante que as FKs não bloqueiem a exclusão em cascata manual
+  await db.execute(`PRAGMA foreign_keys = OFF`);
+  try {
+    await db.execute(`DELETE FROM ALUNO_HORARIO_PADRAO WHERE id_turma = $1`, [idTurma]);
+    await db.execute(`DELETE FROM AGENDA_CALENDARIO WHERE id_turma = $1`, [idTurma]);
+    await db.execute(`DELETE FROM REPOSICAO_AULA WHERE id_turma_reposicao = $1`, [idTurma]);
+    await db.execute(`DELETE FROM TURMAS WHERE id_turma = $1`, [idTurma]);
+  } finally {
+    await db.execute(`PRAGMA foreign_keys = ON`);
+  }
   return { sucesso: true, mensagem: "Turma excluída com sucesso!" };
 }

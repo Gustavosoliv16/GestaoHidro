@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { HashRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
-import { useAppUpdater } from "./services/useAppUpdater";
 
 import Menutopbar    from "../src/components/layout/Menubar";
 import Homepage      from "../src/pages/Homepage";
@@ -20,6 +19,9 @@ import { useKeyboardShortcuts } from "./components/ui/useKeyboardShortcuts";
 import { useRouteLoading }      from "./components/ui/useRouteLoading";
 import { backupStartup }        from "./services/BackupService";
 import { SessionProvider, useSession } from "./contexts/SessionContext";
+import { UpdaterProvider } from "./contexts/UpdaterContext";
+import { useUpdater } from "./contexts/UpdaterContext";
+import ChangelogModal from "./components/ui/ChangelogModal";
 import "primereact/resources/themes/saga-blue/theme.css";
 import "primeicons/primeicons.css";
 import "primeflex/primeflex.css";
@@ -28,7 +30,6 @@ import "./App.css";
 // ── Guard: só renderiza filhos se há sessão ativa ──────────────────────────
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { logado } = useSession();
-  useAppUpdater();
   if (!logado) return <Login />;
   return <>{children}</>;
 }
@@ -37,6 +38,7 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useSession();
+  const { changelogAberto, fecharChangelog } = useUpdater();
   const [atalhoModalVisible, setAtalhoModalVisible] = useState(false);
   const routeLoading = useRouteLoading();
 
@@ -75,6 +77,7 @@ function AppContent() {
       <RouteLoading loading={routeLoading} />
       <ErrorBanner />
       <Menutopbar />
+      <ChangelogModal visible={changelogAberto} onHide={fecharChangelog} />
       <AtalhoModal
         visible={atalhoModalVisible}
         onHide={() => setAtalhoModalVisible(false)}
@@ -109,9 +112,11 @@ export default function App() {
   return (
     <div className="app-shell" style={{ scrollbarGutter: "stable" }}>
         <SessionProvider>
-          <HashRouter>
-            <AppContent />
-          </HashRouter>
+          <UpdaterProvider>
+            <HashRouter>
+              <AppContent />
+            </HashRouter>
+          </UpdaterProvider>
         </SessionProvider>
     </div>
   );

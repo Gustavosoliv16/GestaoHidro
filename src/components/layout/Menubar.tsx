@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import Database from "@tauri-apps/plugin-sql";
 import { useEscolaConfig } from "../../contexts/EscolaContext";
 import { useSession } from "../../contexts/SessionContext";
+import { useUpdater } from "../../contexts/UpdaterContext";
 import logoBrancoFallback from "../../assets/HIDROFIT_BRANCO.png";
 
 interface Vencimento {
@@ -69,6 +70,7 @@ export default function Menutopbar() {
 
   const { config: escolaConfig } = useEscolaConfig();
   const { sessao, logout } = useSession();
+  const { update: updateDisponivel } = useUpdater();
 
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem("theme") === "dark");
 
@@ -332,7 +334,7 @@ export default function Menutopbar() {
           }}
         >
           <i className="pi pi-bell text-2xl" />
-          {vencimentos.length > 0 && (
+          {(vencimentos.length > 0 || updateDisponivel) && (
             <span
               style={{
                 position: "absolute",
@@ -351,7 +353,7 @@ export default function Menutopbar() {
                 padding: "0 4px",
               }}
             >
-              {vencimentos.length}
+              {vencimentos.length + (updateDisponivel ? 1 : 0)}
             </span>
           )}
         </button>
@@ -407,6 +409,60 @@ export default function Menutopbar() {
                 </button>
               )}
             </div>
+
+            {/* Item de atualização disponível */}
+            {updateDisponivel && (
+              <div
+                style={{
+                  padding: "0.75rem 1rem",
+                  borderBottom: "1px solid var(--color-border)",
+                  background: "rgba(14, 124, 140, 0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.75rem",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+                  <span
+                    style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: "var(--color-cyan-600)",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div>
+                    <div style={{ fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text)" }}>
+                      Atualização disponível
+                    </div>
+                    <div style={{ fontSize: "0.72rem", color: "var(--color-text-secondary)" }}>
+                      Versão {updateDisponivel.version} — instale em Configurações
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    navigate("/configuracoes");
+                    setNotifAberto(false);
+                  }}
+                  style={{
+                    background: "none",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: "4px",
+                    color: "var(--color-cyan-600)",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    padding: "0.2rem 0.5rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Ver →
+                </button>
+              </div>
+            )}
 
             {vencimentos.length === 0 ? (
               <div

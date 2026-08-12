@@ -16,6 +16,8 @@ import {
   type BackupDisponivel,
 } from "../services/BackupService";
 import { useSession } from "../contexts/SessionContext";
+import { useUpdater } from "../contexts/UpdaterContext";
+import ChangelogModal from "../components/ui/ChangelogModal";
 import {
   listarFuncionarios,
   criarFuncionario,
@@ -33,6 +35,8 @@ export default function Configuracoes() {
   const toast = useRef<Toast>(null);
   const { sessao } = useSession();
   const location = useLocation();
+  const { fase: updateFase, update: updateDisponivel, progresso: updateProgresso, erro: updateErro, verificar: verificarUpdate, instalar: instalarUpdate, dispensar: dispensarUpdate } = useUpdater();
+  const [changelogVisible, setChangelogVisible] = useState(false);
 
   // ── Aba ativa ─────────────────────────────────────────────────────────────
   const [abaAtiva, setAbaAtiva] = useState<Aba>(() => {
@@ -482,16 +486,125 @@ export default function Configuracoes() {
               <i className="pi pi-info-circle text-primary text-xl" />
               <h3 className="m-0 text-lg font-bold text-900">Informações do Sistema</h3>
             </div>
-            <div className="grid">
+            <div className="grid mb-4">
               <div className="col-12 md:col-6">
-                <div className="text-xs font-semibold text-600 uppercase mb-1">Versão</div>
-                <div className="text-sm font-bold text-900">{versaoApp}</div>
+                <div className="text-xs font-semibold text-600 uppercase mb-1">Versão instalada</div>
+                <div className="flex align-items-center gap-2">
+                  <span className="text-sm font-bold text-900">{versaoApp}</span>
+                  <Button
+                    label="Notas de versão"
+                    icon="pi pi-list"
+                    className="p-button-text p-button-sm"
+                    style={{ fontSize: "0.75rem", padding: "0.1rem 0.4rem" }}
+                    onClick={() => setChangelogVisible(true)}
+                  />
+                </div>
               </div>
               <div className="col-12 md:col-6">
                 <div className="text-xs font-semibold text-600 uppercase mb-1">Banco de Dados</div>
                 <div className="text-sm font-bold text-900">SQLite</div>
               </div>
             </div>
+
+            <Divider className="my-3" />
+
+            {/* ── Atualização ── */}
+            <div className="flex align-items-center gap-2 mb-3">
+              <i className="pi pi-cloud-download text-primary" style={{ fontSize: "1rem" }} />
+              <h4 className="m-0 text-sm font-bold text-900">Atualização do Sistema</h4>
+            </div>
+
+            {/* Estado: erro */}
+            {updateFase === "erro" && (
+              <div
+                className="flex align-items-center gap-2 p-3 border-round mb-3"
+                style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}
+              >
+                <i className="pi pi-exclamation-circle" style={{ color: "var(--color-danger)" }} />
+                <span className="text-sm text-700 flex-1">{updateErro ?? "Falha ao verificar atualização."}</span>
+                <Button
+                  label="Fechar"
+                  className="p-button-text p-button-sm p-button-danger"
+                  onClick={dispensarUpdate}
+                />
+              </div>
+            )}
+
+            {/* Estado: disponivel */}
+            {updateFase === "disponivel" && updateDisponivel && (
+              <div
+                className="flex align-items-center gap-3 p-3 border-round mb-3"
+                style={{ background: "rgba(14,124,140,0.07)", border: "1px solid rgba(14,124,140,0.2)" }}
+              >
+                <i className="pi pi-cloud-download" style={{ color: "var(--color-cyan-600)", fontSize: "1.2rem" }} />
+                <div className="flex-1">
+                  <div className="text-sm font-bold text-900">
+                    Versão {updateDisponivel.version} disponível
+                  </div>
+                  <div className="text-xs text-500 mt-1">
+                    Instalada: {versaoApp}
+                  </div>
+                </div>
+                <Button
+                  label="Instalar agora"
+                  icon="pi pi-download"
+                  className="p-button-sm p-button-success"
+                  onClick={instalarUpdate}
+                />
+              </div>
+            )}
+
+            {/* Estado: baixando */}
+            {updateFase === "baixando" && (
+              <div className="p-3 border-round mb-3" style={{ background: "rgba(14,124,140,0.05)", border: "1px solid rgba(14,124,140,0.15)" }}>
+                <div className="flex align-items-center gap-2 mb-2">
+                  <i className="pi pi-spin pi-spinner" style={{ color: "var(--color-cyan-600)" }} />
+                  <span className="text-sm font-semibold text-900">
+                    Baixando atualização… {updateProgresso !== null ? `${updateProgresso}%` : ""}
+                  </span>
+                </div>
+                {updateProgresso !== null && (
+                  <div style={{ height: "6px", background: "var(--surface-300, #d1d5db)", borderRadius: "3px", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        width: `${updateProgresso}%`,
+                        height: "100%",
+                        background: "var(--color-cyan-600, #0891b2)",
+                        borderRadius: "3px",
+                        transition: "width 0.3s ease",
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Estado: instalando */}
+            {updateFase === "instalando" && (
+              <div
+                className="flex align-items-center gap-2 p-3 border-round mb-3"
+                style={{ background: "rgba(14,124,140,0.05)", border: "1px solid rgba(14,124,140,0.15)" }}
+              >
+                <i className="pi pi-spin pi-spinner" style={{ color: "var(--color-cyan-600)" }} />
+                <span className="text-sm font-semibold text-900">Instalando… o app será reiniciado automaticamente.</span>
+              </div>
+            )}
+
+            {/* Estado: idle ou verificando — botão de verificação manual */}
+            {(updateFase === "idle" || updateFase === "verificando") && (
+              <div className="flex align-items-center justify-content-between">
+                <span className="text-sm text-500">
+                  {updateFase === "verificando" ? "Verificando…" : "O sistema está atualizado."}
+                </span>
+                <Button
+                  label={updateFase === "verificando" ? "Verificando…" : "Verificar atualizações"}
+                  icon={updateFase === "verificando" ? "pi pi-spin pi-spinner" : "pi pi-refresh"}
+                  className="p-button-outlined p-button-sm"
+                  onClick={verificarUpdate}
+                  loading={updateFase === "verificando"}
+                />
+              </div>
+            )}
           </Card>
         </>
       )}
@@ -664,6 +777,9 @@ export default function Configuracoes() {
           </div>
         </div>
       </Dialog>
+
+      {/* ── Changelog ────────────────────────────────────────────────────── */}
+      <ChangelogModal visible={changelogVisible} onHide={() => setChangelogVisible(false)} />
     </div>
   );
 }

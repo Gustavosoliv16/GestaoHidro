@@ -1,6 +1,6 @@
 # Gestão HidroEscola
  
-![Versão](https://img.shields.io/badge/versão-1.7.6-blue)
+![Versão](https://img.shields.io/badge/versão-1.7.7-blue)
 ![Licença](https://img.shields.io/badge/licença-MIT-green)
 ![Plataforma](https://img.shields.io/badge/plataforma-Windows-0078D6?logo=windows&logoColor=white)
 ![Status](https://img.shields.io/badge/status-Estável-brightgreen)
